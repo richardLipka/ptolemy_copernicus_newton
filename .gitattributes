@@ -1,0 +1,4 @@
+# Normalise line endings so the repository stays LF regardless of platform.
+# Without this, checking out on Windows and committing back rewrites whole
+# files as CRLF and buries real changes in the diff.
+* text=auto eol=lf
