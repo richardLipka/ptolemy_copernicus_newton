@@ -755,19 +755,37 @@ button[aria-pressed='true'] {
   opacity: 0.9;
 }
 
-/* Arrowhead: a CSS triangle turned to face along its shaft. */
+/*
+ * Arrowhead: a CSS border triangle whose apex points along +x, turned to face
+ * along its shaft.
+ *
+ * The margin matters. Anchoring with top/left puts the element's *top* edge at
+ * the centre, so its vertical middle — and therefore the transform origin at
+ * 0 50% — sits half a head-height too low. That has to be cancelled with a
+ * margin, before any rotation: cancelling it with a translateY inside the
+ * transform instead displaces every head perpendicular to its own direction,
+ * since by then the axes have already turned.
+ *
+ * With the origin on the centre, the apex sits exactly --head-length along local
+ * x, so pulling the element back by that much lands the apex on the tip.
+ */
 .vector__head {
+  --head-length: 8px;
+  --head-half-width: 4.5px;
+
   position: absolute;
   top: 50%;
   left: 50%;
+  box-sizing: content-box;
   width: 0;
   height: 0;
-  border-left: 8px solid var(--vector-tint);
-  border-top: 4.5px solid transparent;
-  border-bottom: 4.5px solid transparent;
+  margin-top: calc(-1 * var(--head-half-width));
+  border-left: var(--head-length) solid var(--vector-tint);
+  border-top: var(--head-half-width) solid transparent;
+  border-bottom: var(--head-half-width) solid transparent;
   transform-origin: 0 50%;
   transform: translate(calc(var(--x) * var(--unit)), calc(var(--y) * var(--unit)))
-    rotate(calc(var(--angle) * 1deg)) translateX(-8px) translateY(-4.5px);
+    rotate(calc(var(--angle) * 1deg)) translateX(calc(-1 * var(--head-length)));
   opacity: 0.9;
 }
 

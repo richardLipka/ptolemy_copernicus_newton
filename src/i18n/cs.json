@@ -127,6 +127,5 @@
   "info.speed": "Rychlost",
   "info.netForce": "Výsledná síla",
   "info.forceScaleNote": "Délky vektorů jsou seřazené, ale nikoli proporcionální — Slunce tvoří přes 98 % tahu, takže při přesném poměru by ostatní vektory nebyly vidět. Přesné hodnoty jsou v tabulce.",
-  "view.forces": "Síly",
   "view.forcesLegend": "Modrý vektor je rychlost, černý výsledná síla. Tenké vektory jsou gravitační tah jednotlivých těles, obarvené podle toho, které táhne. Délky jsou seřazené, ne proporcionální — přesné hodnoty najdete u vybraného tělesa."
 }

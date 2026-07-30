@@ -208,13 +208,14 @@ export function renderControls(
   // circles for Ptolemy and Copernicus, force and velocity vectors for Newton.
   // Only the Earth-centred reframe has none, since it borrows finished positions
   // rather than deriving them.
+  // One label across all models: what it shows differs (circles for the
+  // geometric constructions, force vectors for Newton) but it is the same idea —
+  // the machinery behind the position — so it gets the same name.
   const hasMachinery = Boolean(store.engine.construction ?? store.engine.dynamics);
   if (hasMachinery) {
     toggles.appendChild(
-      toggleButton(
-        store.engine.dynamics ? t('view.forces') : t('view.construction'),
-        state.showConstruction,
-        () => store.toggle('showConstruction'),
+      toggleButton(t('view.construction'), state.showConstruction, () =>
+        store.toggle('showConstruction'),
       ),
     );
   }

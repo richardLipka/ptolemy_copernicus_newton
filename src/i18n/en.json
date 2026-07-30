@@ -127,6 +127,5 @@
   "info.speed": "Speed",
   "info.netForce": "Net force",
   "info.forceScaleNote": "Vector lengths are ordered but not proportional — the Sun is over 98% of the pull, so true proportions would leave the others invisible. Exact figures are in the table.",
-  "view.forces": "Forces",
   "view.forcesLegend": "The blue vector is velocity, the black one the net force. The thin vectors are each body's gravitational pull, coloured by which body pulls. Lengths are ordered, not proportional — exact figures are listed under the selected body."
 }
