@@ -167,25 +167,36 @@ body {
   display: none;
 }
 
-/* --- orbit paths -------------------------------------------------------- */
+/* --- orbit trails ------------------------------------------------------- */
 
+/*
+ * The logged history of where each body has been.
+ *
+ * Kept visually separate from the construction harness, which is the other
+ * thing drawn as thin lines: trails take the body's own colour and fade with
+ * age, so they read as a record with a direction of travel. The harness is
+ * brass, uniform, and geometric. Colour plus the fade is the distinction —
+ * neither alone would carry it, since a single faint line looks much like
+ * another.
+ */
 .path {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-.path__segment {
+.trail__segment {
   position: absolute;
   top: 50%;
   left: 50%;
-  height: var(--line-hairline);
+  height: var(--line-fine);
   width: calc(var(--len) * var(--unit));
   background: var(--stroke, var(--ink-faint));
   transform-origin: 0 50%;
   transform: translate(calc(var(--x) * var(--unit)), calc(var(--y) * var(--unit)))
     rotate(calc(var(--angle) * 1deg));
-  opacity: 0.55;
+  /* --age runs 0 at the oldest end to 1 at the body. */
+  opacity: calc(0.12 + 0.68 * var(--age, 1));
 }
 
 .instrument[data-orbits='off'] .path {

@@ -38,6 +38,11 @@
   "time.stepForward": "O krok vpřed",
   "time.jumpTo": "Přejít na datum",
 
+  "harness.label": "Pomocné čáry",
+  "harness.clearTrails": "Smazat stopy",
+  "harness.trailsEmpty": "Dráhy se kreslí ze skutečně proběhlých poloh, nikoli předem vypočtené. Spusťte čas a stopa začne vznikat.",
+  "harness.trailsRecorded": "Zaznamenáno {{days}} dní, krok {{step}} dne. Delší historie se ukládá hruběji.",
+
   "view.orbits": "Dráhy",
   "view.sightlines": "Záměrné přímky",
   "view.trueScale": "Skutečné měřítko",

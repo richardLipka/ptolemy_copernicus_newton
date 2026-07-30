@@ -11,7 +11,7 @@ import { BODY_IDS, type BodyId } from '../core/bodies';
 import { MODES, type EngineId, type ModeId } from '../core/engines/types';
 import { MAX_JD, MIN_JD, dateFromJd, jdFromDate } from '../core/time';
 import type { ZodiacScheme } from '../core/zodiac';
-import { LOCALES, t, type Locale } from '../i18n/i18n';
+import { LOCALES, formatNumber, t, type Locale } from '../i18n/i18n';
 import type { ScaleMode, Store } from '../state/store';
 import { el, field, panel, select, toggleButton } from './dom';
 
@@ -183,6 +183,16 @@ export function renderControls(
   viewPanel.appendChild(scaleRow);
   viewPanel.appendChild(el('p', 'note', t('view.scaleHint')));
 
+  container.appendChild(viewPanel);
+
+  // --- harness ----------------------------------------------------------
+  //
+  // Everything drawn over the bodies themselves, each switchable on its own.
+  // Grouping them makes it clear they are all optional annotation rather than
+  // part of the model.
+
+  const harnessPanel = panel(t('harness.label'));
+
   const toggles = el('div', 'button-row');
   toggles.append(
     toggleButton(t('view.orbits'), state.showOrbits, () => store.toggle('showOrbits')),
@@ -205,10 +215,30 @@ export function renderControls(
     );
   }
 
-  viewPanel.appendChild(toggles);
+  harnessPanel.appendChild(toggles);
+
+  if (state.showOrbits) {
+    const trailNote = el(
+      'p',
+      'note',
+      store.trails.size < 2
+        ? t('harness.trailsEmpty')
+        : t('harness.trailsRecorded', {
+            days: formatNumber(store.trails.spanDays, 0),
+            step: formatNumber(store.trails.stepDays, 2),
+          }),
+    );
+    harnessPanel.appendChild(trailNote);
+
+    const clear = el('button', undefined, t('harness.clearTrails'));
+    clear.type = 'button';
+    clear.disabled = store.trails.size === 0;
+    clear.addEventListener('click', () => store.clearTrails());
+    harnessPanel.appendChild(clear);
+  }
 
   if (store.engine.construction && state.showConstruction) {
-    viewPanel.appendChild(
+    harnessPanel.appendChild(
       el(
         'p',
         'note',
@@ -220,11 +250,11 @@ export function renderControls(
     // not project to a circle, which rather undercuts "circles upon circles".
     // Say so, and point at the toggle that fixes it.
     if (state.selectedBody && state.scaleMode === 'compressed') {
-      viewPanel.appendChild(el('p', 'note', t('view.constructionScaleWarning')));
+      harnessPanel.appendChild(el('p', 'note', t('view.constructionScaleWarning')));
     }
   }
 
-  container.appendChild(viewPanel);
+  container.appendChild(harnessPanel);
 
   // --- locale -----------------------------------------------------------
 

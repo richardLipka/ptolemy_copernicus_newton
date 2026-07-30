@@ -70,18 +70,6 @@ function renderMasthead(): void {
 const INFO_BUDGET_MS = 200;
 const EVENT_BUDGET_MS = 600;
 
-/**
- * Traced paths are the most expensive thing in the app — 1,000-odd engine
- * evaluations and as many DOM writes — and also the least urgent to refresh.
- *
- * A path is drawn centred on the current date and spans months to years, so
- * the body stays on its own curve for the whole window: a path that is a
- * second out of date is not merely acceptable, it is indistinguishable.
- * Rebuilding three times a second cost two thirds of the frame budget and
- * bought nothing.
- */
-const PATH_BUDGET_MS = 1200;
-
 /** How far the date may drift before the event window is rescanned, days. */
 const EVENT_RESCAN_DAYS = 25;
 
@@ -135,10 +123,8 @@ let lastRing = '';
 let lastSelected: string | null = null;
 
 let lastInfoAt = 0;
-let lastPathAt = 0;
 let lastEventAt = 0;
 let lastEventScanJd = Number.NaN;
-let lastPathJd = Number.NaN;
 
 function render(): void {
   const state = store.get();
@@ -171,14 +157,6 @@ function render(): void {
     document.title = t('app.title');
   }
 
-  // Paths lag the date slightly while playing, which is invisible: they span
-  // months to years, so a third of a second of drift moves them imperceptibly.
-  if (contextChanged || (state.julianDate !== lastPathJd && now - lastPathAt > PATH_BUDGET_MS)) {
-    lastPathAt = now;
-    lastPathJd = state.julianDate;
-    orrery.rebuildPaths();
-  }
-
   if (contextChanged || state.selectedBody !== lastSelected || now - lastInfoAt > INFO_BUDGET_MS) {
     lastInfoAt = now;
     lastSelected = state.selectedBody;
@@ -199,9 +177,26 @@ function render(): void {
 
 store.subscribe(render);
 
+/**
+ * Longest real interval a single frame may represent, seconds.
+ *
+ * Browsers suspend animation frames in a hidden tab, so the first frame after
+ * one is revealed reports the entire time it spent hidden. Left unclamped, that
+ * whole interval is multiplied by the time rate: a minute in another tab at 400
+ * days a second would jump the clock by sixty-five years and, worse, do it in
+ * one step the n-body integrator would have to swallow whole.
+ *
+ * Clamping means simulated time pauses while the tab is away rather than
+ * catching up, which is also the more useful behaviour.
+ */
+const MAX_FRAME_SECONDS = 0.1;
+
 let previousTimestamp = performance.now();
 function frame(timestamp: number): void {
-  const elapsedSeconds = (timestamp - previousTimestamp) / 1000;
+  const elapsedSeconds = Math.min(
+    (timestamp - previousTimestamp) / 1000,
+    MAX_FRAME_SECONDS,
+  );
   previousTimestamp = timestamp;
   store.tick(elapsedSeconds);
   requestAnimationFrame(frame);

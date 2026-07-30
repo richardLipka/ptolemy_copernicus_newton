@@ -59,7 +59,8 @@ separate code path.
 | Build order | **Core math first (unit-tested), then UI** |
 | Radial scale | **Compressed by default, with a true-scale toggle** |
 | Model overlay | **Ghost overlay** — a second model drawn faintly alongside the active one |
-| Orbit paths | **Traced over a fixed window**, so any stationary point draws its real curve |
+| Orbit paths | **Logged, never pre-computed** — a trail is a record of positions actually visited |
+| Overlays | **Trails, construction, sight-lines and star figures each switch independently** |
 | Sphere detail | **Bands plus engraved star figures** (principal stars joined by figure lines) |
 
 ---
@@ -437,16 +438,41 @@ it: two position sets, one accurate and one historical, drawn in the same frame
 so the Copernican 13° error on Mars is a visible gap rather than a figure in a
 table.
 
-### 13.2 Orbit paths are traced, not idealised
+### 13.2 Orbits are logged, never pre-computed
 
-Paths are sampled from the active engine over a fixed window and drawn as real
-curves. This is the only approach that survives an arbitrary stationary point:
-centre the map on Earth and Mars draws the looping rosette that Ptolemy needed
-epicycles to reproduce, and it comes out of the sampling for free rather than
-being a special case.
+An orbit is drawn from `state/trails.ts`, a log of snapshots the simulation
+genuinely passed through. Nothing is sampled ahead of the clock. A trail is
+therefore evidence rather than prediction: it cannot show a shape the engine did
+not produce, and an orbit that closes on itself has demonstrably closed rather
+than been drawn closed.
 
-Paths are recomputed when the engine, frame origin, date window, or scale
-changes — not per frame.
+Each past position is plotted against the frame origin **as it stood at that
+moment**, not where the origin is now. That is what makes an Earth-centred Mars
+accumulate the retrograde rosette — every point is geocentric for its own date,
+exactly as an observer would have recorded it.
+
+Consequences, all deliberate:
+
+- **Nothing is drawn until the clock runs.** On load the map is bare. This is
+  the honest cost of the approach and the UI says so rather than hiding it.
+- **A full Saturn circuit needs 29 simulated years to elapse.** Run time fast
+  and it accumulates; there is no shortcut, because a log has no future.
+- **Whole snapshots are kept, not screen points**, so recentring the map or
+  switching scale reprojects existing history instead of discarding it. Only a
+  change of *engine* resets the log, since a trail belongs to one model.
+- **A date jump resets it.** The bodies did not travel from where they were to
+  where they now are, and a line joining the two would be a path nothing took.
+
+Memory and the DOM are bounded by capacity (150 snapshots), and **decimation**
+buys unbounded time coverage within that bound: on overflow every second sample
+is dropped and the spacing doubles. Long histories are recorded more coarsely
+than recent ones, which is the only alternative to either forgetting the past or
+growing without limit.
+
+The log records every `stepDays`, so its newest entry lags the body by up to one
+step — obvious once the step has coarsened. The renderer closes that last gap
+with a live segment from the final sample to the body's current position, or the
+trail visibly detaches from the planet it belongs to.
 
 ### 13.3 The construction harness
 
@@ -487,7 +513,18 @@ twice the centre's offset, arms joining the right points — because the harness
 is a second derivation of the same geometry and could otherwise drift into a
 diagram of nothing.
 
-### 13.4 The celestial sphere's star figures are ornament
+### 13.4 Overlays are all optional, and trails must not look like harness
+
+Everything drawn over the bodies is annotation, grouped in one panel and each
+switchable on its own: **trails**, the **construction** circles, **sight-lines**
+to the zodiac, and the **star figures** on the ring.
+
+Trails and harness are both thin lines, so they are deliberately separated on two
+channels at once: a trail takes its body's colour and **fades with age**, giving
+it a direction of travel; the harness is uniform brass. Colour alone would not
+carry it — one faint line looks much like another — and neither would the fade.
+
+### 13.5 The celestial sphere's star figures are ornament
 
 The ring shows principal stars joined by figure lines, in the manner of an
 engraved star chart. **Star positions are approximate and decorative.** The
@@ -498,7 +535,7 @@ are marked as such in the source so nobody later mistakes them for a catalogue.
 Pictorial engravings — an actual ram, an actual bull — would need SVG artwork
 or bitmaps and are therefore out of scope under the CSS-only constraint.
 
-### 13.5 Still assumed, not confirmed
+### 13.6 Still assumed, not confirmed
 
 - **Deployment form** — building for a folder of static assets with a relative
   base path. A single-file inlined bundle is a small config change if needed.

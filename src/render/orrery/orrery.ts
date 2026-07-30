@@ -16,8 +16,8 @@ import type { Store } from '../../state/store';
 import {
   buildConstruction,
   buildView,
+  projectTrail,
   ringIntercept,
-  traceAllPaths,
   type Point,
 } from '../../state/selectors';
 import { CONSTELLATION_FIGURES } from './constellations';
@@ -72,8 +72,6 @@ const div = (className: string): HTMLDivElement => {
 
 export interface OrreryRenderer {
   update(): void;
-  /** Recompute traced paths. Expensive; call on engine/frame/scale changes. */
-  rebuildPaths(): void;
   rebuildRing(): void;
 }
 
@@ -144,6 +142,8 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     pip: HTMLDivElement;
     ghost: HTMLDivElement;
     ghostLink: HTMLDivElement;
+    /** Live segment joining the logged trail to the body's current position. */
+    trailLeader: HTMLDivElement;
   }
 
   const elements = new Map<BodyId, BodyElements>();
@@ -174,6 +174,12 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     const ghostLink = div('ghost-link');
     ghostLink.style.setProperty('--tint', tint);
 
+    const trailLeader = div('trail__segment');
+    trailLeader.style.setProperty('--stroke', tint);
+    trailLeader.style.setProperty('--age', '1');
+    trailLeader.style.display = 'none';
+    pathLayer.appendChild(trailLeader);
+
     sightLayer.append(sightline, pip);
     bodyLayer.append(ghostLink, ghost, marker, label);
 
@@ -186,39 +192,91 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
       }
     });
 
-    elements.set(id, { marker, phase, label, sightline, pip, ghost, ghostLink });
+    elements.set(id, {
+      marker,
+      phase,
+      label,
+      sightline,
+      pip,
+      ghost,
+      ghostLink,
+      trailLeader,
+    });
   }
 
-  // --- pooled path segments ---------------------------------------------
+  // --- pooled trail segments --------------------------------------------
 
   const segmentPool: HTMLDivElement[] = [];
 
-  function rebuildPaths(): void {
+  /** Signature of the last trail draw, so identical frames do no DOM work. */
+  let lastTrailKey = '';
+
+  /**
+   * The newest logged point per body, in screen units.
+   *
+   * The log only records every `stepDays`, so its end lags the body by up to a
+   * full step — and once history is long the step is coarse enough for the gap
+   * to be obvious. A live segment joins this point to the body each frame, so
+   * the trail always reaches the planet it belongs to.
+   */
+  const trailEnds = new Map<BodyId, Point>();
+
+  /**
+   * Draw the logged history.
+   *
+   * Recomputed only when the log has actually changed — a new snapshot, a
+   * decimation, or a reprojection after recentring. Between those, which at
+   * ordinary rates is most frames, this returns immediately.
+   */
+  function updateTrails(): void {
     const state = store.get();
-    const paths = traceAllPaths(state);
+    const log = store.trails;
+
+    const key = [
+      log.size,
+      log.generation,
+      state.frameOrigin,
+      state.scaleMode,
+      state.showOrbits,
+    ].join('|');
+    if (key === lastTrailKey) return;
+    lastTrailKey = key;
 
     let used = 0;
-    for (const [id, points] of paths) {
-      for (let i = 1; i < points.length; i++) {
-        const from = points[i - 1];
-        const to = points[i];
-        if (!from || !to) continue;
+    trailEnds.clear();
 
-        // A traced path can jump when a body passes very close to the frame
-        // origin and its projected direction swings round; skip those rather
-        // than drawing a chord across the map.
-        if (Math.hypot(to.x - from.x, to.y - from.y) > 0.6) continue;
+    if (state.showOrbits) {
+      const samples = log.all();
 
-        let segment = segmentPool[used];
-        if (!segment) {
-          segment = div('path__segment');
-          segmentPool.push(segment);
-          pathLayer.appendChild(segment);
+      for (const id of BODY_IDS) {
+        if (id === state.frameOrigin) continue;
+        const points = projectTrail(samples, id, state.frameOrigin, state.scaleMode);
+        const newest = points[points.length - 1];
+        if (newest) trailEnds.set(id, newest);
+
+        for (let i = 1; i < points.length; i++) {
+          const from = points[i - 1]!;
+          const to = points[i]!;
+
+          // A body passing close to the frame origin swings through a large
+          // apparent angle between two snapshots; skip that rather than draw a
+          // chord straight across the map.
+          if (Math.hypot(to.x - from.x, to.y - from.y) > 0.6) continue;
+
+          let segment = segmentPool[used];
+          if (!segment) {
+            segment = div('trail__segment');
+            segmentPool.push(segment);
+            pathLayer.appendChild(segment);
+          }
+          segment.style.setProperty('--stroke', `var(--body-${id})`);
+          // Older positions fade, so a trail reads as a record with a
+          // direction rather than as a drawn curve.
+          segment.style.setProperty('--age', (i / points.length).toFixed(3));
+          segment.style.display = '';
+          setSegment(segment, from, to);
+          used++;
         }
-        segment.style.setProperty('--stroke', `var(--body-${id})`);
-        segment.style.display = '';
-        setSegment(segment, from, to);
-        used++;
       }
     }
 
@@ -359,6 +417,7 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     setFlag(instrument, 'figures', state.showStarFigures);
     setFlag(instrument, 'construction', state.showConstruction);
 
+    updateTrails();
     updateHarness();
 
     const sunLongitudeFrom = (id: BodyId): number =>
@@ -406,7 +465,23 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
         setPoint(parts.pip, target);
       }
 
-      const ghostPoint = view.ghosts.get(body.id);
+        // Close the gap between the newest logged position and where the body
+      // actually is now, so the trail meets the planet at any step size.
+      const trailEnd = trailEnds.get(body.id);
+      const leader = elements.get(body.id)!.trailLeader;
+      if (state.showOrbits && trailEnd) {
+        const gap = Math.hypot(body.point.x - trailEnd.x, body.point.y - trailEnd.y);
+        if (gap > 0.0005 && gap < 0.6) {
+          leader.style.display = '';
+          setSegment(leader, trailEnd, body.point);
+        } else {
+          leader.style.display = 'none';
+        }
+      } else {
+        leader.style.display = 'none';
+      }
+
+    const ghostPoint = view.ghosts.get(body.id);
       if (ghostPoint) {
         parts.ghost.style.display = '';
         parts.ghostLink.style.display = '';
@@ -420,8 +495,7 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
   }
 
   rebuildRing();
-  rebuildPaths();
   update();
 
-  return { update, rebuildPaths, rebuildRing };
+  return { update, rebuildRing };
 }

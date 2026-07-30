@@ -22,6 +22,7 @@ import { MODES, type Engine, type EngineId, type ModeId } from '../core/engines/
 import { SimulationClock, clampJd, jdFromDate } from '../core/time';
 import type { ZodiacScheme } from '../core/zodiac';
 import { getLocale, setLocale, type Locale } from '../i18n/i18n';
+import { TrailLog } from './trails';
 
 export const ENGINES: Record<EngineId, Engine> = {
   keplerian: keplerianEngine,
@@ -59,6 +60,8 @@ type Listener = (state: State) => void;
 
 export class Store {
   readonly clock: SimulationClock;
+  /** Where the bodies have been. Orbits are drawn from this, not predicted. */
+  readonly trails = new TrailLog();
   private state: State;
   private readonly listeners = new Set<Listener>();
 
@@ -118,6 +121,9 @@ export class Store {
   setMode(mode: ModeId): void {
     const engineId = MODES[mode].engines[0]!;
     const ghost = this.state.ghostEngineId === engineId ? null : this.state.ghostEngineId;
+    // A trail records one model's history; carrying it into another would
+    // attribute positions to an engine that never produced them.
+    this.trails.reset();
     this.patch({
       mode,
       engineId,
@@ -128,14 +134,26 @@ export class Store {
 
   setEngine(engineId: EngineId): void {
     const ghost = this.state.ghostEngineId === engineId ? null : this.state.ghostEngineId;
+    this.trails.reset();
     this.patch({ engineId, ghostEngineId: ghost });
+  }
+
+  clearTrails(): void {
+    this.trails.reset();
+    this.emit();
   }
 
   setGhostEngine(engineId: EngineId | null): void {
     this.patch({ ghostEngineId: engineId === this.state.engineId ? null : engineId });
   }
 
+  /**
+   * Recentre the map. The trail survives: whole snapshots are logged, so the
+   * recorded history simply reprojects about the new origin — the same past,
+   * seen from a different chair.
+   */
   setFrameOrigin(frameOrigin: BodyId): void {
+    this.trails.invalidateProjection();
     this.patch({ frameOrigin });
   }
 
@@ -152,6 +170,7 @@ export class Store {
   }
 
   setScaleMode(scaleMode: ScaleMode): void {
+    this.trails.invalidateProjection();
     this.patch({ scaleMode });
   }
 
@@ -168,13 +187,21 @@ export class Store {
 
   // --- time -------------------------------------------------------------
 
+  /**
+   * Jump to a date. The trail is discarded, because the bodies did not travel
+   * from where they were to where they now are — a line joining the two would
+   * be a path nothing ever took.
+   */
   setJulianDate(jd: number): void {
     this.clock.setJd(jd);
+    this.trails.reset();
     this.patch({ julianDate: this.clock.julianDate });
   }
 
+  /** Nudge the clock. Small and continuous, so the trail keeps building. */
   stepDays(days: number): void {
     this.clock.step(days);
+    this.recordTrail();
     this.patch({ julianDate: this.clock.julianDate });
   }
 
@@ -202,7 +229,22 @@ export class Store {
   tick(realSeconds: number): void {
     if (!this.state.playing) return;
     this.clock.advance(realSeconds);
+    this.recordTrail();
     this.patch({ julianDate: this.clock.julianDate });
+  }
+
+  /**
+   * Offer the current positions to the log.
+   *
+   * The engine is evaluated here rather than in the renderer so that history is
+   * recorded even when nothing is drawn — trails switched off, or the tab in
+   * the background — and the record stays continuous either way.
+   */
+  private recordTrail(): void {
+    this.trails.record(
+      this.clock.julianDate,
+      ENGINES[this.state.engineId].positionsAt(this.clock.julianDate),
+    );
   }
 
   jumpToDate(date: Date): void {

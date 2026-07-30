@@ -38,6 +38,11 @@
   "time.stepForward": "Step forward",
   "time.jumpTo": "Jump to date",
 
+  "harness.label": "Overlays",
+  "harness.clearTrails": "Clear trails",
+  "harness.trailsEmpty": "Orbits are drawn from positions actually visited, not computed in advance. Run the clock and the trail builds.",
+  "harness.trailsRecorded": "{{days}} days recorded, {{step}}-day steps. Longer history is kept more coarsely.",
+
   "view.orbits": "Orbits",
   "view.sightlines": "Sight-lines",
   "view.trueScale": "True scale",

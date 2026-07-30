@@ -4,9 +4,14 @@ An interactive 2D model of the solar system that runs the same sky through three
 world-systems, so you can watch where they agree and where they part company.
 
 Pick any body as the stationary point and every orbit redraws around it. Centre
-the map on Earth and Mars traces the looping rosette that cost Ptolemy his
-epicycles — not because the code knows what a retrograde loop is, but because
-that is what the motion genuinely looks like from here.
+the map on Earth, run the clock, and Mars accumulates the looping rosette that
+cost Ptolemy his epicycles — not because the code knows what a retrograde loop
+is, but because that is where Mars was actually seen to go.
+
+Orbits are **logged, not predicted**. Nothing is computed ahead of the clock: a
+trail is a record of positions the simulation genuinely passed through, so it
+cannot show a shape the model did not produce. The map therefore starts bare and
+fills in as time runs.
 
 No installation, no backend, no database. It builds to a folder of static files
 and runs from any web server or straight off disk.
@@ -66,6 +71,10 @@ quietly regress.
   ring, showing where each body *appears* as distinct from where it *is*. The
   ring switches between the twelve equal signs and the real IAU constellations,
   which have been drifting apart for two thousand years.
+- **Switch off anything you don't want.** Trails, construction, sight-lines and
+  star figures are all optional annotation, each with its own switch. Trails take
+  their body's colour and fade with age; the harness is brass and uniform, so the
+  record of where something went never reads as part of the machinery.
 - **Compare predicted dates.** For any conjunction, opposition or station, the
   event panel shows the date each of the three models predicts and the spread
   between them.

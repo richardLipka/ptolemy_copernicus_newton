@@ -7,7 +7,7 @@
  * means a resize needs no recomputation.
  */
 
-import { BODIES, BODY_IDS, type BodyId } from '../core/bodies';
+import { BODY_IDS, type BodyId } from '../core/bodies';
 import type { ConstructionRole } from '../core/construction';
 import { apparentLongitude, relativePosition } from '../core/coordinates';
 import type { PositionSet } from '../core/engines/types';
@@ -17,6 +17,7 @@ import { DEG, length, sub, vec3, type Vec3 } from '../core/vec';
 import { locate, type ZodiacPosition } from '../core/zodiac';
 import type { ScaleMode, State } from './store';
 import { ENGINES } from './store';
+import type { TrailSample } from './trails';
 
 export interface Point {
   x: number;
@@ -173,101 +174,49 @@ export function buildView(state: State): OrreryView {
 }
 
 /**
- * Trace every body's path in a single pass.
+ * Project a logged trail for one body.
  *
- * Tracing rather than drawing an idealised ellipse is what lets an arbitrary
- * stationary point work: centre the map on Earth and Mars produces the looping
- * rosette that Ptolemy needed epicycles to reproduce, without a line of code
- * that knows what a retrograde loop is.
- *
- * Bodies are traced together, in ascending date order, because the n-body
- * engine integrates to reach a date. Tracing them one at a time would send it
- * seeking back and forth across centuries once per body; walking a single
- * sorted timeline lets it sweep the span once.
+ * Each recorded snapshot is projected against the frame origin *as it stood at
+ * that moment*, which is what an observer would have plotted at the time. Centre
+ * the map on Earth and Mars therefore accumulates the retrograde rosette that
+ * cost Ptolemy his epicycles — not because anything here knows what a loop is,
+ * but because that is where Mars was seen to be.
  */
-export function traceAllPaths(
-  state: State,
-  // Enough to resolve the three retrograde loops a non-heliocentric path
-  // shows, at ~40 points each, without putting a thousand extra elements on
-  // the page.
-  samplesPerBody = 120,
-): Map<BodyId, Point[]> {
-  const engine = ENGINES[state.engineId];
+export function projectTrail(
+  samples: readonly TrailSample[],
+  bodyId: BodyId,
+  frameOrigin: BodyId,
+  scaleMode: ScaleMode,
+): Point[] {
+  const points: Point[] = [];
 
-  const wanted: { jd: number; id: BodyId; index: number }[] = [];
-  const paths = new Map<BodyId, Point[]>();
+  for (const sample of samples) {
+    const body = sample.positions.get(bodyId);
+    const origin = sample.positions.get(frameOrigin);
+    if (!body || !origin) continue;
 
-  for (const id of BODY_IDS) {
-    if (id === state.frameOrigin) continue;
-    const span = pathSpanDays(id, state.frameOrigin);
-    const start = state.julianDate - span / 2;
-    const step = span / (samplesPerBody - 1);
-
-    paths.set(id, new Array<Point>(samplesPerBody));
-    for (let i = 0; i < samplesPerBody; i++) {
-      wanted.push({ jd: start + step * i, id, index: i });
+    if (bodyId === 'moon') {
+      const earth = sample.positions.get('earth');
+      if (!earth) continue;
+      const earthPoint = projectVector(sub(earth, origin), scaleMode);
+      const offset = sub(body, earth);
+      const distance = Math.hypot(offset.x, offset.y);
+      if (distance === 0) {
+        points.push(earthPoint);
+        continue;
+      }
+      const radius = MOON_ORBIT_RADIUS * (distance / MOON_MEAN_DISTANCE_AU);
+      points.push({
+        x: earthPoint.x + (offset.x / distance) * radius,
+        y: earthPoint.y + (offset.y / distance) * radius,
+      });
+      continue;
     }
+
+    points.push(projectVector(sub(body, origin), scaleMode));
   }
 
-  wanted.sort((a, b) => a.jd - b.jd);
-
-  let lastJd = Number.NaN;
-  let projected: Map<BodyId, Point> | null = null;
-
-  for (const { jd, id, index } of wanted) {
-    if (jd !== lastJd || !projected) {
-      projected = projectPositions(
-        engine.positionsAt(jd),
-        state.frameOrigin,
-        state.scaleMode,
-      );
-      lastJd = jd;
-    }
-    const point = projected.get(id);
-    if (point) paths.get(id)![index] = point;
-  }
-
-  return paths;
-}
-
-/** Orbital period about the Sun, days. The Moon's is Earth's, since that is
- *  what governs its motion relative to anything other than Earth. */
-function orbitalPeriodDays(id: BodyId): number {
-  if (id === 'moon') return 365.25;
-  const rate = BODIES[id].orbit?.rates.L;
-  return rate ? (360 / rate) * 36525 : 365.25;
-}
-
-/** How many loops a non-closing path is drawn for. */
-const RETROGRADE_LOOPS_SHOWN = 3;
-
-/**
- * How much time a body's traced path should span.
- *
- * Centred on the Sun, one orbital period closes the curve exactly. Centred on
- * anything else it generally never closes, and the right unit is the *synodic*
- * period — the interval between successive alignments, which is what sets the
- * spacing of the retrograde loops.
- *
- * Using the orbital period there instead is what turns the map into a ball of
- * wool: Saturn seen from Earth completes a loop every 378 days, so its 29-year
- * orbit contains 57 of them, far more than a sampled path can resolve or an
- * eye can read. Three loops shows the pattern.
- */
-function pathSpanDays(bodyId: BodyId, frameOrigin: BodyId): number {
-  // A satellite about its own primary closes in one orbit, like a planet
-  // about the Sun.
-  if (BODIES[bodyId].parent === frameOrigin) return 27.321661;
-  if (frameOrigin === 'sun') return orbitalPeriodDays(bodyId);
-  // The Sun's apparent circuit takes exactly the observer's own year.
-  if (bodyId === 'sun') return orbitalPeriodDays(frameOrigin);
-
-  const bodyPeriod = orbitalPeriodDays(bodyId);
-  const originPeriod = orbitalPeriodDays(frameOrigin);
-  if (bodyPeriod === originPeriod) return bodyPeriod;
-
-  const synodic = Math.abs(1 / (1 / bodyPeriod - 1 / originPeriod));
-  return synodic * RETROGRADE_LOOPS_SHOWN;
+  return points;
 }
 
 // --- construction ("the harness") ---------------------------------------
