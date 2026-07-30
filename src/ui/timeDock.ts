@@ -25,12 +25,12 @@ export function renderTimeDock(container: HTMLElement, store: Store): TimeDock {
 
   const card = panel(t('time.label'));
 
-  const clock = el('div', 'clock');
-  card.appendChild(clock);
-
-  // --- transport ---------------------------------------------------------
-
-  const transport = el('div', 'button-row');
+  /*
+   * One grid for the whole panel, so the transport and rate rows share column
+   * tracks: the four steppers line up in two columns down the edges, and the
+   * play button, the clock and the rate readout take all the width between them.
+   */
+  const grid = el('div', 'control-grid');
 
   const iconButton = (
     label: string,
@@ -47,21 +47,20 @@ export function renderTimeDock(container: HTMLElement, store: Store): TimeDock {
     return button;
   };
 
-  transport.append(
+  const clock = el('div', 'clock control-grid__wide');
+  grid.appendChild(clock);
+
+  // --- transport ---------------------------------------------------------
+
+  const playPause = el('button', undefined, state.playing ? t('time.pause') : t('time.play'));
+  playPause.type = 'button';
+  playPause.addEventListener('click', () => store.togglePlay());
+
+  grid.append(
     iconButton('‹', t('time.stepBack'), () => store.stepDays(-1)),
-    (() => {
-      const playPause = el(
-        'button',
-        undefined,
-        state.playing ? t('time.pause') : t('time.play'),
-      );
-      playPause.type = 'button';
-      playPause.addEventListener('click', () => store.togglePlay());
-      return playPause;
-    })(),
+    playPause,
     iconButton('›', t('time.stepForward'), () => store.stepDays(1)),
   );
-  card.appendChild(transport);
 
   // --- rate --------------------------------------------------------------
   //
@@ -69,25 +68,17 @@ export function renderTimeDock(container: HTMLElement, store: Store): TimeDock {
   // spans a factor of 1600, and the buttons make the extremes reachable without
   // making the middle fiddly.
 
-  const rateRow = el('div', 'button-row');
-  rateRow.append(
-    iconButton(
-      '−',
-      t('time.slower'),
-      () => store.stepRate(-1),
-      !store.canSlowDown,
-    ),
-    (() => {
-      const readout = el(
-        'div',
-        'rate-readout',
-        `${formatNumber(state.rateDaysPerSecond, state.rateDaysPerSecond < 1 ? 2 : 0)} ${t('time.rate.unit')}`,
-      );
-      return readout;
-    })(),
+  const rate = el(
+    'div',
+    'rate-readout',
+    `${formatNumber(state.rateDaysPerSecond, state.rateDaysPerSecond < 1 ? 2 : 0)} ${t('time.rate.unit')}`,
+  );
+
+  grid.append(
+    iconButton('−', t('time.slower'), () => store.stepRate(-1), !store.canSlowDown),
+    rate,
     iconButton('+', t('time.faster'), () => store.stepRate(1), !store.canSpeedUp),
   );
-  card.appendChild(rateRow);
 
   // --- jump --------------------------------------------------------------
 
@@ -100,14 +91,15 @@ export function renderTimeDock(container: HTMLElement, store: Store): TimeDock {
     if (dateInput.valueAsDate) store.setJulianDate(jdFromDate(dateInput.valueAsDate));
   });
 
-  const jumpRow = el('div', 'button-row');
-  jumpRow.style.marginTop = '0.4rem';
   const today = el('button', undefined, t('time.today'));
   today.type = 'button';
   today.addEventListener('click', () => store.jumpToDate(new Date()));
-  jumpRow.append(dateInput, today);
-  card.appendChild(jumpRow);
 
+  const jump = el('div', 'control-grid__split');
+  jump.append(dateInput, today);
+  grid.appendChild(jump);
+
+  card.appendChild(grid);
   container.appendChild(card);
 
   return { dateInput, clock };

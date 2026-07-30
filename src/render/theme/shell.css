@@ -306,10 +306,59 @@
 
   /* A square button for the transport and rate steppers. */
   .icon-button {
-    min-width: 1.9rem;
     text-align: center;
     padding-inline: 0.35rem;
     font-family: var(--face-numeric);
+  }
+
+  /*
+   * Transport and rate rows share one set of column tracks, so the four corner
+   * steppers line up in two clean columns and whatever sits between them — the
+   * play button, the rate readout — takes all the width that is left. Laid out as
+   * separate flex rows they each sized to their own content and came out ragged.
+   */
+  .control-grid {
+    display: grid;
+    grid-template-columns: 2.2rem minmax(0, 1fr) 2.2rem;
+    gap: 0.35rem;
+    align-items: stretch;
+  }
+
+  /* Anything that should run the full width of the grid. */
+  .control-grid__wide {
+    grid-column: 1 / -1;
+  }
+
+  /* The date field and its "today" button: field takes the slack. */
+  .control-grid__split {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.35rem;
+  }
+
+  .control-grid input[type='date'] {
+    min-width: 0;
+    width: 100%;
+  }
+
+  /*
+   * Overlay toggles as a two-column block rather than a wrapping row, which
+   * left a ragged edge whenever a label wrapped or the fourth toggle was absent.
+   * An odd one out spans both columns so the block always ends square.
+   */
+  .toggle-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem;
+  }
+
+  .toggle-grid > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .toggle-grid button {
+    width: 100%;
   }
 
   /* --- readouts ---------------------------------------------------------- */
@@ -341,12 +390,17 @@
   }
 
   .rate-readout {
+    display: grid;
+    place-items: center;
     font-family: var(--face-numeric);
     font-variant-numeric: tabular-nums;
     font-size: var(--size-label);
     color: var(--text);
-    min-width: 5.2rem;
     text-align: center;
+    /* Matches the buttons either side so the row reads as one control. */
+    border: var(--line-fine) solid var(--panel-edge);
+    border-radius: var(--control-radius);
+    background: color-mix(in srgb, var(--panel-surface) 35%, transparent);
   }
 
   /* --- events ------------------------------------------------------------ */

@@ -167,7 +167,10 @@ export function renderControls(container: HTMLElement, store: Store): void {
 
   const harnessPanel = panel(t('harness.label'));
 
-  const toggles = el('div', 'button-row');
+  // A two-column block rather than a wrapping row: with three or four toggles of
+  // uneven label length, a flex row left a ragged right edge. An odd one out
+  // spans both columns so the block always ends square.
+  const toggles = el('div', 'toggle-grid');
   toggles.append(
     toggleButton(t('view.orbits'), state.showOrbits, () => store.toggle('showOrbits')),
     toggleButton(t('view.sightlines'), state.showSightLines, () =>
@@ -212,6 +215,7 @@ export function renderControls(container: HTMLElement, store: Store): void {
     const clear = el('button', undefined, t('harness.clearTrails'));
     clear.type = 'button';
     clear.disabled = store.trails.size === 0;
+    clear.style.width = '100%';
     clear.addEventListener('click', () => store.clearTrails());
     harnessPanel.appendChild(clear);
   }
