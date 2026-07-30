@@ -26,11 +26,9 @@
   "time.play": "Spustit",
   "time.pause": "Zastavit",
   "time.today": "Dnes",
-  "time.rate": "Rychlost",
   "time.rate.unit": "dní/s",
   "time.stepBack": "O krok zpět",
   "time.stepForward": "O krok vpřed",
-  "time.jumpTo": "Přejít na datum",
   "harness.label": "Pomocné čáry",
   "harness.clearTrails": "Smazat stopy",
   "harness.sightlineBend": "Záměrná přímka se u tělesa láme, protože zhuštěné měřítko zkresluje úhly měřené odjinud než ze středu mapy. Ve skutečném měřítku se zlom téměř vytratí; v ptolemaiovském pohledu, kde je Země zároveň středem, je přímka úplně rovná.",
@@ -121,8 +119,6 @@
   "locale.label": "Jazyk",
   "locale.cs": "Čeština",
   "locale.en": "English",
-  "note.ghostAccuracy": "Slabě vykreslený model: {{model}}",
-  "note.outOfRange": "Aplikace je platná pro roky 1600 až 2400.",
   "info.forces": "Síly a rychlost",
   "info.speed": "Rychlost",
   "info.netForce": "Výsledná síla",
@@ -145,5 +141,6 @@
   "theme.lcars.short": "LCARS",
   "time.slower": "Zpomalit",
   "time.faster": "Zrychlit",
-  "view.zoomHint": "Kolečkem myši lze mapu přiblížit a oddálit, vždy k nehybnému bodu. Dvojklikem do mapy se vrátíte na základní zobrazení."
+  "view.zoomHint": "Kolečkem myši lze mapu přiblížit a oddálit, vždy k nehybnému bodu. Dvojklikem do mapy se vrátíte na základní zobrazení.",
+  "info.modelDistanceRatio": "Poměr vzdáleností"
 }

@@ -24,8 +24,23 @@ export interface Point {
   y: number;
 }
 
-/** Outer edge of the modelled system, AU. Saturn's aphelion with headroom. */
-const SYSTEM_RADIUS_AU = 10.1;
+/**
+ * Outer edge of the modelled system, AU.
+ *
+ * Must cover the *largest* model, not the true one, and all models must share it
+ * — the ghost overlay draws two at once, and a comparison between two different
+ * scales would be meaningless.
+ *
+ * The binding constraint is Ptolemy's nested spheres, which put Saturn's shell
+ * at 12.3–17.2 AU against the real 9.0–10.1. His cosmos genuinely is larger,
+ * measured in units of the Sun's distance, and that is worth seeing. Sized at
+ * 10.1 the outer Ptolemaic planets projected past 1.0 and drew straight through
+ * the zodiac ring.
+ *
+ * The cost is a heliocentric map about 85% of its former radius. That was a real
+ * loss before the wheel zoom existed; it is a small one now.
+ */
+const SYSTEM_RADIUS_AU = 17.5;
 
 /**
  * Softening constant for the compressed scale, AU.

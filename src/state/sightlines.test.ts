@@ -94,8 +94,12 @@ describe('a single straight line to the ring cannot reach the body', () => {
 
   it('misses badly when the observer is off-centre', () => {
     for (const id of ['mercury', 'venus', 'mars'] as BodyId[]) {
-      // Measured worst over the span: Mercury and Venus above 20°, Mars ~10°.
-      expect(worstMiss('compressed', 'sun', id), `${id}`).toBeGreaterThan(8);
+      // Thresholds are loose because the exact angles depend on
+      // SYSTEM_RADIUS_AU: enlarging it to cover Ptolemy's nested spheres pulled
+      // everything inward and shrank the parallax with it. The claim under test
+      // is that a single straight line misses by a wide margin, not any
+      // particular figure.
+      expect(worstMiss('compressed', 'sun', id), `${id}`).toBeGreaterThan(6);
     }
   });
 
@@ -167,7 +171,8 @@ describe('why the line is straight only for Ptolemy', () => {
     for (const id of ['mercury', 'venus', 'mars'] as BodyId[]) {
       const compressed = worstBend('compressed', id);
       const trueScale = worstBend('true', id);
-      expect(compressed, `${id} compressed`).toBeGreaterThan(15);
+      // Loose for the same reason as above — the figure tracks SYSTEM_RADIUS_AU.
+      expect(compressed, `${id} compressed`).toBeGreaterThan(12);
       expect(trueScale, `${id} true`).toBeLessThan(compressed);
     }
   });

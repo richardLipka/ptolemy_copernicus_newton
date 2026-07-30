@@ -26,11 +26,9 @@
   "time.play": "Play",
   "time.pause": "Pause",
   "time.today": "Today",
-  "time.rate": "Rate",
   "time.rate.unit": "days/s",
   "time.stepBack": "Step back",
   "time.stepForward": "Step forward",
-  "time.jumpTo": "Jump to date",
   "harness.label": "Overlays",
   "harness.clearTrails": "Clear trails",
   "harness.sightlineBend": "The sight-line bends at the body because the compressed scale distorts angles measured from anywhere but the centre of the map. At true scale the bend all but disappears; in Ptolemy's view, where Earth is also the centre, the line is perfectly straight.",
@@ -121,8 +119,6 @@
   "locale.label": "Language",
   "locale.cs": "Čeština",
   "locale.en": "English",
-  "note.ghostAccuracy": "Faint model: {{model}}",
-  "note.outOfRange": "The app is valid for the years 1600 to 2400.",
   "info.forces": "Forces and velocity",
   "info.speed": "Speed",
   "info.netForce": "Net force",
@@ -145,5 +141,6 @@
   "theme.lcars.short": "LCARS",
   "time.slower": "Slower",
   "time.faster": "Faster",
-  "view.zoomHint": "The mouse wheel zooms the map, always about the stationary point. Double-click the map to return to the fitted view."
+  "view.zoomHint": "The mouse wheel zooms the map, always about the stationary point. Double-click the map to return to the fitted view.",
+  "info.modelDistanceRatio": "Distance ratio"
 }

@@ -14,11 +14,17 @@
  * which is the one thing the angular machinery had never been able to speak to.
  */
 
-import { AU_IN_KM, BODIES, type BodyId } from '../../core/bodies';
-import { apparentLongitudeRate, solarElongation } from '../../core/coordinates';
+import { BODIES, type BodyId } from '../../core/bodies';
+import {
+  apparentLongitude,
+  apparentLongitudeRate,
+  relativePosition,
+  solarElongation,
+} from '../../core/coordinates';
 import type { EngineId } from '../../core/engines/types';
 import { illuminationOf, phaseName } from '../../core/illumination';
 import { t, bodyName, formatNumber } from '../../i18n/i18n';
+import { angleDiffDeg } from '../../core/vec';
 import { ENGINES, type Store } from '../../state/store';
 import { buildView } from '../../state/selectors';
 import { el, panel, readout } from '../../ui/dom';
@@ -207,12 +213,11 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
 
   // What each model makes of the phase.
   //
-  // The lit fraction depends on nothing but the Sun-body-observer angle, and
-  // both historical constructions were fitted to reproduce that triangle, so
-  // they agree more closely than their reputations suggest. Mercury is the
-  // exception and worth selecting: the models part company by around twenty
-  // percentage points there, because its eccentricity of 0.21 defeats both a
-  // circle and an epicycle.
+  // This is the one reading where the geocentric model fails outright rather
+  // than approximately. With its deferents scaled to the nested spheres, Venus
+  // is penned inside the Sun's shell and never passes half-lit, so at superior
+  // conjunction Ptolemy says crescent where the other two say full — a whole
+  // disc apart. Venus and Mercury are the bodies to select for it.
   if (selected !== 'sun' && !body.isObserver) {
     const table = el('div', 'comparison');
     table.appendChild(el('div', 'field__label', t('info.phaseByModel')));
@@ -234,25 +239,46 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
     card.appendChild(table);
   }
 
-  // With a ghost model selected, the gap between the two predictions is the
-  // number the whole app is built to surface.
-  if (state.ghostEngineId) {
+  /*
+   * With a ghost model selected, how far the two disagree.
+   *
+   * Reported as an *angle*, not as a distance. A linear separation conflates two
+   * quite different disagreements, and since the deferents were scaled to
+   * Ptolemy's nested spheres the distance term swamps everything: Mars showed
+   * 677 million km of "error" where the two models place it only 4.3° apart. The
+   * angle is the observable quantity, the one the accuracy tests measure, and
+   * the one the historical argument turned on.
+   *
+   * The distance disagreement is worth seeing too, but as a ratio and clearly
+   * labelled as such — it is precisely what no pre-telescopic observation could
+   * test, and therefore what let the two systems coexist for so long.
+   */
+  if (state.ghostEngineId && !body.isObserver) {
     const ghostPositions = ENGINES[state.ghostEngineId].positionsAt(state.julianDate);
-    const ghostBody = ghostPositions.get(selected);
-    const activeBody = view.positions.get(selected);
-    const ghostObserver = ghostPositions.get(state.observationPoint);
-    const activeObserver = view.positions.get(state.observationPoint);
 
-    if (ghostBody && activeBody && ghostObserver && activeObserver) {
-      const separationAu = Math.hypot(
-        ghostBody.x - ghostObserver.x - (activeBody.x - activeObserver.x),
-        ghostBody.y - ghostObserver.y - (activeBody.y - activeObserver.y),
-        ghostBody.z - ghostObserver.z - (activeBody.z - activeObserver.z),
-      );
+    const separation = Math.abs(
+      angleDiffDeg(
+        apparentLongitude(ghostPositions, state.observationPoint, selected),
+        apparentLongitude(view.positions, state.observationPoint, selected),
+      ),
+    );
+    card.appendChild(
+      readout(
+        t('info.modelError'),
+        `${formatNumber(separation, 2)}${t('info.unit.deg')}`,
+      ),
+    );
+
+    const ghostDistance = relativePosition(
+      ghostPositions,
+      state.observationPoint,
+      selected,
+    ).distance;
+    if (body.distanceFromObserver > 0 && ghostDistance > 0) {
       card.appendChild(
         readout(
-          t('info.modelError'),
-          `${formatNumber(separationAu * AU_IN_KM / 1e6, 2)} mil. km`,
+          t('info.modelDistanceRatio'),
+          `${formatNumber(ghostDistance / body.distanceFromObserver, 2)}×`,
         ),
       );
     }
