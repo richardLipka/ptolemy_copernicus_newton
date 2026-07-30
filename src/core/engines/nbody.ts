@@ -10,6 +10,7 @@
  */
 
 import { BODIES, BODY_IDS, type BodyId } from '../bodies';
+import { dynamicsOf, type Dynamics, type StateVectors } from '../dynamics';
 import { J2000, MAX_JD, MIN_JD } from '../time';
 import { ZERO, add, scale, sub, vec3, type Vec3 } from '../vec';
 import { keplerianStates } from './keplerian';
@@ -307,6 +308,38 @@ export class NBodySimulation {
   }
 
   /**
+   * Positions and velocities together.
+   *
+   * Velocities are the integrator's own state, and no other engine has them: the
+   * historical constructions give a position for a date and nothing more. That
+   * is precisely why only this engine can show forces — the machinery Newton
+   * places a body with is not a curve but a pair of vectors.
+   */
+  statesAt(jd: number): StateVectors {
+    this.advanceTo(jd);
+
+    const positions = new Map<BodyId, Vec3>();
+    const velocities = new Map<BodyId, Vec3>();
+    for (let i = 0; i < this.count; i++) {
+      const base = i * 3;
+      const id = BODY_IDS[i]!;
+      positions.set(
+        id,
+        vec3(this.positions[base]!, this.positions[base + 1]!, this.positions[base + 2]!),
+      );
+      velocities.set(
+        id,
+        vec3(
+          this.velocities[base]!,
+          this.velocities[base + 1]!,
+          this.velocities[base + 2]!,
+        ),
+      );
+    }
+    return { positions, velocities };
+  }
+
+  /**
    * Total energy in the barycentric frame. Constant to within integrator error,
    * which makes it the cheapest available check that a long run has not gone
    * numerically bad.
@@ -348,9 +381,14 @@ export const sharedSimulation = (): NBodySimulation => {
   return shared;
 };
 
+/** Velocity and every gravitational pull acting on one body. */
+export const nbodyDynamics = (jd: number, target: BodyId): Dynamics | null =>
+  dynamicsOf(sharedSimulation().statesAt(jd), target);
+
 export const nbodyEngine: Engine = {
   id: 'nbody',
   positionsAt: (jd: number): PositionSet => sharedSimulation().positionsAt(jd),
+  dynamics: nbodyDynamics,
 };
 
 /** Heliocentric view of an n-body result, for comparison against the other

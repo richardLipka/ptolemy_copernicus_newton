@@ -15,6 +15,7 @@ import { t } from '../../i18n/i18n';
 import type { Store } from '../../state/store';
 import {
   buildConstruction,
+  buildDynamicsView,
   buildView,
   projectTrail,
   ringIntercept,
@@ -300,6 +301,8 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
 
   const harnessSegments: HTMLDivElement[] = [];
   const harnessMarkers: HTMLDivElement[] = [];
+  const vectorShafts: HTMLDivElement[] = [];
+  const vectorHeads: HTMLDivElement[] = [];
 
   /**
    * Draw the selected body's machinery. Rebuilt every frame from pooled
@@ -364,6 +367,51 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     }
     for (let i = usedMarkers; i < harnessMarkers.length; i++) {
       harnessMarkers[i]!.style.display = 'none';
+    }
+
+    // Newton's machinery is vectors rather than circles, drawn in the same layer
+    // under the same switch: force is how this model places a body.
+    const vectors =
+      state.showConstruction && state.selectedBody
+        ? buildDynamicsView(state, state.selectedBody)
+        : null;
+
+    let usedVectors = 0;
+    if (vectors) {
+      for (const vector of vectors) {
+        let shaft = vectorShafts[usedVectors];
+        let head = vectorHeads[usedVectors];
+        if (!shaft || !head) {
+          shaft = div('vector__shaft');
+          head = div('vector__head');
+          vectorShafts.push(shaft);
+          vectorHeads.push(head);
+          harnessLayer.append(shaft, head);
+        }
+
+        for (const element of [shaft, head]) {
+          element.dataset.role = vector.role;
+          if (vector.source) element.dataset.source = vector.source;
+          else delete element.dataset.source;
+          element.style.display = '';
+        }
+
+        setSegment(shaft, vector.from, vector.to);
+        // The head sits at the tip, turned to face along the shaft.
+        setPoint(head, vector.to);
+        head.style.setProperty(
+          '--angle',
+          String(
+            Math.atan2(vector.to.y - vector.from.y, vector.to.x - vector.from.x) / DEG,
+          ),
+        );
+        usedVectors++;
+      }
+    }
+
+    for (let i = usedVectors; i < vectorShafts.length; i++) {
+      vectorShafts[i]!.style.display = 'none';
+      vectorHeads[i]!.style.display = 'none';
     }
   }
 

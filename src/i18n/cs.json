@@ -1,33 +1,27 @@
 {
   "app.title": "Orrery — tři modely sluneční soustavy",
   "app.subtitle": "Ptolemaios · Koperník · Newton",
-
   "mode.ptolemy": "Ptolemaios",
   "mode.copernicus": "Koperník",
   "mode.newton": "Newton",
   "mode.label": "Model",
-
   "engine.ptolemaic-reframe": "Přepočet do geocentrické soustavy",
   "engine.ptolemaic-epicyclic": "Deferenty a epicykly",
   "engine.circular": "Kruhové dráhy",
   "engine.nbody": "Gravitační simulace",
   "engine.keplerian": "Keplerovské dráhy",
   "engine.label": "Provedení",
-
   "engine.help.ptolemaic-reframe": "Přesné polohy vyjádřené se Zemí ve středu. To, co se Ptolemaios snažil napodobit.",
   "engine.help.ptolemaic-epicyclic": "Skutečná Ptolemaiova konstrukce s parametry z Almagestu, včetně jeho chyb.",
   "engine.help.circular": "Heliocentrický model s dokonale kruhovými drahami, jak jej publikoval Koperník.",
   "engine.help.nbody": "Numerická integrace Newtonova gravitačního zákona. Dráhy nejsou předepsány, ale vznikají.",
-
   "ghost.label": "Porovnat s",
   "ghost.none": "Bez porovnání",
   "ghost.hint": "Druhý model se vykreslí slabě vedle aktivního.",
-
   "frame.label": "Nehybný bod",
   "frame.hint": "Které těleso zůstává ve středu mapy.",
   "observer.label": "Místo pozorování",
   "observer.hint": "Odkud vychází záměrné přímky k nebeské sféře.",
-
   "time.label": "Čas",
   "time.play": "Spustit",
   "time.pause": "Zastavit",
@@ -37,13 +31,11 @@
   "time.stepBack": "O krok zpět",
   "time.stepForward": "O krok vpřed",
   "time.jumpTo": "Přejít na datum",
-
   "harness.label": "Pomocné čáry",
   "harness.clearTrails": "Smazat stopy",
   "harness.sightlineBend": "Záměrná přímka se u tělesa láme, protože zhuštěné měřítko zkresluje úhly měřené odjinud než ze středu mapy. Ve skutečném měřítku se zlom téměř vytratí; v ptolemaiovském pohledu, kde je Země zároveň středem, je přímka úplně rovná.",
   "harness.trailsEmpty": "Dráhy se kreslí ze skutečně proběhlých poloh, nikoli předem vypočtené. Spusťte čas a stopa začne vznikat.",
   "harness.trailsRecorded": "Zaznamenáno {{days}} dní, krok {{step}} dne. Delší historie se ukládá hruběji.",
-
   "view.orbits": "Dráhy",
   "view.sightlines": "Záměrné přímky",
   "view.trueScale": "Skutečné měřítko",
@@ -54,10 +46,9 @@
   "view.zodiac.label": "Zvěrokruh",
   "view.figures": "Obrazce souhvězdí",
   "view.construction": "Konstrukce",
-  "view.constructionHint": "Vyberte těleso a zobrazí se jeho konstrukce — deferent, epicykl a ekvant.",
+  "view.constructionHint": "Vyberte těleso a zobrazí se jeho konstrukce — u Ptolemaia a Koperníka kružnice, u Newtona vektory sil.",
   "view.constructionLegend": "Tenký kruh je deferent, silnější epicykl. Kroužek značí střed deferentu, kosočtverec ekvant — bod, kolem něhož se střed epicyklu pohybuje rovnoměrně. Přerušovaná čára je apsidální osa.",
   "view.constructionScaleWarning": "Ve zhuštěném měřítku se kružnice jeví zdeformované. Přepněte na skutečné měřítko a uvidíte je jako skutečné kruhy.",
-
   "body.sun": "Slunce",
   "body.mercury": "Merkur",
   "body.venus": "Venuše",
@@ -66,7 +57,6 @@
   "body.mars": "Mars",
   "body.jupiter": "Jupiter",
   "body.saturn": "Saturn",
-
   "info.title": "Vybrané těleso",
   "info.none": "Vyberte těleso na mapě.",
   "info.distanceFromSun": "Vzdálenost od Slunce",
@@ -87,7 +77,6 @@
   "info.retrograde": "Zpětný pohyb",
   "info.direct": "Přímý pohyb",
   "info.modelError": "Odchylka modelu",
-
   "phase.new": "nov",
   "phase.waxing-crescent": "dorůstající srpek",
   "phase.first-quarter": "první čtvrť",
@@ -96,7 +85,6 @@
   "phase.waning-gibbous": "couvající vypouklá",
   "phase.last-quarter": "poslední čtvrť",
   "phase.waning-crescent": "couvající srpek",
-
   "events.title": "Úkazy",
   "events.none": "V tomto období nejsou žádné úkazy.",
   "events.conjunction": "Konjunkce",
@@ -115,7 +103,6 @@
   "events.search": "Hledat",
   "events.searchNext": "Najít nejbližší",
   "events.window": "Období",
-
   "zodiac.aries": "Beran",
   "zodiac.taurus": "Býk",
   "zodiac.gemini": "Blíženci",
@@ -131,11 +118,15 @@
   "zodiac.capricornus": "Kozoroh",
   "zodiac.aquarius": "Vodnář",
   "zodiac.pisces": "Ryby",
-
   "locale.label": "Jazyk",
   "locale.cs": "Čeština",
   "locale.en": "English",
-
   "note.ghostAccuracy": "Slabě vykreslený model: {{model}}",
-  "note.outOfRange": "Aplikace je platná pro roky 1600 až 2400."
+  "note.outOfRange": "Aplikace je platná pro roky 1600 až 2400.",
+  "info.forces": "Síly a rychlost",
+  "info.speed": "Rychlost",
+  "info.netForce": "Výsledná síla",
+  "info.forceScaleNote": "Délky vektorů jsou seřazené, ale nikoli proporcionální — Slunce tvoří přes 98 % tahu, takže při přesném poměru by ostatní vektory nebyly vidět. Přesné hodnoty jsou v tabulce.",
+  "view.forces": "Síly",
+  "view.forcesLegend": "Modrý vektor je rychlost, černý výsledná síla. Tenké vektory jsou gravitační tah jednotlivých těles, obarvené podle toho, které táhne. Délky jsou seřazené, ne proporcionální — přesné hodnoty najdete u vybraného tělesa."
 }

@@ -729,3 +729,106 @@ button[aria-pressed='true'] {
 .comparison__row {
   position: relative;
 }
+
+/* --- force and velocity vectors (Newton's harness) ---------------------- */
+
+/*
+ * Newton places a body by force, so his machinery is a set of vectors where
+ * Ptolemy's is a set of circles. Both are drawn in the harness layer under the
+ * same switch.
+ *
+ * Shaft lengths are ordered but NOT proportional: the Sun accounts for over 98%
+ * of the pull on Earth, and proportional lengths would leave every other vector
+ * a sub-pixel nub. A fourth root keeps Jupiter's tug visible. Exact magnitudes
+ * are in the info panel — see selectors.ts.
+ */
+.vector__shaft {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: var(--line-medium);
+  width: calc(var(--len) * var(--unit));
+  transform-origin: 0 50%;
+  transform: translate(calc(var(--x) * var(--unit)), calc(var(--y) * var(--unit)))
+    rotate(calc(var(--angle) * 1deg));
+  background: var(--vector-tint);
+  opacity: 0.9;
+}
+
+/* Arrowhead: a CSS triangle turned to face along its shaft. */
+.vector__head {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-left: 8px solid var(--vector-tint);
+  border-top: 4.5px solid transparent;
+  border-bottom: 4.5px solid transparent;
+  transform-origin: 0 50%;
+  transform: translate(calc(var(--x) * var(--unit)), calc(var(--y) * var(--unit)))
+    rotate(calc(var(--angle) * 1deg)) translateX(-8px) translateY(-4.5px);
+  opacity: 0.9;
+}
+
+/* Each pull takes the colour of the body exerting it, so it is self-labelling. */
+.vector__shaft[data-role='gravity'],
+.vector__head[data-role='gravity'] {
+  --vector-tint: var(--brass-dark);
+  height: var(--line-fine);
+  opacity: 0.75;
+}
+
+.vector__shaft[data-role='gravity'][data-source='sun'],
+.vector__head[data-role='gravity'][data-source='sun'] {
+  --vector-tint: var(--body-sun);
+}
+.vector__shaft[data-role='gravity'][data-source='moon'],
+.vector__head[data-role='gravity'][data-source='moon'] {
+  --vector-tint: var(--body-moon);
+}
+.vector__shaft[data-role='gravity'][data-source='mercury'],
+.vector__head[data-role='gravity'][data-source='mercury'] {
+  --vector-tint: var(--body-mercury);
+}
+.vector__shaft[data-role='gravity'][data-source='venus'],
+.vector__head[data-role='gravity'][data-source='venus'] {
+  --vector-tint: var(--body-venus);
+}
+.vector__shaft[data-role='gravity'][data-source='earth'],
+.vector__head[data-role='gravity'][data-source='earth'] {
+  --vector-tint: var(--body-earth);
+}
+.vector__shaft[data-role='gravity'][data-source='mars'],
+.vector__head[data-role='gravity'][data-source='mars'] {
+  --vector-tint: var(--body-mars);
+}
+.vector__shaft[data-role='gravity'][data-source='jupiter'],
+.vector__head[data-role='gravity'][data-source='jupiter'] {
+  --vector-tint: var(--body-jupiter);
+}
+.vector__shaft[data-role='gravity'][data-source='saturn'],
+.vector__head[data-role='gravity'][data-source='saturn'] {
+  --vector-tint: var(--body-saturn);
+}
+
+/* The resultant: the only force that actually moves anything. Heaviest. */
+.vector__shaft[data-role='net-force'],
+.vector__head[data-role='net-force'] {
+  --vector-tint: var(--ink);
+  opacity: 0.95;
+}
+
+.vector__shaft[data-role='net-force'] {
+  height: var(--line-heavy);
+}
+
+/* Velocity: the other half of the state, and the only one not a force. */
+.vector__shaft[data-role='velocity'],
+.vector__head[data-role='velocity'] {
+  --vector-tint: #3f6f8f;
+}
+
+.vector__shaft[data-role='velocity'] {
+  height: var(--line-heavy);
+}

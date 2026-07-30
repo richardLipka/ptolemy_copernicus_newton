@@ -204,13 +204,17 @@ export function renderControls(
     ),
   );
 
-  // Only Ptolemy's epicycles and Copernicus's circles are built by
-  // construction. Newton integrates and the Earth-centred reframe borrows
-  // accurate positions, so neither has machinery to show.
-  if (store.engine.construction) {
+  // Every model that builds a position from something shows its machinery here:
+  // circles for Ptolemy and Copernicus, force and velocity vectors for Newton.
+  // Only the Earth-centred reframe has none, since it borrows finished positions
+  // rather than deriving them.
+  const hasMachinery = Boolean(store.engine.construction ?? store.engine.dynamics);
+  if (hasMachinery) {
     toggles.appendChild(
-      toggleButton(t('view.construction'), state.showConstruction, () =>
-        store.toggle('showConstruction'),
+      toggleButton(
+        store.engine.dynamics ? t('view.forces') : t('view.construction'),
+        state.showConstruction,
+        () => store.toggle('showConstruction'),
       ),
     );
   }
@@ -249,19 +253,23 @@ export function renderControls(
     harnessPanel.appendChild(el('p', 'note', t('harness.sightlineBend')));
   }
 
-  if (store.engine.construction && state.showConstruction) {
+  if (hasMachinery && state.showConstruction) {
     harnessPanel.appendChild(
       el(
         'p',
         'note',
-        state.selectedBody ? t('view.constructionLegend') : t('view.constructionHint'),
+        !state.selectedBody
+          ? t('view.constructionHint')
+          : store.engine.dynamics
+            ? t('view.forcesLegend')
+            : t('view.constructionLegend'),
       ),
     );
 
     // Under the compressed scale a circle not centred on the frame origin does
     // not project to a circle, which rather undercuts "circles upon circles".
     // Say so, and point at the toggle that fixes it.
-    if (state.selectedBody && state.scaleMode === 'compressed') {
+    if (store.engine.construction && state.selectedBody && state.scaleMode === 'compressed') {
       harnessPanel.appendChild(el('p', 'note', t('view.constructionScaleWarning')));
     }
   }

@@ -25,6 +25,37 @@ import { ENGINES, type Store } from '../../state/store';
 import { buildView } from '../../state/selectors';
 import { el, panel, readout } from '../../ui/dom';
 
+/**
+ * Force magnitudes as a mantissa and a power of ten.
+ *
+ * They span twelve orders of magnitude between the Sun's grip and Saturn's, so
+ * fixed-point notation is unreadable and locale grouping is beside the point.
+ */
+function formatExponent(value: number): string {
+  if (value === 0) return '0';
+  const exponent = Math.floor(Math.log10(Math.abs(value)));
+  const mantissa = value / 10 ** exponent;
+  return `${formatNumber(mantissa, 2)}·10${superscript(exponent)}`;
+}
+
+const SUPERSCRIPTS = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+
+const superscript = (exponent: number): string =>
+  (exponent < 0 ? '⁻' : '') +
+  Math.abs(exponent)
+    .toString()
+    .split('')
+    .map((digit) => SUPERSCRIPTS[Number(digit)])
+    .join('');
+
+/** A pull's share of the total, with room for the very small ones. */
+function formatShare(share: number): string {
+  const percent = share * 100;
+  if (percent >= 1) return `${formatNumber(percent, 1)} %`;
+  if (percent >= 0.001) return `${formatNumber(percent, 3)} %`;
+  return '< 0,001 %';
+}
+
 /** One engine per model, for the side-by-side phase figures. */
 const PHASE_COMPARISON_ENGINES: readonly EngineId[] = [
   'nbody',
@@ -144,6 +175,37 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
       `${formatNumber(BODIES[selected].radius, 0)} ${t('info.unit.km')}`,
     ),
   );
+
+  // Exact force magnitudes, because the drawn vector lengths are deliberately
+  // not proportional — a fourth root, or nothing but the Sun would be visible.
+  const dynamics = store.engine.dynamics?.(state.julianDate, selected);
+  if (dynamics) {
+    const table = el('div', 'comparison');
+    table.appendChild(el('div', 'field__label', t('info.forces')));
+
+    table.appendChild(
+      readout(t('info.speed'), `${formatNumber(dynamics.speedKmPerSecond, 2)} km/s`),
+    );
+    table.appendChild(
+      readout(t('info.netForce'), `${formatExponent(dynamics.netNewtons)} N`),
+    );
+
+    for (const pull of dynamics.pulls) {
+      const row = el('div', 'comparison__row');
+      row.appendChild(el('span', undefined, bodyName(pull.source)));
+      row.appendChild(
+        el(
+          'span',
+          'readout__value',
+          `${formatExponent(pull.newtons)} N · ${formatShare(pull.share)}`,
+        ),
+      );
+      table.appendChild(row);
+    }
+
+    table.appendChild(el('p', 'note', t('info.forceScaleNote')));
+    card.appendChild(table);
+  }
 
   // What each model makes of the phase.
   //

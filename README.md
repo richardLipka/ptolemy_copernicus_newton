@@ -64,6 +64,14 @@ quietly regress.
   **equant** — the off-centre point about which the epicycle's centre sweeps
   equal angles in equal time. It is the cleverest device in the *Almagest* and
   it is invisible in the finished orbit.
+- **See Newton's machinery too.** He places a body by force rather than by
+  geometry, so the same switch draws vectors instead of circles: velocity, the
+  net force, and every other body's gravitational pull, coloured by which body
+  pulls, with exact magnitudes in newtons listed alongside. Select **Earth** and
+  the Sun is 99.5% of the pull — which is why treating an orbit as a two-body
+  ellipse works at all. Then select the **Moon**: the Sun pulls it more than
+  twice as hard as Earth does (69.5% against 30.5%), and it orbits Earth anyway,
+  because the two are falling toward the Sun together.
 - **Compare two models at once.** The ghost overlay draws a second model faintly
   beside the active one, so Copernicus's 13° error on Mars is a visible gap
   rather than a number.

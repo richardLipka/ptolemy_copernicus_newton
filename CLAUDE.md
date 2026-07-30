@@ -490,6 +490,48 @@ simplification even though he predicted no better. The n-body integrator has no
 construction, and the Earth-centred reframe borrows accurate positions rather
 than deriving them, so both leave the method undefined and the toggle hides.
 
+#### Newton's machinery is vectors, not circles
+
+Newton places a body by *force*, so his counterpart to the deferent and epicycle
+is not a curve but a pair of vectors. The n-body engine therefore exposes
+`dynamics()` alongside the others' `construction()`, and both render in the same
+harness layer under the same switch — labelled **Konstrukce / Construction** for
+the geometric models and **Síly / Forces** for Newton.
+
+For the selected body it draws the **velocity**, the **net force**, and **one
+gravitational pull per other body**, each in the colour of the body exerting it.
+Only the n-body engine can do this, because only an integrator carries
+velocities: a historical construction yields a position for a date and nothing
+more.
+
+**Lengths are ordered but not proportional.** The Sun is 99.5% of the pull on
+Earth, so true proportions would render every other vector a sub-pixel nub and
+the display would say only "the Sun wins" — which the numbers say better. A
+fourth root turns a 20,000:1 spread into about 12:1, with a floor so the weakest
+stay findable. Exact magnitudes in newtons, plus each pull's share, are listed in
+the info panel, and the UI states that the drawing is compressed.
+
+Three things worth pointing students at, all visible in the panel:
+
+- **Earth**: Sun 3.44·10²² N (99.5%), Moon 1.84·10²⁰ N (0.53%), everything else
+  under 0.002%. This is why treating an orbit as a two-body ellipse works.
+- **The Moon**: Sun 4.21·10²⁰ N (69.5%) against Earth's 1.84·10²⁰ N (30.5%) —
+  the Sun pulls the Moon more than twice as hard as Earth does, yet the Moon
+  still orbits Earth, because the two are falling toward the Sun together.
+- **Newton's third law**, readable across two selections: Earth←Moon and
+  Moon←Earth are both 1.84·10²⁰ N.
+
+Velocity is drawn to a separate scale, normalised so Earth's mean orbital speed
+is a fixed length; the arrow then reads directly as "faster or slower than
+Earth", and its length falling off with distance from the Sun is Kepler's third
+law emerging from an integration that was never told it.
+
+Vector directions are found by *local linearisation* — projecting a short step
+along the vector and differencing — not by projecting the direction itself, which
+would be wrong wherever the radial scale is compressed.
+
+#### Drawing the geometric circles
+
 Two consequences worth knowing:
 
 - **Circles are sampled into polylines, not drawn as CSS circles.** Under the

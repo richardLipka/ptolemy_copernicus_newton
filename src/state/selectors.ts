@@ -307,6 +307,142 @@ export function buildConstruction(
   };
 }
 
+// --- Newton's machinery: force and velocity vectors ---------------------
+
+export type VectorRole = 'velocity' | 'net-force' | 'gravity';
+
+export interface ProjectedVector {
+  from: Point;
+  to: Point;
+  role: VectorRole;
+  /** Which body pulls, for gravity vectors. */
+  source?: BodyId;
+  /** Physical size: newtons for forces, km/s for velocity. */
+  magnitude: number;
+}
+
+/** Screen length given to the strongest pull, in map-radius units. */
+const MAX_FORCE_LENGTH = 0.3;
+/** Shortest a pull may be drawn, so the weak ones remain findable. */
+const MIN_FORCE_LENGTH = 0.022;
+
+/**
+ * Exponent compressing the range of drawn force lengths.
+ *
+ * The Sun accounts for over 98% of the pull on Earth, so proportional lengths
+ * would render every other vector as a sub-pixel nub — the display would say
+ * only "the Sun wins", which the numbers in the panel say better. A fourth-root
+ * turns a 20,000:1 spread into about 12:1, keeping Jupiter's tug visible.
+ *
+ * Lengths are therefore *ordered* but not proportional, and the UI says so. The
+ * exact figures live in the info panel.
+ */
+const FORCE_COMPRESSION = 0.25;
+
+/** Earth's mean orbital speed, km/s — the yardstick for velocity arrows. */
+const REFERENCE_SPEED_KM_S = 29.78;
+const REFERENCE_SPEED_LENGTH = 0.25;
+
+/**
+ * Direction of an engine-space vector, as drawn.
+ *
+ * The projection is radial about the frame origin and therefore not
+ * angle-preserving, so a vector's screen direction is found by projecting a
+ * short step along it and differencing — a local linearisation rather than
+ * projecting the direction itself, which would be wrong wherever the scale is
+ * compressed.
+ */
+function screenDirection(
+  project: (point: Vec3) => Point,
+  origin: Vec3,
+  direction: Vec3,
+  step = 0.01,
+): Point {
+  const base = project(origin);
+  const ahead = project({
+    x: origin.x + direction.x * step,
+    y: origin.y + direction.y * step,
+    z: origin.z + direction.z * step,
+  });
+  const dx = ahead.x - base.x;
+  const dy = ahead.y - base.y;
+  const size = Math.hypot(dx, dy);
+  if (size === 0) return { x: 1, y: 0 };
+  return { x: dx / size, y: dy / size };
+}
+
+/**
+ * Velocity and gravitational pulls on a body, ready to draw.
+ *
+ * This is Newton's answer to the deferent and the epicycle: he places a body by
+ * force, so the machinery to show is a set of vectors rather than a set of
+ * circles.
+ */
+export function buildDynamicsView(
+  state: State,
+  bodyId: BodyId,
+): ProjectedVector[] | null {
+  const engine = ENGINES[state.engineId];
+  if (!engine.dynamics) return null;
+
+  const dynamics = engine.dynamics(state.julianDate, bodyId);
+  if (!dynamics) return null;
+
+  const positions = engine.positionsAt(state.julianDate);
+  const anchor = positions.get(bodyId);
+  if (!anchor) return null;
+
+  const project = constructionProjector(state, bodyId, positions);
+  const from = project(anchor);
+  const vectors: ProjectedVector[] = [];
+
+  const push = (
+    direction: Vec3,
+    lengthUnits: number,
+    role: VectorRole,
+    magnitude: number,
+    source?: BodyId,
+  ): void => {
+    const screen = screenDirection(project, anchor, direction);
+    vectors.push({
+      from,
+      to: { x: from.x + screen.x * lengthUnits, y: from.y + screen.y * lengthUnits },
+      role,
+      source,
+      magnitude,
+    });
+  };
+
+  const strongest = dynamics.pulls[0]?.newtons ?? 0;
+
+  for (const pull of dynamics.pulls) {
+    const ratio = strongest === 0 ? 0 : pull.newtons / strongest;
+    const lengthUnits = Math.max(
+      MIN_FORCE_LENGTH,
+      MAX_FORCE_LENGTH * ratio ** FORCE_COMPRESSION,
+    );
+    push(pull.direction, lengthUnits, 'gravity', pull.newtons, pull.source);
+  }
+
+  // The resultant, drawn last so it sits over the contributions it sums.
+  if (dynamics.netNewtons > 0) {
+    push(dynamics.netDirection, MAX_FORCE_LENGTH, 'net-force', dynamics.netNewtons);
+  }
+
+  if (dynamics.speedKmPerSecond > 0) {
+    const speedLength =
+      (dynamics.speedKmPerSecond / REFERENCE_SPEED_KM_S) * REFERENCE_SPEED_LENGTH;
+    push(
+      dynamics.velocity,
+      speedLength,
+      'velocity',
+      dynamics.speedKmPerSecond,
+    );
+  }
+
+  return vectors;
+}
+
 /** Where a body's sight-line meets the zodiac ring, in map-radius units. */
 export function ringIntercept(longitudeDeg: number, ringRadius: number): Point {
   return {

@@ -1,5 +1,6 @@
 import type { BodyId } from '../bodies';
 import type { ConstructionSource } from '../construction';
+import type { DynamicsSource } from '../dynamics';
 import type { Vec3 } from '../vec';
 
 /**
@@ -33,6 +34,16 @@ export interface Engine {
    * positions rather than deriving them, so both leave this undefined.
    */
   construction?: ConstructionSource;
+  /**
+   * Velocity and gravitational forces acting on a body.
+   *
+   * Newton's counterpart to the other models' construction: he places a body by
+   * force rather than by geometry, so the machinery to display is a set of
+   * vectors instead of circles. Only the n-body engine has it, because only an
+   * integrator carries velocities — a historical construction yields a position
+   * for a date and nothing more.
+   */
+  dynamics?: DynamicsSource;
 }
 
 export type EngineId =
