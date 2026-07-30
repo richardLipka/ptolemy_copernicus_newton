@@ -1,0 +1,66 @@
+/*
+ * Atelier — the parchment palette, drawn as a modern instrument.
+ *
+ * Same pigments as Orrery, different century. Where that theme imitates a
+ * printed plate — hard edges, warm paper, no depth — this one treats the same
+ * colours as a contemporary interface: near-white ground so the hues carry more
+ * contrast, sans-serif for anything numeric or interactive, soft elevation
+ * instead of ruled borders, and generous radii.
+ *
+ * The point of keeping it in the family is that the body colours are unchanged,
+ * so a reading taken in one theme is directly comparable with the other.
+ */
+
+@layer theme {
+  :root[data-theme='atelier'] {
+    --surface: #f7f3ea;
+    --surface-glow: rgba(255, 255, 255, 0.9);
+    --surface-shade: rgba(150, 126, 88, 0.1);
+
+    --text-strong: #23201b;
+    --text: #4f4840;
+    /* Darker than the parchment theme's equivalent: the hint notes are set in
+       this, and the original value only reached 3.4:1 against a near-white
+       ground. Orrery keeps its own value, since preserving that look was the
+       point of having both. */
+    --text-muted: #6b645c;
+
+    --accent: #a07a42;
+    --accent-bright: #c79a54;
+    --accent-dark: #6f5632;
+    --accent-shadow: #4a3a22;
+
+    --panel-surface: rgba(255, 253, 249, 0.86);
+    --panel-inner: rgba(160, 122, 66, 0.05);
+    /* Elevation rather than a ruled border: the edge is barely there. */
+    --panel-edge: rgba(35, 32, 27, 0.1);
+    --panel-radius: 12px;
+    --panel-blur: 16px;
+    --panel-shadow: 0 2px 4px rgba(35, 32, 27, 0.04),
+      0 12px 32px rgba(35, 32, 27, 0.08);
+    --control-radius: 7px;
+    --hover-tint: rgba(160, 122, 66, 0.1);
+
+    --shadow-fill: rgba(30, 26, 20, 0.78);
+    --shadow-solid: #1e1a14;
+
+    --velocity-tint: #2f6f92;
+
+    /* A serif display face still suits the subject; everything functional is
+       set in a UI sans, which is the actual modernising move. */
+    --face-display: 'Iowan Old Style', Palatino, Georgia, serif;
+    --face-text: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --face-numeric: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
+
+    --body-sun: #d9a441;
+    --body-mercury: #9a8c78;
+    --body-venus: #d8c48a;
+    --body-earth: #6f8f7d;
+    --body-moon: #b8b0a0;
+    --body-mars: #a35f43;
+    --body-jupiter: #b08a5f;
+    --body-saturn: #a89468;
+
+    --sightline-opacity: 0.5;
+  }
+}

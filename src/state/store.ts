@@ -22,6 +22,7 @@ import { MODES, type Engine, type EngineId, type ModeId } from '../core/engines/
 import { SimulationClock, clampJd, jdFromDate } from '../core/time';
 import type { ZodiacScheme } from '../core/zodiac';
 import { getLocale, setLocale, type Locale } from '../i18n/i18n';
+import { applyTheme, readStoredTheme, type ThemeId } from '../render/theme/themes';
 import { TrailLog } from './trails';
 
 export const ENGINES: Record<EngineId, Engine> = {
@@ -48,6 +49,23 @@ export type SphereCentre = 'frame' | 'observer';
 /** Which model the app opens on. */
 const INITIAL_MODE: ModeId = 'newton';
 
+/**
+ * Simulated days per real second, slowest to fastest.
+ *
+ * Roughly geometric: each rung is a useful step rather than an arithmetic one.
+ * A quarter-day resolves the Moon; four hundred puts Saturn round in a minute.
+ */
+export const RATE_LADDER: readonly number[] = [0.25, 1, 5, 20, 100, 400];
+
+/** Closest rung to an arbitrary rate, for stepping from an off-ladder value. */
+function nearestRung(rate: number): number {
+  let best = 0;
+  for (let i = 1; i < RATE_LADDER.length; i++) {
+    if (Math.abs(RATE_LADDER[i]! - rate) < Math.abs(RATE_LADDER[best]! - rate)) best = i;
+  }
+  return best;
+}
+
 export interface State {
   mode: ModeId;
   engineId: EngineId;
@@ -65,6 +83,7 @@ export interface State {
   /** Draw the selected body's deferent, epicycle and equant. */
   showConstruction: boolean;
   locale: Locale;
+  theme: ThemeId;
   /** Mirrors the clock so subscribers see time changes like any other change. */
   julianDate: number;
   playing: boolean;
@@ -103,6 +122,7 @@ export class Store {
       showStarFigures: true,
       showConstruction: true,
       locale: getLocale(),
+      theme: readStoredTheme(),
       julianDate: this.clock.julianDate,
       playing: false,
       rateDaysPerSecond: 1,
@@ -208,6 +228,11 @@ export class Store {
     this.patch({ locale });
   }
 
+  setTheme(theme: ThemeId): void {
+    applyTheme(theme);
+    this.patch({ theme });
+  }
+
   // --- time -------------------------------------------------------------
 
   /**
@@ -231,6 +256,29 @@ export class Store {
   setRate(rateDaysPerSecond: number): void {
     this.clock.setRate(rateDaysPerSecond);
     this.patch({ rateDaysPerSecond });
+  }
+
+  /**
+   * Step along the rate ladder.
+   *
+   * Rates span a factor of 1600, so a linear control would be useless: the
+   * ladder is roughly geometric and the buttons move one rung. Clamped at both
+   * ends rather than wrapping, so holding the button down cannot silently take
+   * you from a crawl to four centuries a minute.
+   */
+  stepRate(direction: -1 | 1): void {
+    const current = RATE_LADDER.indexOf(this.state.rateDaysPerSecond);
+    const from = current === -1 ? nearestRung(this.state.rateDaysPerSecond) : current;
+    const next = Math.min(RATE_LADDER.length - 1, Math.max(0, from + direction));
+    this.setRate(RATE_LADDER[next]!);
+  }
+
+  get canSpeedUp(): boolean {
+    return this.state.rateDaysPerSecond < RATE_LADDER[RATE_LADDER.length - 1]!;
+  }
+
+  get canSlowDown(): boolean {
+    return this.state.rateDaysPerSecond > RATE_LADDER[0]!;
   }
 
   play(): void {

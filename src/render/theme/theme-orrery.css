@@ -1,0 +1,51 @@
+/*
+ * Orrery — brass instrument on parchment, c. 1750.
+ *
+ * The original look, unchanged: engraved hairlines, warm paper, hard-edged
+ * panels with no blur or shadow, because a printed plate has neither.
+ */
+
+@layer theme {
+  :root[data-theme='orrery'] {
+    --surface: #e8dcc0;
+    --surface-glow: rgba(255, 250, 235, 0.55);
+    --surface-shade: rgba(160, 130, 85, 0.18);
+
+    --text-strong: #2e2317;
+    --text: #5a4a35;
+    --text-muted: #8a7859;
+
+    --accent: #b08d57;
+    --accent-bright: #d4b16a;
+    --accent-dark: #7d6236;
+    --accent-shadow: #5c4728;
+
+    --panel-surface: rgba(232, 220, 192, 0.94);
+    --panel-inner: rgba(255, 250, 236, 0.35);
+    --panel-edge: var(--accent-dark);
+    --panel-radius: 2px;
+    --panel-blur: 0px;
+    --panel-shadow: 0 1px 0 rgba(92, 71, 40, 0.25);
+    --control-radius: 1px;
+    --hover-tint: rgba(212, 177, 106, 0.22);
+
+    --shadow-fill: rgba(24, 18, 10, 0.82);
+    --shadow-solid: #241a10;
+
+    --velocity-tint: #3f6f8f;
+
+    --face-display: 'Iowan Old Style', 'Palatino Linotype', Palatino,
+      'Book Antiqua', Georgia, serif;
+    --face-text: Georgia, 'Times New Roman', serif;
+    --face-numeric: 'Palatino Linotype', Palatino, Georgia, serif;
+
+    --body-sun: #d9a441;
+    --body-mercury: #9a8c78;
+    --body-venus: #d8c48a;
+    --body-earth: #6f8f7d;
+    --body-moon: #b8b0a0;
+    --body-mars: #a35f43;
+    --body-jupiter: #b08a5f;
+    --body-saturn: #a89468;
+  }
+}

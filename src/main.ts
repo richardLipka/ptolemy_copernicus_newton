@@ -1,20 +1,28 @@
 /**
  * Wiring.
  *
- * Two update paths, deliberately separated by cost. The instrument updates in
- * place every animation frame; the panels and the traced orbit paths rebuild
- * only when something they depend on actually changes. Orbit tracing evaluates
- * the engine a few hundred times and event scanning a few hundred more, so
- * neither belongs on the animation path.
+ * The map is full-bleed and the controls float over it in docks. Two update
+ * paths, deliberately separated by cost: the instrument updates in place every
+ * animation frame, while the panels rebuild only when something they show
+ * actually changes. Event scanning evaluates the engine a few hundred times, so
+ * it does not belong on the animation path.
  */
 
-import './render/theme/theme.css';
+import './render/theme/tokens.css';
+import './render/theme/theme-orrery.css';
+import './render/theme/theme-atelier.css';
+import './render/theme/theme-nocturne.css';
+import './render/theme/theme-lcars.css';
+import './render/theme/shell.css';
 import './render/theme/layout.css';
 
 import { createOrrery } from './render/orrery/orrery';
 import { renderEventPanel } from './render/event-panel/eventPanel';
 import { renderInfoPanel } from './render/info-panel/infoPanel';
+import { applyTheme } from './render/theme/themes';
 import { renderControls } from './ui/controls';
+import { renderTimeDock } from './ui/timeDock';
+import { renderTopBar } from './ui/topBar';
 import { dateFromJd } from './core/time';
 import { formatDateTime, setLocale, t } from './i18n/i18n';
 import { store } from './state/store';
@@ -23,30 +31,62 @@ const root = document.querySelector<HTMLDivElement>('#app');
 if (!root) throw new Error('Missing #app');
 
 setLocale(store.get().locale);
+applyTheme(store.get().theme);
 document.title = t('app.title');
+
+// --- structure -----------------------------------------------------------
 
 const stage = document.createElement('div');
 stage.className = 'stage';
 
-const sidebar = document.createElement('aside');
-sidebar.className = 'sidebar';
+/**
+ * The region the instrument is measured against.
+ *
+ * Inset by the dock widths, so the map centres in the gap the user can actually
+ * see and the zodiac ring's labels stay clear of the floating panels — even
+ * though the drawing itself may pass beneath them.
+ */
+const field = document.createElement('div');
+field.className = 'stage__field';
+
+const dockLeft = document.createElement('div');
+dockLeft.className = 'dock dock--left';
+
+const dockTopRight = document.createElement('div');
+dockTopRight.className = 'dock dock--top-right';
+
+const dockRight = document.createElement('div');
+dockRight.className = 'dock dock--right';
+
+const dockBottomRight = document.createElement('div');
+dockBottomRight.className = 'dock dock--bottom-right';
+
+/** Wrapper the narrow-viewport rules turn into a stacked column. */
+const dockStack = document.createElement('div');
+dockStack.className = 'dock-stack';
+dockStack.append(dockTopRight, dockRight, dockBottomRight, dockLeft);
+
+root.append(field, dockStack);
 
 const masthead = document.createElement('header');
-masthead.className = 'masthead';
-const clock = document.createElement('div');
-clock.className = 'clock';
+masthead.className = 'masthead panel';
+dockLeft.appendChild(masthead);
 
 const controlsHost = document.createElement('div');
+controlsHost.style.display = 'contents';
+dockLeft.appendChild(controlsHost);
+
 const infoHost = document.createElement('div');
+infoHost.style.display = 'contents';
 const eventsHost = document.createElement('div');
+eventsHost.style.display = 'contents';
+dockRight.append(infoHost, eventsHost);
 
-/** Kept so the running clock can update the field without rebuilding it. */
+const orrery = createOrrery(field, store);
+
+/** Handed back by the time dock so the clock can update without a rebuild. */
 let dateInput: HTMLInputElement | null = null;
-
-sidebar.append(masthead, clock, controlsHost, infoHost, eventsHost);
-root.append(stage, sidebar);
-
-const orrery = createOrrery(stage, store);
+let clockReadout: HTMLElement | null = null;
 
 function renderMasthead(): void {
   masthead.replaceChildren();
@@ -58,6 +98,8 @@ function renderMasthead(): void {
   subtitle.textContent = t('app.subtitle');
   masthead.append(title, subtitle);
 }
+
+// --- update budgets ------------------------------------------------------
 
 /**
  * Rebuild budgets, in wall-clock milliseconds.
@@ -74,13 +116,12 @@ const EVENT_BUDGET_MS = 600;
 const EVENT_RESCAN_DAYS = 25;
 
 /**
- * What the controls depend on — deliberately *not* the date.
+ * What the interactive panels depend on — deliberately *not* the date.
  *
- * The controls contain the only interactive elements in the app, and replacing
- * a button mid-gesture swallows the click that was meant for it. While the
- * clock ran, this signature changed every simulated day and tore down the
- * transport controls underneath the pointer, which is why the stop button
- * appeared not to work. Nothing here may vary with time.
+ * These hold the only interactive elements in the app, and replacing a button
+ * mid-gesture swallows the click meant for it. Nothing here may vary with time,
+ * or the transport controls would be torn down under the pointer while the clock
+ * ran, which is exactly how the stop button once came to appear broken.
  */
 function controlsSignature(): string {
   const state = store.get();
@@ -99,6 +140,7 @@ function controlsSignature(): string {
     state.showConstruction,
     state.selectedBody,
     state.locale,
+    state.theme,
     state.playing,
     state.rateDaysPerSecond,
   ].join('|');
@@ -115,6 +157,7 @@ function contextSignature(): string {
     state.zodiacScheme,
     state.scaleMode,
     state.locale,
+    state.theme,
   ].join('|');
 }
 
@@ -134,11 +177,14 @@ function render(): void {
   const contextChanged = context !== lastContext;
   lastContext = context;
 
-  clock.textContent = formatDateTime(dateFromJd(state.julianDate));
   orrery.update();
 
-  // The date input is updated in place rather than rebuilt, so that typing
-  // into it is not interrupted by the clock.
+  const reading = formatDateTime(dateFromJd(state.julianDate));
+  if (clockReadout && clockReadout.textContent !== reading) {
+    clockReadout.textContent = reading;
+  }
+
+  // Updated in place rather than rebuilt, so typing into it is not interrupted.
   if (dateInput && document.activeElement !== dateInput) {
     const value = dateFromJd(state.julianDate).toISOString().slice(0, 10);
     if (dateInput.value !== value) dateInput.value = value;
@@ -154,7 +200,12 @@ function render(): void {
   if (controls !== lastControls) {
     lastControls = controls;
     renderMasthead();
-    dateInput = renderControls(controlsHost, store);
+    renderTopBar(dockTopRight, store);
+    renderControls(controlsHost, store);
+    const dock = renderTimeDock(dockBottomRight, store);
+    dateInput = dock.dateInput;
+    clockReadout = dock.clock;
+    clockReadout.textContent = reading;
     document.title = t('app.title');
   }
 

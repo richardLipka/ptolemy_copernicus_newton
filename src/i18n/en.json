@@ -131,5 +131,18 @@
   "view.sphere.frame": "Sphere on centre",
   "view.sphere.observer": "Sphere on observer",
   "view.sphere.frameHint": "The celestial sphere is concentric with the map, as on a traditional orrery. Sight-lines bend at the body when the observer is not the centre.",
-  "view.sphere.observerHint": "The celestial sphere surrounds the observation point, which is where the sky actually belongs. Sight-lines are then straight in every model; the sphere is no longer concentric with the map, and the map shrinks to make room."
+  "view.sphere.observerHint": "The celestial sphere surrounds the observation point, which is where the sky actually belongs. Sight-lines are then straight in every model; the sphere is no longer concentric with the map, and the map shrinks to make room.",
+  "locale.cs.short": "CZ",
+  "locale.en.short": "EN",
+  "theme.label": "Look",
+  "theme.orrery": "Orrery — brass on parchment",
+  "theme.orrery.short": "Parchment",
+  "theme.atelier": "Atelier — modern light",
+  "theme.atelier.short": "Atelier",
+  "theme.nocturne": "Nocturne — dark, by candlelight",
+  "theme.nocturne.short": "Night",
+  "theme.lcars": "LCARS",
+  "theme.lcars.short": "LCARS",
+  "time.slower": "Slower",
+  "time.faster": "Faster"
 }

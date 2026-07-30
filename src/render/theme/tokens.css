@@ -1,0 +1,121 @@
+/*
+ * The theming contract.
+ *
+ * A theme is a block of custom properties and nothing else — no theme file
+ * contains a selector for a component. Everything downstream (layout.css,
+ * shell.css) reads only the names below, so adding a look means adding one file
+ * and one entry to the picker.
+ *
+ * Two naming layers exist on purpose. Themes define *semantic* names (surface,
+ * text, accent), while the drawing code still reads the original
+ * parchment/ink/brass names it was written with. The aliases at the bottom map
+ * one to the other. Renaming nine hundred lines of instrument CSS to suit a
+ * dark palette would have been a large, risky edit for no functional gain; this
+ * keeps the theme files honest and the geometry untouched.
+ */
+
+@layer tokens, structure, components, theme;
+
+@layer tokens {
+  :root {
+    /* --- shape and rhythm, shared by every theme ----------------------- */
+
+    --line-hairline: 0.5px;
+    --line-fine: 1px;
+    --line-medium: 1.5px;
+    --line-heavy: 2px;
+
+    /* Structural radii of the instrument, in map-radius units. Geometry, not
+       taste: the renderer's own constants must match these. */
+    --ring-inner: 1.06;
+    --ring-outer: 1.26;
+    --ring-figures: 1.16;
+
+    /* Fluid type: readable on a laptop, not gigantic on a lecture projector. */
+    --size-label: clamp(0.66rem, 0.62rem + 0.15vw, 0.76rem);
+    --size-body: clamp(0.8rem, 0.76rem + 0.18vw, 0.92rem);
+    --size-heading: clamp(0.92rem, 0.88rem + 0.2vw, 1.06rem);
+    --size-title: clamp(1.1rem, 1rem + 0.5vw, 1.45rem);
+
+    --tracking-wide: 0.14em;
+    --tracking-label: 0.08em;
+
+    --transition-fast: 120ms ease-out;
+
+    /* How far the floating panels sit from the edge, and how wide they run. */
+    --dock-gap: clamp(0.5rem, 1.1vw, 1rem);
+    --dock-width: clamp(13rem, 20vw, 18.5rem);
+
+    /* --- fallbacks ---------------------------------------------------------
+     * A theme is expected to override all of these. They are set here so a
+     * missing token degrades to something legible rather than to nothing.
+     */
+    --surface: #e8dcc0;
+    --surface-glow: transparent;
+    --surface-shade: transparent;
+
+    --text-strong: #2e2317;
+    --text: #4b3c2a;
+    --text-muted: #8a7859;
+
+    --accent: #b08d57;
+    --accent-bright: #d4b16a;
+    --accent-dark: #7d6236;
+    --accent-shadow: #5c4728;
+
+    --panel-surface: rgba(232, 220, 192, 0.92);
+    --panel-inner: rgba(255, 250, 236, 0.35);
+    --panel-edge: var(--accent-dark);
+    --panel-radius: 2px;
+    --panel-blur: 0px;
+    --panel-shadow: none;
+    --control-radius: 1px;
+    --hover-tint: rgba(212, 177, 106, 0.22);
+
+    /* Unlit side of a body, and the same colour opaque for the phase disc. */
+    --shadow-fill: rgba(24, 18, 10, 0.82);
+    --shadow-solid: #241a10;
+
+    /* The one vector that is not a force. */
+    --velocity-tint: #3f6f8f;
+    /* The resultant force. */
+    --net-force-tint: var(--text-strong);
+
+    --face-display: 'Iowan Old Style', 'Palatino Linotype', Palatino,
+      'Book Antiqua', Georgia, serif;
+    --face-text: Georgia, 'Times New Roman', serif;
+    --face-numeric: 'Palatino Linotype', Palatino, Georgia, serif;
+
+    --body-sun: #d9a441;
+    --body-mercury: #9a8c78;
+    --body-venus: #d8c48a;
+    --body-earth: #6f8f7d;
+    --body-moon: #b8b0a0;
+    --body-mars: #a35f43;
+    --body-jupiter: #b08a5f;
+    --body-saturn: #a89468;
+
+    --ghost-opacity: 0.42;
+    --sightline-opacity: 0.55;
+
+    /* --- aliases -----------------------------------------------------------
+     * The instrument CSS was written against these names. Themes never set
+     * them; they follow from the semantic tokens above.
+     */
+    --parchment: var(--surface);
+    --parchment-deep: var(--surface-shade);
+    --parchment-shadow: var(--surface-shade);
+
+    --ink: var(--text-strong);
+    --ink-soft: var(--text);
+    --ink-faint: var(--text-muted);
+
+    --brass: var(--accent);
+    --brass-bright: var(--accent-bright);
+    --brass-dark: var(--accent-dark);
+    --brass-shadow: var(--accent-shadow);
+
+    --panel-bg: var(--panel-surface);
+    --panel-border: var(--panel-edge);
+  }
+}

@@ -1,38 +1,17 @@
 /*
- * Structure and the instrument itself.
+ * The instrument itself: the map, the zodiac ring and everything drawn on them.
  *
- * The whole drawing is CSS: bodies are elements translated by custom
- * properties, orbit paths are chains of rotated hairline segments, and phases
- * are gradients clipped by a shifted disc. Nothing is drawn to a canvas.
+ * The whole drawing is CSS. Bodies are elements translated by custom properties,
+ * trails and orbits are chains of rotated hairline segments, phases are
+ * gradients clipped to a disc, and Newton's forces are rotated triangles.
+ * Nothing is drawn to a canvas.
+ *
+ * Colours come only from the token contract in tokens.css, so a theme can
+ * repaint all of it without touching a line of geometry. The shell — panels,
+ * docks, controls — lives in shell.css.
  */
 
-* {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  height: 100%;
-  margin: 0;
-}
-
-body {
-  background:
-    radial-gradient(ellipse at 30% 20%, rgba(255, 250, 235, 0.55), transparent 60%),
-    radial-gradient(ellipse at 75% 85%, rgba(160, 130, 85, 0.18), transparent 55%),
-    var(--parchment);
-  color: var(--ink);
-  font-family: var(--face-text);
-  font-size: var(--size-body);
-  overflow: hidden;
-}
-
-#app {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 21rem;
-  height: 100%;
-}
-
+@layer structure {
 /* --- the instrument ---------------------------------------------------- */
 
 .stage {
@@ -381,8 +360,8 @@ body {
   transform: rotate(calc(var(--sun-angle) * 1deg));
   background: linear-gradient(
     to right,
-    rgba(24, 18, 10, 0.82) 0%,
-    rgba(24, 18, 10, 0.82) calc(var(--shadow-edge) * 100%),
+    var(--shadow-fill) 0%,
+    var(--shadow-fill) calc(var(--shadow-edge) * 100%),
     transparent calc(var(--shadow-edge) * 100%)
   );
 }
@@ -429,305 +408,6 @@ body {
     rotate(calc(var(--angle) * 1deg));
   opacity: 0.5;
   pointer-events: none;
-}
-
-/* --- panels ------------------------------------------------------------- */
-
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem;
-  overflow-y: auto;
-  border-left: var(--line-fine) solid var(--brass-dark);
-  background: var(--panel-bg);
-}
-
-.masthead__title {
-  font-family: var(--face-display);
-  font-size: var(--size-title);
-  margin: 0;
-  letter-spacing: 0.01em;
-}
-
-.masthead__subtitle {
-  font-family: var(--face-display);
-  font-size: var(--size-label);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  margin: 0.15rem 0 0;
-}
-
-.panel {
-  border: var(--line-fine) solid var(--brass-dark);
-  padding: 0.7rem 0.75rem;
-  background: rgba(255, 250, 236, 0.35);
-}
-
-.panel__title {
-  font-family: var(--face-display);
-  font-size: var(--size-label);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  margin: 0 0 0.5rem;
-  padding-bottom: 0.3rem;
-  border-bottom: var(--line-hairline) solid var(--brass-dark);
-}
-
-.field {
-  display: grid;
-  gap: 0.2rem;
-  margin-bottom: 0.55rem;
-}
-
-.field:last-child {
-  margin-bottom: 0;
-}
-
-.field__label {
-  font-size: var(--size-label);
-  letter-spacing: var(--tracking-label);
-  color: var(--ink-soft);
-}
-
-.field__hint {
-  font-size: 0.68rem;
-  color: var(--ink-faint);
-  font-style: italic;
-}
-
-select,
-input[type='date'],
-input[type='number'],
-button {
-  font-family: var(--face-text);
-  font-size: var(--size-body);
-  color: var(--ink);
-  background: rgba(255, 252, 244, 0.75);
-  border: var(--line-fine) solid var(--brass-dark);
-  padding: 0.25rem 0.4rem;
-}
-
-button {
-  cursor: pointer;
-  font-family: var(--face-display);
-  letter-spacing: var(--tracking-label);
-  transition: background var(--transition-fast);
-}
-
-button:hover {
-  background: var(--brass-bright);
-}
-
-button[aria-pressed='true'] {
-  background: var(--brass);
-  color: var(--parchment);
-}
-
-.button-row {
-  display: flex;
-  gap: 0.3rem;
-  flex-wrap: wrap;
-}
-
-.segmented {
-  display: flex;
-  border: var(--line-fine) solid var(--brass-dark);
-}
-
-.segmented button {
-  flex: 1;
-  border: 0;
-  border-right: var(--line-hairline) solid var(--brass-dark);
-  background: transparent;
-}
-
-.segmented button:last-child {
-  border-right: 0;
-}
-
-.readout {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.12rem 0;
-  font-size: var(--size-body);
-}
-
-.readout__label {
-  color: var(--ink-soft);
-}
-
-.readout__value {
-  font-family: var(--face-numeric);
-  font-variant-numeric: tabular-nums;
-}
-
-.clock {
-  font-family: var(--face-display);
-  font-size: 1.05rem;
-  text-align: center;
-  padding: 0.2rem 0;
-  letter-spacing: 0.02em;
-}
-
-/*
- * Phase as an observer sees it, in the info panel.
- *
- * Unlike the map markers this needs a real terminator. Seen from the observer
- * the boundary between light and dark is the body's own great circle viewed
- * obliquely, which projects to a half-ellipse whose width is |cos i| of the
- * disc — not a straight line. A straight edge reads as a bite taken out of the
- * disc rather than as a phase, which is why it is built from a half-disc plus an
- * ellipse rather than a gradient.
- *
- * --lit-width is |cos i|, i.e. |2k - 1|. The ellipse bulges out of the lit half
- * when gibbous and eats into it when crescent, which is the whole difference
- * between the two.
- */
-.phase-disc {
-  position: relative;
-  width: 3.4rem;
-  height: 3.4rem;
-  border-radius: 50%;
-  border: var(--line-fine) solid var(--ink-soft);
-  background: var(--phase-dark);
-  overflow: hidden;
-  margin: 0.4rem auto 0.2rem;
-  --phase-dark: #241a10;
-}
-
-/* The lit hemisphere: right half when waxing, left when waning. */
-.phase-disc__half {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  width: 50%;
-  background: var(--tint);
-}
-
-.phase-disc[data-side='right'] .phase-disc__half {
-  right: 0;
-}
-
-.phase-disc[data-side='left'] .phase-disc__half {
-  left: 0;
-}
-
-.phase-disc__terminator {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  height: 100%;
-  width: calc(var(--lit-width) * 100%);
-  transform: translateX(-50%);
-  border-radius: 50%;
-}
-
-/* Gibbous: the lit side bulges past the centre line. */
-.phase-disc[data-shape='gibbous'] .phase-disc__terminator {
-  background: var(--tint);
-}
-
-/* Crescent: shadow encroaches on the lit side. */
-.phase-disc[data-shape='crescent'] .phase-disc__terminator {
-  background: var(--phase-dark);
-}
-
-.phase-caption {
-  text-align: center;
-  font-family: var(--face-display);
-  font-size: var(--size-label);
-  letter-spacing: var(--tracking-label);
-  color: var(--ink-soft);
-  margin: 0 0 0.4rem;
-}
-
-.event {
-  border-bottom: var(--line-hairline) solid var(--brass-dark);
-  padding: 0.35rem 0;
-  cursor: pointer;
-}
-
-.event:last-child {
-  border-bottom: 0;
-}
-
-.event:hover {
-  background: rgba(212, 177, 106, 0.22);
-}
-
-.event__date {
-  font-family: var(--face-numeric);
-  font-variant-numeric: tabular-nums;
-  font-size: var(--size-label);
-  color: var(--ink-faint);
-}
-
-.event__title {
-  font-family: var(--face-display);
-}
-
-.comparison {
-  margin-top: 0.4rem;
-  font-size: var(--size-label);
-}
-
-.comparison__row {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.1rem 0;
-}
-
-.comparison__spread {
-  margin-top: 0.3rem;
-  padding-top: 0.3rem;
-  border-top: var(--line-hairline) solid var(--brass-dark);
-  font-style: italic;
-  color: var(--ink-soft);
-}
-
-.note {
-  font-size: 0.68rem;
-  color: var(--ink-faint);
-  font-style: italic;
-  line-height: 1.35;
-}
-
-@media (max-width: 900px) {
-  #app {
-    grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, 1fr) auto;
-  }
-
-  .sidebar {
-    border-left: 0;
-    border-top: var(--line-fine) solid var(--brass-dark);
-    max-height: 45vh;
-  }
-
-  .instrument {
-    --ring-extent: 1.4;
-  }
-}
-
-/* The active model's row, in a side-by-side comparison. */
-.comparison__row--active {
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.comparison__row--active::before {
-  content: '▸';
-  position: absolute;
-  margin-left: -0.75rem;
-  color: var(--brass-dark);
-}
-
-.comparison__row {
-  position: relative;
 }
 
 /* --- force and velocity vectors (Newton's harness) ---------------------- */
@@ -833,7 +513,7 @@ button[aria-pressed='true'] {
 /* The resultant: the only force that actually moves anything. Heaviest. */
 .vector__shaft[data-role='net-force'],
 .vector__head[data-role='net-force'] {
-  --vector-tint: var(--ink);
+  --vector-tint: var(--net-force-tint);
   opacity: 0.95;
 }
 
@@ -844,9 +524,10 @@ button[aria-pressed='true'] {
 /* Velocity: the other half of the state, and the only one not a force. */
 .vector__shaft[data-role='velocity'],
 .vector__head[data-role='velocity'] {
-  --vector-tint: #3f6f8f;
+  --vector-tint: var(--velocity-tint);
 }
 
 .vector__shaft[data-role='velocity'] {
   height: var(--line-heavy);
+}
 }

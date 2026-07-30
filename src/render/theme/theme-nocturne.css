@@ -1,0 +1,67 @@
+/*
+ * Nocturne — the same brass instrument, by candlelight.
+ *
+ * A dark theme in period rather than a modern dark mode: the palette is what an
+ * eighteenth-century observatory actually looked like at night, warm lamplight
+ * on metal against a sky-black ground, not grey-on-charcoal.
+ *
+ * Two things matter for legibility here. The ground is warm rather than neutral
+ * (#14110c, not #111), because the brass has to sit in the same light as the
+ * surface it lies on. And the accent is *raised* rather than darkened for
+ * contrast — brass reads as brass when it is brighter than its background, and
+ * the engraved hairlines would otherwise vanish entirely.
+ */
+
+@layer theme {
+  :root[data-theme='nocturne'] {
+    --surface: #14110c;
+    --surface-glow: rgba(198, 158, 96, 0.1);
+    --surface-shade: rgba(0, 0, 0, 0.55);
+
+    --text-strong: #f0e6d2;
+    --text: #cbbb9c;
+    --text-muted: #907f63;
+
+    /* Lifted well above the ground: on parchment the brass is the darker of the
+       two, and here it must be the lighter or the whole engraving disappears. */
+    --accent: #c9a466;
+    --accent-bright: #f0d49a;
+    --accent-dark: #9c7f4f;
+    --accent-shadow: #6b552f;
+
+    --panel-surface: rgba(28, 24, 17, 0.82);
+    --panel-inner: rgba(240, 230, 210, 0.04);
+    --panel-edge: #6b552f;
+    --panel-radius: 3px;
+    --panel-blur: 10px;
+    --panel-shadow: 0 6px 22px rgba(0, 0, 0, 0.55);
+    --control-radius: 2px;
+    --hover-tint: rgba(201, 164, 102, 0.18);
+
+    /* Nights are darker than the unlit side of a planet ever is on paper, so
+       the terminator needs to be near-opaque to read against this ground. */
+    --shadow-fill: rgba(6, 5, 3, 0.9);
+    --shadow-solid: #060503;
+
+    --velocity-tint: #6fa8c8;
+
+    --face-display: 'Iowan Old Style', 'Palatino Linotype', Palatino,
+      'Book Antiqua', Georgia, serif;
+    --face-text: Georgia, 'Times New Roman', serif;
+    --face-numeric: 'Palatino Linotype', Palatino, Georgia, serif;
+
+    /* Bodies brightened: the paper palette was tuned to be darker than its
+       background and would read as holes cut in the sky. */
+    --body-sun: #ffc766;
+    --body-mercury: #b7a992;
+    --body-venus: #f0dda6;
+    --body-earth: #8fc0a8;
+    --body-moon: #ded6c6;
+    --body-mars: #d97f5c;
+    --body-jupiter: #d9ab74;
+    --body-saturn: #cdb684;
+
+    --ghost-opacity: 0.5;
+    --sightline-opacity: 0.6;
+  }
+}

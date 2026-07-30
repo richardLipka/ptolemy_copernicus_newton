@@ -1,29 +1,24 @@
 /**
- * Controls.
+ * The floating control panels.
  *
- * Rebuilt wholesale whenever state changes, which is cheap at this size and
- * avoids a second source of truth about which option is currently selected.
- * The instrument itself, where rebuilding would be expensive, updates in place
- * instead.
+ * Each dock is rebuilt wholesale when the state it shows changes, which is cheap
+ * at this size and avoids a second source of truth about which option is
+ * selected. The instrument, where rebuilding would be expensive, updates in
+ * place instead.
  */
 
 import { BODY_IDS, type BodyId } from '../core/bodies';
 import { MODES, type EngineId, type ModeId } from '../core/engines/types';
-import { MAX_JD, MIN_JD, dateFromJd, jdFromDate } from '../core/time';
 import type { ZodiacScheme } from '../core/zodiac';
-import { LOCALES, formatNumber, t, type Locale } from '../i18n/i18n';
+import { formatNumber, t } from '../i18n/i18n';
 import type { ScaleMode, SphereCentre, Store } from '../state/store';
 import { el, field, panel, select, toggleButton } from './dom';
 
 const bodyOptions = (): { value: BodyId; label: string }[] =>
   BODY_IDS.map((id) => ({ value: id, label: t(`body.${id}`) }));
 
-/** Returns the date field, which the caller updates in place as the clock runs
- *  rather than rebuilding these controls on every tick. */
-export function renderControls(
-  container: HTMLElement,
-  store: Store,
-): HTMLInputElement {
+/** The left dock: which model, seen from where, and what to draw over it. */
+export function renderControls(container: HTMLElement, store: Store): void {
   const state = store.get();
   container.replaceChildren();
 
@@ -102,53 +97,6 @@ export function renderControls(
     ),
   );
   container.appendChild(vantagePanel);
-
-  // --- time -------------------------------------------------------------
-
-  const timePanel = panel(t('time.label'));
-
-  const dateInput = el('input');
-  dateInput.type = 'date';
-  dateInput.valueAsDate = dateFromJd(state.julianDate);
-  dateInput.min = dateFromJd(MIN_JD).toISOString().slice(0, 10);
-  dateInput.max = dateFromJd(MAX_JD).toISOString().slice(0, 10);
-  dateInput.addEventListener('change', () => {
-    if (dateInput.valueAsDate) store.setJulianDate(jdFromDate(dateInput.valueAsDate));
-  });
-  timePanel.appendChild(field(t('time.jumpTo'), dateInput));
-
-  const transport = el('div', 'button-row');
-  const back = el('button', undefined, '‹');
-  back.title = t('time.stepBack');
-  back.addEventListener('click', () => store.stepDays(-1));
-
-  const playPause = el('button', undefined, state.playing ? t('time.pause') : t('time.play'));
-  playPause.addEventListener('click', () => store.togglePlay());
-
-  const forward = el('button', undefined, '›');
-  forward.title = t('time.stepForward');
-  forward.addEventListener('click', () => store.stepDays(1));
-
-  const today = el('button', undefined, t('time.today'));
-  today.addEventListener('click', () => store.jumpToDate(new Date()));
-
-  transport.append(back, playPause, forward, today);
-  timePanel.appendChild(transport);
-
-  const rateOptions = [0.25, 1, 5, 20, 100, 400].map((rate) => ({
-    value: String(rate),
-    label: `${rate} ${t('time.rate.unit')}`,
-  }));
-  timePanel.appendChild(
-    field(
-      t('time.rate'),
-      select(rateOptions, String(state.rateDaysPerSecond), (value) =>
-        store.setRate(Number(value)),
-      ),
-    ),
-  );
-
-  container.appendChild(timePanel);
 
   // --- view -------------------------------------------------------------
 
@@ -303,20 +251,4 @@ export function renderControls(
   }
 
   container.appendChild(harnessPanel);
-
-  // --- locale -----------------------------------------------------------
-
-  const localePanel = panel(t('locale.label'));
-  const localeRow = el('div', 'segmented');
-  for (const locale of LOCALES) {
-    localeRow.appendChild(
-      toggleButton(t(`locale.${locale}`), state.locale === locale, () =>
-        store.setLocale(locale as Locale),
-      ),
-    );
-  }
-  localePanel.appendChild(localeRow);
-  container.appendChild(localePanel);
-
-  return dateInput;
 }

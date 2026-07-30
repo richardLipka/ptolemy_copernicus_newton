@@ -440,6 +440,58 @@ regress.
 
 ## 13. UI Layer Notes
 
+### 13.0 The shell and the themes
+
+**Layout.** The map is full-bleed and the controls float over it in docks:
+model/vantage/overlay controls on the left, a slim language-and-theme bar hugging
+the top-right corner, the selected-body detail directly beneath it, and time with
+the simulation transport at bottom right.
+
+The instrument is *not* measured against the viewport but against
+`.stage__field`, an element inset by the dock widths. That is what keeps the map
+centred in the gap the user can actually see and the zodiac labels clear of the
+panels, even though the drawing itself may pass beneath them. Below 60rem the
+docks stop floating and stack as a scrolling column under the map.
+
+**Themes.** Four looks, chosen from the top bar and remembered in localStorage:
+
+| id | |
+|---|---|
+| `orrery` | brass on parchment, c. 1750 — the original, unchanged |
+| `atelier` | the same pigments as a modern instrument: near-white ground, UI sans, soft elevation, generous radii |
+| `nocturne` | the same instrument by candlelight — warm lamplight on metal against sky-black |
+| `lcars` | after the Okudagram: black ground, flat saturated blocks, asymmetric elbows |
+
+A theme is **a block of custom properties and nothing else**. No theme file
+contains a component selector, with one deliberate exception: LCARS needs shape
+overrides (block capitals, elbow radii, borderless controls), kept to a short
+block confined to the `theme` cascade layer so it cannot outrank structure.
+
+Two naming layers exist on purpose. Themes define *semantic* tokens (`--surface`,
+`--text-strong`, `--accent`); the instrument CSS still reads the
+parchment/ink/brass names it was written with, and `tokens.css` aliases one to
+the other. Renaming nine hundred lines of geometry to suit a dark palette would
+have been a large, risky edit for no functional gain.
+
+Colours that had been baked into `layout.css` — the terminator fill, the velocity
+vector's blue, the net-force ink — are now tokens, or the dark and LCARS themes
+would have had invisible phases and an unreadable velocity arrow.
+
+Files: `tokens.css` (contract and fallbacks), `theme-*.css` (one per look),
+`shell.css` (docks, panels, controls), `layout.css` (the instrument).
+`@layer tokens, structure, components, theme` fixes the precedence.
+
+**Contrast** was measured rather than eyeballed, on the body surface: body text
+10.0–15.2:1 across all four themes, engraved ring hairlines 4.2–6.2:1, ring
+labels 6.3–14.1:1. Atelier's muted text was darkened from the inherited value,
+which only reached 3.4:1 against a near-white ground; Orrery keeps the original,
+since preserving that look is the point of having both.
+
+**The rate ladder** (`RATE_LADDER`) is stepped by − and + buttons beside
+play/pause. It is geometric — 0.25, 1, 5, 20, 100, 400 days a second — because the
+useful range spans a factor of 1600 and a linear control would be unusable. The
+buttons clamp at both ends rather than wrapping.
+
 ### 13.1 Ghost overlay
 
 The user picks a comparison model; its bodies render faintly beside the active

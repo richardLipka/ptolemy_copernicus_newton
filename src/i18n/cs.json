@@ -131,5 +131,18 @@
   "view.sphere.frame": "Sféra kolem středu",
   "view.sphere.observer": "Sféra kolem pozorovatele",
   "view.sphere.frameHint": "Nebeská sféra je soustředná s mapou, jako na klasickém orreryi. Záměrné přímky se u tělesa lámou, pokud pozorovatel není ve středu.",
-  "view.sphere.observerHint": "Nebeská sféra obklopuje místo pozorování, tedy tam, kam obloha skutečně patří. Záměrné přímky jsou pak rovné ve všech modelech; sféra ale není soustředná s mapou a mapa se zmenší, aby se vešla."
+  "view.sphere.observerHint": "Nebeská sféra obklopuje místo pozorování, tedy tam, kam obloha skutečně patří. Záměrné přímky jsou pak rovné ve všech modelech; sféra ale není soustředná s mapou a mapa se zmenší, aby se vešla.",
+  "locale.cs.short": "CZ",
+  "locale.en.short": "EN",
+  "theme.label": "Vzhled",
+  "theme.orrery": "Orrery — mosaz na pergamenu",
+  "theme.orrery.short": "Pergamen",
+  "theme.atelier": "Atelier — moderní světlý",
+  "theme.atelier.short": "Atelier",
+  "theme.nocturne": "Nocturne — tmavý, při svíčkách",
+  "theme.nocturne.short": "Noc",
+  "theme.lcars": "LCARS",
+  "theme.lcars.short": "LCARS",
+  "time.slower": "Zpomalit",
+  "time.faster": "Zrychlit"
 }

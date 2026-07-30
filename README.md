@@ -16,7 +16,7 @@ fills in as time runs.
 No installation, no backend, no database. It builds to a folder of static files
 and runs from any web server or straight off disk.
 
-Czech and English · [Architecture notes](CLAUDE.md) · MIT licensed
+Czech and English · four looks · [Architecture notes](CLAUDE.md) · MIT licensed
 
 > A live demo can be published by enabling GitHub Pages for this repository
 > (Settings → Pages → Source → "GitHub Actions"); the workflow is already in
@@ -98,6 +98,26 @@ quietly regress.
 - **Compare predicted dates.** For any conjunction, opposition or station, the
   event panel shows the date each of the three models predicts and the spread
   between them.
+
+## Four looks
+
+The map runs full-bleed with the controls floating over it, and the top-right bar
+switches language and theme. Your choice of both is remembered.
+
+- **Parchment** — brass instrument on paper, c. 1750. Engraved hairlines, hard
+  edges, no depth, because a printed plate has none.
+- **Atelier** — the same pigments as a modern instrument: near-white ground, UI
+  sans for anything functional, soft elevation instead of ruled borders.
+- **Night** — the same instrument by candlelight. A dark theme *in period* rather
+  than a modern dark mode: warm lamplight on metal against a sky-black ground,
+  with the brass lifted above its background instead of darkened, or the
+  engraving would vanish.
+- **LCARS** — after the Okudagram. Black ground, flat saturated blocks, block
+  capitals, asymmetric elbows.
+
+Every look is a block of CSS custom properties and nothing else, so the body
+colours stay comparable between them and adding a fifth means adding one file.
+Text contrast was measured, not eyeballed: 10:1 or better in all four.
 
 ## Running it
 
