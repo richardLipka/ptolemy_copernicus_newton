@@ -513,7 +513,57 @@ twice the centre's offset, arms joining the right points — because the harness
 is a second derivation of the same geometry and could otherwise drift into a
 diagram of nothing.
 
-### 13.4 Overlays are all optional, and trails must not look like harness
+### 13.4 Two illumination displays, answering different questions
+
+**The map** is a plan view, so a body's lit side is simply the half facing the
+Sun and the terminator is a straight line through its centre — we see that great
+circle edge-on from above. `--shadow-edge` is therefore fixed at 0.5 and only the
+direction changes. Every body has one, the observer included: Earth is as much a
+lit ball as anything else on the map.
+
+The map aims the lit side at the **drawn** Sun rather than the true direction, so
+the picture is self-consistent — the lit side visibly faces the Sun you can see.
+Under the compressed scale those differ once the Sun is off-centre, since
+compressing radii distorts angles measured from anywhere but the frame origin.
+
+**The info panel** answers the different question of what an observer sees, and
+needs a real terminator: seen from the observer that great circle is viewed
+obliquely and projects to a **half-ellipse** of width |cos i|, not a straight
+line. A straight edge reads as a bite out of the disc rather than a phase, so the
+disc is built from a half-disc plus an ellipse that bulges outward when gibbous
+and inward when crescent. This one uses true geometry, never the display frame:
+recentring the map must not change the Moon's phase.
+
+#### What the models actually say about phase
+
+Phases come from the active engine, and the panel lists all three side by side.
+Worst disagreement in lit fraction, 2026–2034 seen from Earth, percentage points:
+
+| | vs reality (Copernicus) | vs reality (Ptolemy) | Ptolemy vs Copernicus |
+|---|---|---|---|
+| Mercury | 22.1 | 18.1 | **20.9** |
+| Venus | 2.3 | 2.3 | 4.1 |
+| Mars | 5.8 | **1.3** | 6.2 |
+| Jupiter | 0.1 | 0.1 | 0.2 |
+| Saturn | 0.0 | 0.0 | 0.1 |
+| Moon | 8.4 | **2.9** | 6.4 |
+
+The models mostly **agree** about phase, which is not the intuitive result and is
+worth stating plainly rather than overselling the differences. Lit fraction
+depends on nothing but the Sun-body-observer angle, and both historical
+constructions were fitted to reproduce that triangle, so they inherit its
+accuracy. Venus — the body whose phases settled the argument — agrees within four
+points across all three.
+
+**Mercury is the exception**, and the one place a large divergence is visible:
+its eccentricity of 0.21 defeats a circle and an epicycle alike, and the models
+part by around twenty points. It is the body to select when demonstrating that
+the choice of model changes what you predict.
+
+Note also that Ptolemy again beats Copernicus, on Mars and the Moon, in the same
+ordering the longitude errors show. `illumination.test.ts` asserts all of this.
+
+### 13.5 Overlays are all optional, and trails must not look like harness
 
 Everything drawn over the bodies is annotation, grouped in one panel and each
 switchable on its own: **trails**, the **construction** circles, **sight-lines**
@@ -524,7 +574,7 @@ channels at once: a trail takes its body's colour and **fades with age**, giving
 it a direction of travel; the harness is uniform brass. Colour alone would not
 carry it — one faint line looks much like another — and neither would the fade.
 
-### 13.5 The celestial sphere's star figures are ornament
+### 13.6 The celestial sphere's star figures are ornament
 
 The ring shows principal stars joined by figure lines, in the manner of an
 engraved star chart. **Star positions are approximate and decorative.** The
@@ -535,7 +585,7 @@ are marked as such in the source so nobody later mistakes them for a catalogue.
 Pictorial engravings — an actual ram, an actual bull — would need SVG artwork
 or bitmaps and are therefore out of scope under the CSS-only constraint.
 
-### 13.6 Still assumed, not confirmed
+### 13.7 Still assumed, not confirmed
 
 - **Deployment form** — building for a folder of static assets with a relative
   base path. A single-file inlined bundle is a small config change if needed.

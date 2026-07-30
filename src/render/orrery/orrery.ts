@@ -9,7 +9,7 @@
  */
 
 import { BODY_IDS, type BodyId } from '../../core/bodies';
-import { DEG, angleDiffDeg, normalizeDeg } from '../../core/vec';
+import { DEG, normalizeDeg } from '../../core/vec';
 import { divisionsFor, precessionSinceJ2000 } from '../../core/zodiac';
 import { t } from '../../i18n/i18n';
 import type { Store } from '../../state/store';
@@ -159,6 +159,9 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     marker.setAttribute('role', 'button');
 
     const phase = div('body__phase');
+    // Half in shadow, always: on a plan view exactly one hemisphere faces the
+    // Sun. Only the direction changes, so this is set once.
+    phase.style.setProperty('--shadow-edge', '0.5');
     marker.appendChild(phase);
 
     const label = div('body__label');
@@ -420,8 +423,20 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     updateTrails();
     updateHarness();
 
-    const sunLongitudeFrom = (id: BodyId): number =>
-      view.bodies.find((body) => body.id === id)?.apparentLongitude ?? 0;
+    // Where the Sun is drawn. The map is a plan view, so a body's lit side is
+    // simply the half facing the Sun, and the terminator is a straight line
+    // through its centre — we are looking down on it edge-on.
+    //
+    // The *drawn* Sun is used rather than the true direction so the picture is
+    // self-consistent: the lit side visibly faces the Sun you can see. Under
+    // the compressed scale those differ once the Sun is off-centre, since
+    // compressing radii distorts angles measured from anywhere but the frame
+    // origin. Phase as an observer would see it is a separate calculation, done
+    // from true geometry in the info panel.
+    const sunPoint = view.bodies.find((body) => body.id === 'sun')?.point ?? {
+      x: 0,
+      y: 0,
+    };
 
     for (const body of view.bodies) {
       const parts = elements.get(body.id)!;
@@ -435,17 +450,17 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
       }
       parts.marker.classList.toggle('body--selected', state.selectedBody === body.id);
 
-      // Phase: the shadow's edge slides across the disc with the lit fraction,
-      // and the whole gradient rotates to face away from the Sun.
-      if (body.id === 'sun' || body.isObserver) {
+      // Every body except the Sun has a lit side, the observer's included —
+      // Earth is as much a lit ball as anything else on the map.
+      if (body.id === 'sun') {
         parts.phase.style.display = 'none';
       } else {
         parts.phase.style.display = '';
-        const toSun = angleDiffDeg(sunLongitudeFrom('sun'), body.apparentLongitude);
-        parts.phase.style.setProperty('--sun-angle', String(toSun + 180));
         parts.phase.style.setProperty(
-          '--shadow-edge',
-          String(1 - body.illumination.illuminatedFraction),
+          '--sun-angle',
+          String(
+            Math.atan2(sunPoint.y - body.point.y, sunPoint.x - body.point.x) / DEG,
+          ),
         );
       }
 

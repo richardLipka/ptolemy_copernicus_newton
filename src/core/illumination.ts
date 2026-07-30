@@ -5,11 +5,18 @@
  * geometry, so it is computed from true positions and never from the display
  * frame. Recentring the map on Jupiter must not change the Moon's phase.
  *
- * Venus is the interesting case. Its phases were Galileo's evidence against
- * Ptolemy: a Venus carried on an epicycle between Earth and the Sun can only
- * ever show a crescent, but Venus is observably full when it is far side of
- * the Sun. Switching engines and watching Venus's phase disc is therefore a
- * direct re-run of the observation that broke the geocentric model.
+ * Phases are computed from whichever engine is active, so each model answers for
+ * itself. What they disagree about is only the Sun-body-observer triangle, and
+ * the historical constructions were fitted to get that roughly right, so the
+ * disagreements are smaller than one might expect — see
+ * `illumination.test.ts`, which pins down the actual figures.
+ *
+ * In particular, switching to the epicyclic engine does *not* turn Venus into a
+ * permanent crescent. Ptolemy's construction fixes angles, not distances, and
+ * his own epicycle ratio lets Venus reach the far side of its epicycle and show
+ * a full disc. What forbade a full Venus was the nested-sphere cosmology built
+ * around the construction, which this engine does not model. See CLAUDE.md
+ * §12.4 and `venus-phases.test.ts`.
  */
 
 import type { BodyId } from './bodies';

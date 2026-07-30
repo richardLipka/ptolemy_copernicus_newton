@@ -67,6 +67,12 @@ quietly regress.
 - **Compare two models at once.** The ghost overlay draws a second model faintly
   beside the active one, so Copernicus's 13° error on Mars is a visible gap
   rather than a number.
+- **Watch the light.** On the map every body's lit hemisphere faces the Sun.
+  Select one and the panel shows its phase *as seen from the observation point*,
+  with a proper elliptical terminator — and what each of the three models
+  predicts for it. Select **Mercury**: Newton, Copernicus and Ptolemy disagree
+  by around twenty percentage points, because its eccentricity of 0.21 defeats a
+  circle and an epicycle alike. On Venus they agree within four.
 - **Read the sky.** Sight-lines run from the observation point out to a zodiac
   ring, showing where each body *appears* as distinct from where it *is*. The
   ring switches between the twelve equal signs and the real IAU constellations,

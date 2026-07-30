@@ -556,28 +556,76 @@ button[aria-pressed='true'] {
   letter-spacing: 0.02em;
 }
 
-/* Phase disc in the info panel, same technique at a larger size. */
+/*
+ * Phase as an observer sees it, in the info panel.
+ *
+ * Unlike the map markers this needs a real terminator. Seen from the observer
+ * the boundary between light and dark is the body's own great circle viewed
+ * obliquely, which projects to a half-ellipse whose width is |cos i| of the
+ * disc — not a straight line. A straight edge reads as a bite taken out of the
+ * disc rather than as a phase, which is why it is built from a half-disc plus an
+ * ellipse rather than a gradient.
+ *
+ * --lit-width is |cos i|, i.e. |2k - 1|. The ellipse bulges out of the lit half
+ * when gibbous and eats into it when crescent, which is the whole difference
+ * between the two.
+ */
 .phase-disc {
   position: relative;
   width: 3.4rem;
   height: 3.4rem;
   border-radius: 50%;
   border: var(--line-fine) solid var(--ink-soft);
-  background: var(--tint);
+  background: var(--phase-dark);
   overflow: hidden;
-  margin: 0.3rem auto;
+  margin: 0.4rem auto 0.2rem;
+  --phase-dark: #241a10;
 }
 
-.phase-disc__shadow {
+/* The lit hemisphere: right half when waxing, left when waning. */
+.phase-disc__half {
   position: absolute;
-  inset: 0;
-  transform: rotate(calc(var(--sun-angle) * 1deg));
-  background: linear-gradient(
-    to right,
-    rgba(24, 18, 10, 0.85) 0%,
-    rgba(24, 18, 10, 0.85) calc(var(--shadow-edge) * 100%),
-    transparent calc(var(--shadow-edge) * 100%)
-  );
+  top: 0;
+  height: 100%;
+  width: 50%;
+  background: var(--tint);
+}
+
+.phase-disc[data-side='right'] .phase-disc__half {
+  right: 0;
+}
+
+.phase-disc[data-side='left'] .phase-disc__half {
+  left: 0;
+}
+
+.phase-disc__terminator {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 100%;
+  width: calc(var(--lit-width) * 100%);
+  transform: translateX(-50%);
+  border-radius: 50%;
+}
+
+/* Gibbous: the lit side bulges past the centre line. */
+.phase-disc[data-shape='gibbous'] .phase-disc__terminator {
+  background: var(--tint);
+}
+
+/* Crescent: shadow encroaches on the lit side. */
+.phase-disc[data-shape='crescent'] .phase-disc__terminator {
+  background: var(--phase-dark);
+}
+
+.phase-caption {
+  text-align: center;
+  font-family: var(--face-display);
+  font-size: var(--size-label);
+  letter-spacing: var(--tracking-label);
+  color: var(--ink-soft);
+  margin: 0 0 0.4rem;
 }
 
 .event {
@@ -646,4 +694,21 @@ button[aria-pressed='true'] {
   .instrument {
     --ring-extent: 1.4;
   }
+}
+
+/* The active model's row, in a side-by-side comparison. */
+.comparison__row--active {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.comparison__row--active::before {
+  content: '▸';
+  position: absolute;
+  margin-left: -0.75rem;
+  color: var(--brass-dark);
+}
+
+.comparison__row {
+  position: relative;
 }
