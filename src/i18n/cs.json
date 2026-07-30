@@ -127,5 +127,9 @@
   "info.speed": "Rychlost",
   "info.netForce": "Výsledná síla",
   "info.forceScaleNote": "Délky vektorů jsou seřazené, ale nikoli proporcionální — Slunce tvoří přes 98 % tahu, takže při přesném poměru by ostatní vektory nebyly vidět. Přesné hodnoty jsou v tabulce.",
-  "view.forcesLegend": "Modrý vektor je rychlost, černý výsledná síla. Tenké vektory jsou gravitační tah jednotlivých těles, obarvené podle toho, které táhne. Délky jsou seřazené, ne proporcionální — přesné hodnoty najdete u vybraného tělesa."
+  "view.forcesLegend": "Modrý vektor je rychlost, černý výsledná síla. Tenké vektory jsou gravitační tah jednotlivých těles, obarvené podle toho, které táhne. Délky jsou seřazené, ne proporcionální — přesné hodnoty najdete u vybraného tělesa.",
+  "view.sphere.frame": "Sféra kolem středu",
+  "view.sphere.observer": "Sféra kolem pozorovatele",
+  "view.sphere.frameHint": "Nebeská sféra je soustředná s mapou, jako na klasickém orreryi. Záměrné přímky se u tělesa lámou, pokud pozorovatel není ve středu.",
+  "view.sphere.observerHint": "Nebeská sféra obklopuje místo pozorování, tedy tam, kam obloha skutečně patří. Záměrné přímky jsou pak rovné ve všech modelech; sféra ale není soustředná s mapou a mapa se zmenší, aby se vešla."
 }

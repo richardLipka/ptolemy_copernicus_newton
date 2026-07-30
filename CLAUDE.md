@@ -608,12 +608,43 @@ Saturn measures a large bend in both, but harmlessly: it sits almost on the ring
 so its outer segment is a stub a tenth of a unit long whose direction is
 ill-conditioned and visually negligible.
 
-**What was rejected.** Making the ring represent the observer's sky exactly —
-mapping every division boundary through the same observer-ray construction —
-would remove the parallax term and make true scale perfectly straight. It was not
-done because it makes the zodiac band unevenly spaced and wobble as Earth moves,
-trading a bend for a stranger artifact, and forces the ring to rebuild every
-frame.
+#### The observer-centred sphere
+
+The parallax term can be removed outright, and there is now a switch for it:
+**Sféra kolem pozorovatele / Sphere on observer** draws the celestial sphere
+around the observation point instead of concentric with the map.
+
+The implementation is cheaper than it sounds. The ring's divisions are absolute
+ecliptic longitudes whichever point they are measured from, so moving the sphere
+onto the observer is a **pure translation of the ring already built** — no
+rebuild, which is what makes it affordable every frame as the observer orbits.
+The pips move with it and the sight-line collapses to a single straight ray.
+
+With it on:
+
+- The ray leaves the observer at the body's true apparent longitude and lands on
+  the ring, in **every** model — the parallax between "direction λ from here" and
+  "the point at angle λ on the ring" cannot arise when the ring is centred on
+  here.
+- The zodiac reading stays exact, for the same reason: a ray at bearing λ falls in
+  the division spanning λ. Verified against the panel — Mercury's pip at bearing
+  108° is 18° into Cancer, matching the reported 18.4° Rak.
+- **At true scale the ray also passes exactly through the body.** That
+  combination — one straight line from observer through planet to the right point
+  on the zodiac — is the most faithful view the app can draw, and worth
+  recommending for reading the sky.
+- Under the compressed scale the ray still need not touch the marker, because
+  compression distorts directions measured from anywhere but the frame origin.
+  That residual is smaller than the old bend (0.1–12.7° against 22–27°) because
+  only the compression term is left.
+
+The costs, which is why it is a switch and not the default: the sphere is no
+longer concentric with the instrument, and the map must **shrink** to keep an
+off-centre ring from being clipped. `--ring-extent` is computed from the
+observer's offset and quantised to 0.05 so the instrument does not breathe as
+that offset varies — 1.90 observing from Earth, 2.45 from Saturn. The concentric
+case keeps the stylesheet's own value untouched, so the default view is
+unaffected by the feature existing.
 
 ### 13.5 Two illumination displays, answering different questions
 

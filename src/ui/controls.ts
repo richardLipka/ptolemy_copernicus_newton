@@ -12,7 +12,7 @@ import { MODES, type EngineId, type ModeId } from '../core/engines/types';
 import { MAX_JD, MIN_JD, dateFromJd, jdFromDate } from '../core/time';
 import type { ZodiacScheme } from '../core/zodiac';
 import { LOCALES, formatNumber, t, type Locale } from '../i18n/i18n';
-import type { ScaleMode, Store } from '../state/store';
+import type { ScaleMode, SphereCentre, Store } from '../state/store';
 import { el, field, panel, select, toggleButton } from './dom';
 
 const bodyOptions = (): { value: BodyId; label: string }[] =>
@@ -168,6 +168,32 @@ export function renderControls(
   }
   viewPanel.appendChild(schemeRow);
 
+  // What the sphere is drawn around. Concentric with the map is the traditional
+  // orrery arrangement; around the observer is where the sky actually belongs,
+  // and is the only way to get straight sight-lines in a heliocentric view.
+  const centreRow = el('div', 'segmented');
+  const centres: { id: SphereCentre; label: string }[] = [
+    { id: 'frame', label: t('view.sphere.frame') },
+    { id: 'observer', label: t('view.sphere.observer') },
+  ];
+  for (const centre of centres) {
+    centreRow.appendChild(
+      toggleButton(centre.label, state.sphereCentre === centre.id, () =>
+        store.setSphereCentre(centre.id),
+      ),
+    );
+  }
+  viewPanel.appendChild(centreRow);
+  viewPanel.appendChild(
+    el(
+      'p',
+      'note',
+      state.sphereCentre === 'observer'
+        ? t('view.sphere.observerHint')
+        : t('view.sphere.frameHint'),
+    ),
+  );
+
   const scaleRow = el('div', 'segmented');
   const scales: { id: ScaleMode; label: string }[] = [
     { id: 'compressed', label: t('view.compressedScale') },
@@ -248,6 +274,7 @@ export function renderControls(
   // otherwise looks like a defect rather than a consequence of the scale.
   if (
     state.showSightLines &&
+    state.sphereCentre === 'frame' &&
     state.observationPoint !== state.frameOrigin &&
     state.scaleMode === 'compressed'
   ) {

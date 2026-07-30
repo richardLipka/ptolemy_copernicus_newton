@@ -28,6 +28,9 @@ const RING_INNER = 1.06;
 const RING_OUTER = 1.26;
 const RING_FIGURES = 1.16;
 
+/** Headroom for a concentric ring and its labels. Matches layout.css. */
+const BASE_RING_EXTENT = 1.46;
+
 /** Marker diameters in px. Not to scale — Jupiter would swallow Mercury. */
 const BODY_SIZE: Record<BodyId, number> = {
   sun: 18,
@@ -466,6 +469,42 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     const state = store.get();
     const view = buildView(state);
 
+    /*
+     * Where the celestial sphere sits.
+     *
+     * Centring it on the observer is a pure translation of the ring already
+     * built: its divisions are absolute ecliptic longitudes either way, so only
+     * the point they are measured from moves. Nothing needs rebuilding, which is
+     * what makes this cheap enough to do every frame as the observer orbits.
+     *
+     * With the sphere around the observer, a sight-line becomes a single straight
+     * ray at the true apparent longitude — no parallax between "direction λ from
+     * here" and "the point at angle λ on the ring", because the ring is now
+     * centred on here.
+     */
+    const observerCentred = state.sphereCentre === 'observer';
+    const sphere = observerCentred ? view.observerPoint : { x: 0, y: 0 };
+
+    // Zoom out enough that an off-centre ring is not clipped, quantised so the
+    // instrument does not breathe as the observer's distance varies. The
+    // concentric case keeps the stylesheet's own value exactly, so the default
+    // view is unaffected by this feature existing.
+    if (observerCentred) {
+      // Quantise only the *extra* beyond the concentric extent, so an observer
+      // that happens to sit at the centre — Ptolemy's Earth — costs nothing and
+      // the view matches the frame-centred one exactly.
+      const offset = Math.hypot(sphere.x, sphere.y);
+      const extra = Math.max(0, offset + RING_OUTER + 0.2 - BASE_RING_EXTENT);
+      const needed = BASE_RING_EXTENT + Math.ceil(extra / 0.05) * 0.05;
+      instrument.style.setProperty('--ring-extent', needed.toFixed(3));
+    } else {
+      instrument.style.removeProperty('--ring-extent');
+    }
+
+    const sphereShift = `translate(calc(${sphere.x} * var(--unit)), calc(${sphere.y} * var(--unit)))`;
+    ringLayer.style.transform = sphereShift;
+    figureLayer.style.transform = sphereShift;
+
     // Only touch these when they change. The stylesheet hangs descendant rules
     // off them, so writing an attribute — even the same value — invalidates
     // style for the whole instrument, and the instrument contains a thousand
@@ -542,13 +581,26 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
         parts.sightlineOuter.style.display = 'none';
         parts.pip.style.display = 'none';
       } else {
+        // The ring intercept is measured from whatever the sphere is centred on.
+        const ray = ringIntercept(body.apparentLongitude, RING_INNER);
+        const target = { x: sphere.x + ray.x, y: sphere.y + ray.y };
+
         parts.sightline.style.display = '';
-        parts.sightlineOuter.style.display = '';
         parts.pip.style.display = '';
-        const target = ringIntercept(body.apparentLongitude, RING_INNER);
-        setSegment(parts.sightline, view.observerPoint, body.point);
-        setSegment(parts.sightlineOuter, body.point, target);
         setPoint(parts.pip, target);
+
+        if (observerCentred) {
+          // One straight ray from the observer to the sphere, at the body's true
+          // apparent longitude. Under the compressed scale it need not pass
+          // exactly through the marker, since compression distorts directions
+          // measured from anywhere but the frame origin; at true scale it does.
+          parts.sightlineOuter.style.display = 'none';
+          setSegment(parts.sightline, view.observerPoint, target);
+        } else {
+          parts.sightlineOuter.style.display = '';
+          setSegment(parts.sightline, view.observerPoint, body.point);
+          setSegment(parts.sightlineOuter, body.point, target);
+        }
       }
 
         // Close the gap between the newest logged position and where the body

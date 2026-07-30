@@ -85,6 +85,12 @@ quietly regress.
   ring, showing where each body *appears* as distinct from where it *is*. The
   ring switches between the twelve equal signs and the real IAU constellations,
   which have been drifting apart for two thousand years.
+- **Put the sky where it belongs.** The celestial sphere can be drawn concentric
+  with the map, as on a traditional orrery, or **around the observation point**.
+  The second is geometrically the honest one: sight-lines become single straight
+  rays at the true apparent longitude in every model, and at true scale they pass
+  exactly through the planet on their way to the zodiac. The cost is a sphere no
+  longer centred on the instrument.
 - **Switch off anything you don't want.** Trails, construction, sight-lines and
   star figures are all optional annotation, each with its own switch. Trails take
   their body's colour and fade with age; the harness is brass and uniform, so the

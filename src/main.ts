@@ -91,6 +91,7 @@ function controlsSignature(): string {
     state.frameOrigin,
     state.observationPoint,
     state.zodiacScheme,
+    state.sphereCentre,
     state.scaleMode,
     state.showOrbits,
     state.showSightLines,

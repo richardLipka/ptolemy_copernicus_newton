@@ -34,6 +34,17 @@ export const ENGINES: Record<EngineId, Engine> = {
 
 export type ScaleMode = 'compressed' | 'true';
 
+/**
+ * What the celestial sphere is drawn around.
+ *
+ * `frame` keeps it concentric with the map, the traditional orrery arrangement.
+ * `observer` puts it around the observation point instead, which is where the
+ * sky actually belongs: it makes sight-lines straight rays at the true apparent
+ * longitude in every model, at the cost of a ring no longer centred on the
+ * instrument.
+ */
+export type SphereCentre = 'frame' | 'observer';
+
 /** Which model the app opens on. */
 const INITIAL_MODE: ModeId = 'newton';
 
@@ -46,6 +57,7 @@ export interface State {
   observationPoint: BodyId;
   selectedBody: BodyId | null;
   zodiacScheme: ZodiacScheme;
+  sphereCentre: SphereCentre;
   scaleMode: ScaleMode;
   showOrbits: boolean;
   showSightLines: boolean;
@@ -84,6 +96,7 @@ export class Store {
       observationPoint: opening.defaultObservationPoint,
       selectedBody: null,
       zodiacScheme: 'signs',
+      sphereCentre: 'frame',
       scaleMode: 'compressed',
       showOrbits: true,
       showSightLines: true,
@@ -173,6 +186,10 @@ export class Store {
 
   setZodiacScheme(zodiacScheme: ZodiacScheme): void {
     this.patch({ zodiacScheme });
+  }
+
+  setSphereCentre(sphereCentre: SphereCentre): void {
+    this.patch({ sphereCentre });
   }
 
   setScaleMode(scaleMode: ScaleMode): void {
