@@ -190,6 +190,20 @@ the sky says full. Note the direction of the two verdicts — Ptolemy's longitud
 *beat* Copernicus's, so the case could not be made on where the planets appear.
 It was made on how they are lit.
 
+Ptolemy comes in three sub-modes. Two share his geometry and differ only in where
+the angles come from: **modern mean longitudes**, which isolate the error in his
+construction, or **his own tables from the Almagest** — what a second-century
+astronomer would actually have computed. The third recentres accurate positions
+on Earth, showing what he was approximating.
+
+Switching between the first two gives a result worth pausing on. His mean motions
+are excellent — good to a part in a hundred thousand, from Babylonian records
+spanning centuries — yet carried nineteen centuries forward they move Venus by
+22° and Mercury by 12°, while Mars and Saturn shift barely a degree. The
+difference is not accuracy but arithmetic: a fractional error in a period is paid
+once per revolution, and Venus has gone round three thousand times since 137 AD
+where Saturn has managed sixty-four.
+
 Remaining simplifications — Ptolemy's lunar crank and his latitude theory — are
 listed in [CLAUDE.md §12.4](CLAUDE.md).
 

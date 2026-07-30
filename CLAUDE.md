@@ -364,8 +364,9 @@ custom-property tokens.
 - **Ptolemaic (epicyclic)** — Almagest apogees, eccentricities, and epicycle
   radii, shifted once into the star-fixed J2000 frame. Driven by modern mean
   longitudes rather than Ptolemy's own tables, so that what the engine shows is
-  the error in his *geometry* rather than 1,900 years of accumulated tabular
-  drift.
+  the error in his *geometry* alone.
+- **Ptolemaic (Almagest tables)** — the same geometry driven by Ptolemy's own
+  mean motions and his precession. See §12.6.
 - **Newtonian** — Yoshida 4th-order symplectic integration at a quarter-day
   step, seeded from the reference ephemeris and checkpointed every five years.
 
@@ -469,6 +470,57 @@ exceeds 44% lit, so the model says crescent where the sky says full.
 The cost is that the epicycle is no longer visibly the heliocentric orbit — the
 correspondence that makes Copernicus's rearrangement obvious. That reading is a
 modern one, and the `ptolemaic-reframe` sub-mode already carries it.
+
+### 12.6 Ptolemy's own tables
+
+A third Ptolemaic sub-mode, differing from the epicyclic one in exactly one
+respect: where the mean longitudes come from. Holding the geometry fixed and
+swapping the tables separates the error in his *construction* from the drift in
+his *rates* — which is the only reason to have both.
+
+The rates are transcribed from the Almagest's sexagesimals. Their internal
+consistency is a good check: the solar figure reproduces the tropical year he
+states, 365;14,48 days, and the synodic periods come out right to about two parts
+in a hundred thousand — Babylonian records with baselines centuries long doing
+their work.
+
+**Measured drift from his epoch to the present, in apparent longitude:**
+
+| Mercury | Venus | Mars | Jupiter | Saturn | Sun |
+|---|---|---|---|---|---|
+| 12.5° | 22.2° | 0.6° | ~1° | 1.0° | 0.9° |
+
+This is not the result I expected, and the split is the interesting part. It does
+not track how good each rate is — they are uniformly excellent — but **how many
+times the body has gone round**. A fractional error in a period is paid once per
+revolution, and since 137 AD Venus has completed some 3,000 circuits and Mercury
+7,800, against Saturn's 64. Hence tens of degrees for the fast inner planets and
+about a lunar diameter for the slow outer ones.
+
+The Sun does well for a second reason. His *tropical* year is six and a half
+minutes too long — the error that walked the Julian calendar out of step with the
+seasons — but this app draws in a star-fixed frame, and there that error is
+largely cancelled by his precession being a quarter too slow. Two mistakes that
+partly undo each other.
+
+**Two modelling choices worth knowing:**
+
+- **Anchored at his epoch, not at Nabonassar.** The engine assumes his tables
+  were right in his own lifetime — roughly true, since he calibrated against
+  contemporary observations — and shows only what his *rates* do when carried
+  forward. Divergence therefore grows from nothing at 137 AD to its full size
+  today, which is what makes the comparison attributable.
+- **Apogees are converted identically in both sub-modes**, using the true
+  precession. Carrying the apsidal lines with his own slow value is tempting and
+  wrong: an apogee is fixed against the *stars*, and Ptolemy measured his
+  correctly in his own era. Using his rate there would misplace every apsidal
+  line by seven degrees at *all* dates including his own, so the two engines
+  would disagree at the very epoch the tables are anchored to. His precession
+  does still enter, in the one place it belongs — converting his tropical mean
+  motions into this star-fixed frame.
+
+`engines/almagest.test.ts` pins the figures down, including that divergence is
+below 0.05° near 137 AD and that the nested spheres are undisturbed.
 
 ## 13. UI Layer Notes
 

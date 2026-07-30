@@ -15,6 +15,7 @@ import { circularEngine } from '../core/engines/circular';
 import { keplerianEngine } from '../core/engines/keplerian';
 import { nbodyEngine } from '../core/engines/nbody';
 import {
+  ptolemaicAlmagestEngine,
   ptolemaicEpicyclicEngine,
   ptolemaicReframeEngine,
 } from '../core/engines/ptolemaic';
@@ -30,6 +31,7 @@ export const ENGINES: Record<EngineId, Engine> = {
   circular: circularEngine,
   'ptolemaic-reframe': ptolemaicReframeEngine,
   'ptolemaic-epicyclic': ptolemaicEpicyclicEngine,
+  'ptolemaic-almagest': ptolemaicAlmagestEngine,
   nbody: nbodyEngine,
 };
 

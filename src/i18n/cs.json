@@ -142,5 +142,7 @@
   "time.slower": "Zpomalit",
   "time.faster": "Zrychlit",
   "view.zoomHint": "Kolečkem myši lze mapu přiblížit a oddálit, vždy k nehybnému bodu. Dvojklikem do mapy se vrátíte na základní zobrazení.",
-  "info.modelDistanceRatio": "Poměr vzdáleností"
+  "info.modelDistanceRatio": "Poměr vzdáleností",
+  "engine.ptolemaic-almagest": "Almagest — Ptolemaiovy tabulky",
+  "engine.help.ptolemaic-almagest": "Táž konstrukce, ale poháněná Ptolemaiovými vlastními středními pohyby a jeho precesí — to, co by skutečně spočetl astronom 2. století. Jeho rychlosti jsou vynikající, chyba se však platí každou oběžnou dobu: vnější planety se za devatenáct století rozejdou asi o stupeň, Venuše a Merkur o desítky."
 }

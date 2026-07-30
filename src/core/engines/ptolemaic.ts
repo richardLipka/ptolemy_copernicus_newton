@@ -28,7 +28,7 @@
 
 import { AU_IN_KM, BODIES, type BodyId } from '../bodies';
 import type { Construction } from '../construction';
-import { centuriesSinceJ2000 } from '../time';
+import { centuriesSinceJ2000, jdFromCalendar } from '../time';
 import { DEG, add, scale, sub, vec3, type Vec3 } from '../vec';
 import { elementsAt, keplerianPositions } from './keplerian';
 import type { Engine, PositionSet } from './types';
@@ -165,15 +165,162 @@ function nestedDeferentRadii(): Partial<Record<BodyId, number>> {
 
 const NESTED_DEFERENT = nestedDeferentRadii();
 
-const apogeeInJ2000Frame = (almagestApogee: number): number =>
-  almagestApogee + APOGEE_PRECESSION_TO_J2000;
+/* --- where the mean motions come from ---------------------------------- */
 
-/** Mean longitude of a body in the J2000 ecliptic frame, degrees. */
-const meanLongitude = (jd: number, id: BodyId): number =>
-  elementsAt(jd, BODIES[id].orbit!).L;
+/**
+ * The angles that drive the construction.
+ *
+ * Ptolemy's model has two separable halves: the *geometry* — eccentric, equant,
+ * epicycle, nested spheres — and the *tables* that say where each mean point
+ * stands on a given day. Swapping the second while holding the first fixed is
+ * what separates the error in his geometry from 1,900 years of tabular drift,
+ * and it is the whole purpose of having two of these.
+ */
+interface MeanMotionSource {
+  /** Heliocentric mean longitude in the J2000 ecliptic, degrees. */
+  longitude(jd: number, id: BodyId): number;
+  /** Mean longitude of the Sun seen from Earth, degrees. */
+  solarLongitude(jd: number): number;
+  /** Mean longitude and anomaly of the Moon, degrees. */
+  lunar(jd: number): { longitude: number; anomaly: number };
+  /** Degrees to add to an Almagest apogee to carry it into the J2000 frame. */
+  apogeeShift: number;
+}
 
-/** Mean longitude of the Sun as seen from Earth. */
-const meanSolarLongitude = (jd: number): number => meanLongitude(jd, 'earth') + 180;
+/**
+ * Modern mean motions.
+ *
+ * What the engine shows is then the error in Ptolemy's *geometry* alone. The
+ * apogees are carried into the star-fixed frame with the true precession rate,
+ * not his, for the same reason.
+ */
+const MODERN_MOTIONS: MeanMotionSource = {
+  longitude: (jd, id) => elementsAt(jd, BODIES[id].orbit!).L,
+  solarLongitude: (jd) => elementsAt(jd, BODIES.earth.orbit!).L + 180,
+  lunar: (jd) => {
+    const t = centuriesSinceJ2000(jd);
+    return {
+      longitude: 218.3164477 + 481_267.88123421 * t - 0.0015786 * t * t,
+      anomaly: 134.9633964 + 477_198.8675055 * t + 0.0087414 * t * t,
+    };
+  },
+  apogeeShift: APOGEE_PRECESSION_TO_J2000,
+};
+
+/**
+ * Ptolemy's own mean motions, from the Almagest's tables.
+ *
+ * Rates in degrees per day, converted from his sexagesimals. Their quality is
+ * uneven in an instructive way. The *synodic* periods — how often a planet
+ * returns to the same configuration with the Sun — are accurate to about two
+ * parts in a hundred thousand, because Babylonian records of risings, stations
+ * and eclipses gave him baselines centuries long. The *sidereal* periods are
+ * looser: Saturn is out by 0.086%, which sounds negligible until it is carried
+ * over the 1,900 years to the present and becomes some twenty degrees.
+ *
+ * His solar figure reproduces the tropical year he states, 365;14,48 days. That
+ * is about six and a half minutes too long — the same error that walked the
+ * Julian calendar out of step with the seasons.
+ */
+const ALMAGEST_RATE = {
+  /** Tropical mean motion in longitude, degrees per day. */
+  sun: 0.9856352784,
+  moonLongitude: 13.1763822151,
+  moonAnomaly: 13.0649882,
+  saturn: 0.0334885402,
+  jupiter: 0.0831224364,
+  mars: 0.5240597114,
+  /** Inferior planets share the Sun's deferent motion; these are anomalies. */
+  venusAnomaly: 0.6165087339,
+  mercuryAnomaly: 3.1066990429,
+} as const;
+
+/**
+ * Ptolemy's precession: one degree per century, against a true 1.397.
+ *
+ * Too slow by a quarter, and the reason his *tropical* longitudes drift while
+ * his sidereal ones hold up. This engine works in the star-fixed J2000 frame,
+ * so his tropical rates are converted with his own constant — the conversion he
+ * would have made himself.
+ */
+const PTOLEMY_PRECESSION_PER_CENTURY = 1.0;
+const PTOLEMY_PRECESSION_PER_DAY = PTOLEMY_PRECESSION_PER_CENTURY / 36_525;
+
+/**
+ * Epoch at which his tables are taken to be exact.
+ *
+ * Anchoring here rather than at the era of Nabonassar is a deliberate
+ * idealisation, and the honest way to state it is that this engine assumes
+ * Ptolemy had his positions right in his own lifetime — which is roughly true,
+ * since he calibrated against contemporary observations — and shows only what
+ * his *rates* do to those positions when carried forward. Divergence therefore
+ * grows from nothing at 137 AD to its full size today.
+ */
+const ALMAGEST_EPOCH_JD = jdFromCalendar(137, 7, 20);
+
+/** A tropical rate expressed in the star-fixed frame this app draws in. */
+const toSidereal = (tropicalRate: number): number =>
+  tropicalRate - PTOLEMY_PRECESSION_PER_DAY;
+
+function almagestHeliocentricRate(id: BodyId): number {
+  switch (id) {
+    case 'saturn':
+      return toSidereal(ALMAGEST_RATE.saturn);
+    case 'jupiter':
+      return toSidereal(ALMAGEST_RATE.jupiter);
+    case 'mars':
+      return toSidereal(ALMAGEST_RATE.mars);
+    // An inferior planet's deferent carries the mean Sun, so its own motion is
+    // the Sun's plus the anomaly Ptolemy tabulated for it.
+    case 'venus':
+      return toSidereal(ALMAGEST_RATE.sun + ALMAGEST_RATE.venusAnomaly);
+    case 'mercury':
+      return toSidereal(ALMAGEST_RATE.sun + ALMAGEST_RATE.mercuryAnomaly);
+    case 'earth':
+      return toSidereal(ALMAGEST_RATE.sun);
+    default:
+      return toSidereal(ALMAGEST_RATE.sun);
+  }
+}
+
+const ALMAGEST_MOTIONS: MeanMotionSource = {
+  longitude: (jd, id) =>
+    MODERN_MOTIONS.longitude(ALMAGEST_EPOCH_JD, id) +
+    almagestHeliocentricRate(id) * (jd - ALMAGEST_EPOCH_JD),
+
+  solarLongitude: (jd) =>
+    MODERN_MOTIONS.solarLongitude(ALMAGEST_EPOCH_JD) +
+    toSidereal(ALMAGEST_RATE.sun) * (jd - ALMAGEST_EPOCH_JD),
+
+  lunar: (jd) => {
+    const anchor = MODERN_MOTIONS.lunar(ALMAGEST_EPOCH_JD);
+    const days = jd - ALMAGEST_EPOCH_JD;
+    return {
+      longitude: anchor.longitude + toSidereal(ALMAGEST_RATE.moonLongitude) * days,
+      anomaly: anchor.anomaly + ALMAGEST_RATE.moonAnomaly * days,
+    };
+  },
+
+  /*
+   * The same apogee conversion as the modern-angle engine, deliberately.
+   *
+   * It is tempting to carry the apsidal lines with his own slow precession too,
+   * but that would be wrong twice over. An apogee is fixed against the *stars*,
+   * which is the frame this app draws in, and Ptolemy measured his apogees
+   * correctly in his own era — his precession error corrupts tropical readings
+   * later on, not the star-frame position he started from. Using his rate here
+   * would misplace every apsidal line by seven degrees at *all* dates, including
+   * his own, so the two engines would disagree at the very epoch where the
+   * tables are anchored and the comparison would measure the wrong thing.
+   *
+   * His precession does still enter, in the one place it belongs: converting his
+   * tropical mean motions into this star-fixed frame, above.
+   */
+  apogeeShift: APOGEE_PRECESSION_TO_J2000,
+};
+
+const apogeeInJ2000Frame = (almagestApogee: number, motions: MeanMotionSource): number =>
+  almagestApogee + motions.apogeeShift;
 
 /**
  * Place the epicycle centre on the deferent.
@@ -239,11 +386,11 @@ export interface PtolemaicGeometry {
 }
 
 /** Ptolemy's Sun: uniform motion on a circle whose centre is offset from Earth. */
-function ptolemaicSunGeometry(jd: number): PtolemaicGeometry {
+function ptolemaicSunGeometry(jd: number, motions: MeanMotionSource): PtolemaicGeometry {
   const radius = 1;
   const eccentricity = (SOLAR_ECCENTRICITY / 60) * radius;
-  const apogee = apogeeInJ2000Frame(SOLAR_APOGEE);
-  const anomaly = meanSolarLongitude(jd) - apogee;
+  const apogee = apogeeInJ2000Frame(SOLAR_APOGEE, motions);
+  const anomaly = motions.solarLongitude(jd) - apogee;
 
   const centre = scale(unitAtLongitude(apogee), eccentricity);
   const position = add(centre, scale(unitAtLongitude(apogee + anomaly), radius));
@@ -263,8 +410,9 @@ function ptolemaicPlanetGeometry(
   jd: number,
   id: BodyId,
   model: AlmagestModel,
+  motions: MeanMotionSource,
 ): PtolemaicGeometry {
-  const apogee = apogeeInJ2000Frame(model.apogee);
+  const apogee = apogeeInJ2000Frame(model.apogee, motions);
 
   // Ptolemy fixed only the ratio r/R; the scale comes from his nested spheres.
   // Scaling all three together leaves the direction from Earth untouched, so
@@ -278,9 +426,9 @@ function ptolemaicPlanetGeometry(
   // the mean Sun while its epicycle carries the planet's motion. Those are the
   // two halves of r_planet - r_earth, assigned the opposite way round.
   const deferentAngle =
-    model.kind === 'superior' ? meanLongitude(jd, id) : meanSolarLongitude(jd);
+    model.kind === 'superior' ? motions.longitude(jd, id) : motions.solarLongitude(jd);
   const epicycleAngle =
-    model.kind === 'superior' ? meanSolarLongitude(jd) : meanLongitude(jd, id);
+    model.kind === 'superior' ? motions.solarLongitude(jd) : motions.longitude(jd, id);
 
   const centre = deferentPoint(
     deferentRadius,
@@ -301,10 +449,8 @@ function ptolemaicPlanetGeometry(
 }
 
 /** Ptolemy's simple lunar model: a concentric deferent with a retrograde epicycle. */
-function ptolemaicMoonGeometry(jd: number): PtolemaicGeometry {
-  const t = centuriesSinceJ2000(jd);
-  const longitude = 218.3164477 + 481_267.88123421 * t - 0.0015786 * t * t;
-  const anomaly = 134.9633964 + 477_198.8675055 * t + 0.0087414 * t * t;
+function ptolemaicMoonGeometry(jd: number, motions: MeanMotionSource): PtolemaicGeometry {
+  const { longitude, anomaly } = motions.lunar(jd);
 
   const deferentRadius = LUNAR_DEFERENT_KM / AU_IN_KM;
   const epicycleRadius = deferentRadius * (LUNAR_EPICYCLE_RADIUS / 60);
@@ -330,17 +476,22 @@ function ptolemaicMoonGeometry(jd: number): PtolemaicGeometry {
 export function ptolemaicGeometryFor(
   jd: number,
   id: BodyId,
+  motions: MeanMotionSource = MODERN_MOTIONS,
 ): PtolemaicGeometry | null {
   if (id === 'earth') return null;
-  if (id === 'sun') return ptolemaicSunGeometry(jd);
-  if (id === 'moon') return ptolemaicMoonGeometry(jd);
+  if (id === 'sun') return ptolemaicSunGeometry(jd, motions);
+  if (id === 'moon') return ptolemaicMoonGeometry(jd, motions);
 
   const model = ALMAGEST[id];
-  return model ? ptolemaicPlanetGeometry(jd, id, model) : null;
+  return model ? ptolemaicPlanetGeometry(jd, id, model, motions) : null;
 }
 
-export function ptolemaicConstruction(jd: number, id: BodyId): Construction | null {
-  const geometry = ptolemaicGeometryFor(jd, id);
+export function ptolemaicConstruction(
+  jd: number,
+  id: BodyId,
+  motions: MeanMotionSource = MODERN_MOTIONS,
+): Construction | null {
+  const geometry = ptolemaicGeometryFor(jd, id, motions);
   if (!geometry) return null;
 
   const construction: Construction = {
@@ -398,18 +549,40 @@ export function ptolemaicConstruction(jd: number, id: BodyId): Construction | nu
  * latitude is a separate construction that this engine does not implement, and
  * the app reads longitudes only. See CLAUDE.md §12.4.
  */
-export function ptolemaicEpicyclicPositions(jd: number): Map<BodyId, Vec3> {
+export function ptolemaicEpicyclicPositions(
+  jd: number,
+  motions: MeanMotionSource = MODERN_MOTIONS,
+): Map<BodyId, Vec3> {
   const positions = new Map<BodyId, Vec3>();
   positions.set('earth', vec3(0, 0, 0));
-  positions.set('sun', ptolemaicSunGeometry(jd).position);
-  positions.set('moon', ptolemaicMoonGeometry(jd).position);
+  positions.set('sun', ptolemaicSunGeometry(jd, motions).position);
+  positions.set('moon', ptolemaicMoonGeometry(jd, motions).position);
 
   for (const [id, model] of Object.entries(ALMAGEST) as [BodyId, AlmagestModel][]) {
-    positions.set(id, ptolemaicPlanetGeometry(jd, id, model).position);
+    positions.set(id, ptolemaicPlanetGeometry(jd, id, model, motions).position);
   }
 
   return positions;
 }
+
+/**
+ * The same construction driven by Ptolemy's own tables — what a second-century
+ * astronomer would actually have computed, rather than his geometry fed with
+ * modern angles.
+ */
+export const almagestTablePositions = (jd: number): Map<BodyId, Vec3> =>
+  ptolemaicEpicyclicPositions(jd, ALMAGEST_MOTIONS);
+
+export const almagestTableConstruction = (
+  jd: number,
+  id: BodyId,
+): Construction | null => ptolemaicConstruction(jd, id, ALMAGEST_MOTIONS);
+
+export const ptolemaicAlmagestEngine: Engine = {
+  id: 'ptolemaic-almagest',
+  positionsAt: (jd: number): PositionSet => almagestTablePositions(jd),
+  construction: almagestTableConstruction,
+};
 
 export const ptolemaicEpicyclicEngine: Engine = {
   id: 'ptolemaic-epicyclic',

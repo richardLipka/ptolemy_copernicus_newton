@@ -51,6 +51,7 @@ export type EngineId =
   | 'circular'
   | 'ptolemaic-reframe'
   | 'ptolemaic-epicyclic'
+  | 'ptolemaic-almagest'
   | 'nbody';
 
 export type ModeId = 'ptolemy' | 'copernicus' | 'newton';
@@ -70,7 +71,7 @@ export const MODES: Record<ModeId, Mode> = {
     // showing deferents, epicycles and the equant, which is also the only
     // sub-mode with machinery to display. The Earth-centred reframe is the
     // analytical companion to it, one selection away.
-    engines: ['ptolemaic-epicyclic', 'ptolemaic-reframe'],
+    engines: ['ptolemaic-epicyclic', 'ptolemaic-almagest', 'ptolemaic-reframe'],
     defaultFrameOrigin: 'earth',
     defaultObservationPoint: 'earth',
   },
