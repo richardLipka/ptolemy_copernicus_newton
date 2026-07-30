@@ -237,6 +237,18 @@ export function renderControls(
     harnessPanel.appendChild(clear);
   }
 
+  // The sight-line runs observer → body → zodiac. It bends at the body whenever
+  // the observer is not the frame origin, and the compressed scale makes that
+  // bend large; at true scale it nearly vanishes. Worth saying, since a 27° bend
+  // otherwise looks like a defect rather than a consequence of the scale.
+  if (
+    state.showSightLines &&
+    state.observationPoint !== state.frameOrigin &&
+    state.scaleMode === 'compressed'
+  ) {
+    harnessPanel.appendChild(el('p', 'note', t('harness.sightlineBend')));
+  }
+
   if (store.engine.construction && state.showConstruction) {
     harnessPanel.appendChild(
       el(

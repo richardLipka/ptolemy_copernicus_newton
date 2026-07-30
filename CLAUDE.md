@@ -513,7 +513,57 @@ twice the centre's offset, arms joining the right points — because the harness
 is a second derivation of the same geometry and could otherwise drift into a
 diagram of nothing.
 
-### 13.4 Two illumination displays, answering different questions
+### 13.4 Sight-lines are two segments, and why they bend
+
+A sight-line runs **observer → body → zodiac ring**, as two segments rather than
+one straight line. Drawn straight it can satisfy only one of its two jobs, and
+the first version satisfied neither exactly.
+
+Two independent distortions sit between the body and the ring:
+
+1. **Parallax of a finite ring.** The ring's divisions are absolute ecliptic
+   longitudes measured from the centre of the instrument, but apparent longitude
+   is an angle measured *at the observer*. A line from an off-centre observer to
+   the ring point at absolute λ does not point along λ. This affects both scales
+   — it was leaving a 1.6–5.2° miss even at true scale, where a uniform scaling
+   should preserve every angle exactly.
+2. **Radial compression.** The compressed scale preserves directions only from
+   the frame origin, so the drawn direction from Earth to a planet is not the
+   true one. Up to about 27° for the inner planets.
+
+Both vanish when the observer *is* the frame origin, which is why the lines are
+dead straight in Ptolemy's geocentric view and only there. That is a real
+geometric fact about the models rather than an implementation quirk, and it is
+worth pointing out to students: the geocentric picture is the one in which the
+sky and the map share a centre.
+
+The two-segment form guarantees what matters — the line demonstrably connects the
+observer to the body, and the pip lands at the body's true apparent longitude, so
+the zodiac reading is exact. The bend at the body is the size of the distortion.
+It is near-invisible at true scale, large under compression, and the UI says so
+rather than leaving it looking like a defect.
+
+Measured bend, 2026 epoch, observing from Earth with the Sun at the centre:
+
+| | compressed | true scale |
+|---|---|---|
+| Mercury | 22.6° | 1.7° |
+| Venus | 26.8° | 3.9° |
+| Mars | 17.5° | 4.4° |
+| Jupiter | 0.3° | 0.1° |
+
+Saturn measures a large bend in both, but harmlessly: it sits almost on the ring,
+so its outer segment is a stub a tenth of a unit long whose direction is
+ill-conditioned and visually negligible.
+
+**What was rejected.** Making the ring represent the observer's sky exactly —
+mapping every division boundary through the same observer-ray construction —
+would remove the parallax term and make true scale perfectly straight. It was not
+done because it makes the zodiac band unevenly spaced and wobble as Earth moves,
+trading a bend for a stranger artifact, and forces the ring to rebuild every
+frame.
+
+### 13.5 Two illumination displays, answering different questions
 
 **The map** is a plan view, so a body's lit side is simply the half facing the
 Sun and the terminator is a straight line through its centre — we see that great
@@ -563,7 +613,7 @@ the choice of model changes what you predict.
 Note also that Ptolemy again beats Copernicus, on Mars and the Moon, in the same
 ordering the longitude errors show. `illumination.test.ts` asserts all of this.
 
-### 13.5 Overlays are all optional, and trails must not look like harness
+### 13.6 Overlays are all optional, and trails must not look like harness
 
 Everything drawn over the bodies is annotation, grouped in one panel and each
 switchable on its own: **trails**, the **construction** circles, **sight-lines**
@@ -574,7 +624,7 @@ channels at once: a trail takes its body's colour and **fades with age**, giving
 it a direction of travel; the harness is uniform brass. Colour alone would not
 carry it — one faint line looks much like another — and neither would the fade.
 
-### 13.6 The celestial sphere's star figures are ornament
+### 13.7 The celestial sphere's star figures are ornament
 
 The ring shows principal stars joined by figure lines, in the manner of an
 engraved star chart. **Star positions are approximate and decorative.** The
@@ -585,7 +635,7 @@ are marked as such in the source so nobody later mistakes them for a catalogue.
 Pictorial engravings — an actual ram, an actual bull — would need SVG artwork
 or bitmaps and are therefore out of scope under the CSS-only constraint.
 
-### 13.7 Still assumed, not confirmed
+### 13.8 Still assumed, not confirmed
 
 - **Deployment form** — building for a folder of static assets with a relative
   base path. A single-file inlined bundle is a small config change if needed.

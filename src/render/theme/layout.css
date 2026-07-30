@@ -297,22 +297,39 @@ body {
 
 /* --- sight-lines -------------------------------------------------------- */
 
+/*
+ * Sight-lines come in two segments — observer to body, then body onward to the
+ * zodiac — because no single straight line can both touch the body and meet the
+ * ring at the body's true apparent longitude once the observer sits off-centre.
+ * See the comment in orrery.ts.
+ */
 .sightline {
   position: absolute;
   top: 50%;
   left: 50%;
   height: var(--line-hairline);
   width: calc(var(--len) * var(--unit));
-  background: linear-gradient(
-    to right,
-    color-mix(in srgb, var(--stroke) 20%, transparent),
-    var(--stroke)
-  );
+  background: var(--stroke);
   transform-origin: 0 50%;
   transform: translate(calc(var(--x) * var(--unit)), calc(var(--y) * var(--unit)))
     rotate(calc(var(--angle) * 1deg));
   opacity: var(--sightline-opacity);
   pointer-events: none;
+}
+
+/* The actual line of sight: the stronger of the two. */
+.sightline--inner {
+  opacity: calc(var(--sightline-opacity) * 1.15);
+}
+
+/* The continuation out to the sphere, fading as it leaves the body. */
+.sightline--outer {
+  background: linear-gradient(
+    to right,
+    var(--stroke),
+    color-mix(in srgb, var(--stroke) 35%, transparent)
+  );
+  opacity: calc(var(--sightline-opacity) * 0.8);
 }
 
 .sightline__pip {

@@ -40,6 +40,7 @@
 
   "harness.label": "Pomocné čáry",
   "harness.clearTrails": "Smazat stopy",
+  "harness.sightlineBend": "Záměrná přímka se u tělesa láme, protože zhuštěné měřítko zkresluje úhly měřené odjinud než ze středu mapy. Ve skutečném měřítku se zlom téměř vytratí; v ptolemaiovském pohledu, kde je Země zároveň středem, je přímka úplně rovná.",
   "harness.trailsEmpty": "Dráhy se kreslí ze skutečně proběhlých poloh, nikoli předem vypočtené. Spusťte čas a stopa začne vznikat.",
   "harness.trailsRecorded": "Zaznamenáno {{days}} dní, krok {{step}} dne. Delší historie se ukládá hruběji.",
 

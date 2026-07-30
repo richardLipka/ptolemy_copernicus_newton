@@ -40,6 +40,7 @@
 
   "harness.label": "Overlays",
   "harness.clearTrails": "Clear trails",
+  "harness.sightlineBend": "The sight-line bends at the body because the compressed scale distorts angles measured from anywhere but the centre of the map. At true scale the bend all but disappears; in Ptolemy's view, where Earth is also the centre, the line is perfectly straight.",
   "harness.trailsEmpty": "Orbits are drawn from positions actually visited, not computed in advance. Run the clock and the trail builds.",
   "harness.trailsRecorded": "{{days}} days recorded, {{step}}-day steps. Longer history is kept more coarsely.",
 

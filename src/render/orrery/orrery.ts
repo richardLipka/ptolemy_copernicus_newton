@@ -138,7 +138,10 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     marker: HTMLDivElement;
     phase: HTMLDivElement;
     label: HTMLDivElement;
+    /** Observer to body. */
     sightline: HTMLDivElement;
+    /** Body onward to the zodiac ring. */
+    sightlineOuter: HTMLDivElement;
     pip: HTMLDivElement;
     ghost: HTMLDivElement;
     ghostLink: HTMLDivElement;
@@ -165,8 +168,12 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     marker.appendChild(phase);
 
     const label = div('body__label');
-    const sightline = div('sightline');
+    // Observer to body: solid, since it is a real line of sight.
+    const sightline = div('sightline sightline--inner');
     sightline.style.setProperty('--stroke', tint);
+    // Body to the zodiac: the same ray continued out to the sphere.
+    const sightlineOuter = div('sightline sightline--outer');
+    sightlineOuter.style.setProperty('--stroke', tint);
     const pip = div('sightline__pip');
     pip.style.setProperty('--stroke', tint);
 
@@ -183,7 +190,7 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     trailLeader.style.display = 'none';
     pathLayer.appendChild(trailLeader);
 
-    sightLayer.append(sightline, pip);
+    sightLayer.append(sightline, sightlineOuter, pip);
     bodyLayer.append(ghostLink, ghost, marker, label);
 
     const select = (): void => store.selectBody(id);
@@ -200,6 +207,7 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
       phase,
       label,
       sightline,
+      sightlineOuter,
       pip,
       ghost,
       ghostLink,
@@ -464,19 +472,34 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
         );
       }
 
-      // Sight-line: drawn at the true apparent longitude, which is what the
-      // ring reading has to be correct about. Under compressed scale it will
-      // not pass exactly through the marker, because compressing radii about
-      // the frame origin distorts angles measured from anywhere else; true
-      // scale removes the discrepancy.
+      // Sight-line, in two segments that mean different things: from the
+      // observer to the body, then from the body out to where it appears on the
+      // zodiac. Drawn as one straight line it could only satisfy one of those
+      // and it used to satisfy neither exactly.
+      //
+      // The reason is that two independent distortions sit between them. The
+      // ring's divisions are absolute ecliptic longitudes measured from the
+      // centre of the instrument, but a sight-line starts at the observer — so
+      // whenever the observer is not the frame origin there is a parallax
+      // between "direction λ from the observer" and "the point at angle λ on the
+      // ring". On top of that, the compressed scale distorts angles measured
+      // from anywhere but the frame origin.
+      //
+      // Both vanish in Ptolemy's geocentric view, where observer and centre
+      // coincide, which is exactly why the lines are dead straight there. The
+      // kink elsewhere is the size of the distortion, and shrinks to almost
+      // nothing at true scale.
       if (body.isObserver) {
         parts.sightline.style.display = 'none';
+        parts.sightlineOuter.style.display = 'none';
         parts.pip.style.display = 'none';
       } else {
         parts.sightline.style.display = '';
+        parts.sightlineOuter.style.display = '';
         parts.pip.style.display = '';
         const target = ringIntercept(body.apparentLongitude, RING_INNER);
-        setSegment(parts.sightline, view.observerPoint, target);
+        setSegment(parts.sightline, view.observerPoint, body.point);
+        setSegment(parts.sightlineOuter, body.point, target);
         setPoint(parts.pip, target);
       }
 
