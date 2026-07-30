@@ -57,6 +57,16 @@ const INITIAL_MODE: ModeId = 'newton';
  */
 export const RATE_LADDER: readonly number[] = [0.25, 1, 5, 20, 100, 400];
 
+/**
+ * Zoom limits.
+ *
+ * The floor shows rather more than the fitted view; the ceiling is set by the
+ * Moon, which needs a good deal of magnification before its exaggerated orbit
+ * separates cleanly from Earth.
+ */
+export const MIN_ZOOM = 0.4;
+export const MAX_ZOOM = 20;
+
 /** Closest rung to an arbitrary rate, for stepping from an off-ladder value. */
 function nearestRung(rate: number): number {
   let best = 0;
@@ -77,6 +87,8 @@ export interface State {
   zodiacScheme: ZodiacScheme;
   sphereCentre: SphereCentre;
   scaleMode: ScaleMode;
+  /** Magnification of the map, 1 being the fitted view. */
+  zoom: number;
   showOrbits: boolean;
   showSightLines: boolean;
   showStarFigures: boolean;
@@ -117,6 +129,7 @@ export class Store {
       zodiacScheme: 'signs',
       sphereCentre: 'frame',
       scaleMode: 'compressed',
+      zoom: 1,
       showOrbits: true,
       showSightLines: true,
       showStarFigures: true,
@@ -215,6 +228,29 @@ export class Store {
   setScaleMode(scaleMode: ScaleMode): void {
     this.trails.invalidateProjection();
     this.patch({ scaleMode });
+  }
+
+  /**
+   * Magnify about the stationary point.
+   *
+   * Zoom needs no centre of its own: the frame origin is already at the middle
+   * of the instrument, and every element is positioned in units of the map
+   * radius, so scaling that unit magnifies about the origin by construction.
+   * Nothing is reprojected and no trail is recomputed — the same numbers are
+   * simply drawn larger.
+   */
+  zoomBy(factor: number): void {
+    this.setZoom(this.state.zoom * factor);
+  }
+
+  setZoom(zoom: number): void {
+    const clamped = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
+    if (clamped === this.state.zoom) return;
+    this.patch({ zoom: clamped });
+  }
+
+  resetZoom(): void {
+    this.setZoom(1);
   }
 
   toggle(

@@ -58,7 +58,8 @@ quietly regress.
 
 - **Move the centre.** Any body can be the stationary point in any model. The
   Ptolemaic and Copernican maps of the same instant are the same geometry seen
-  from two chairs.
+  from two chairs. The mouse wheel zooms about whatever you have made the centre;
+  double-click returns to the fitted view.
 - **See the machinery.** In Ptolemy and Copernicus modes, select a body and the
   construction appears: deferent, epicycle, the arms carrying them, and the
   **equant** — the off-centre point about which the epicycle's centre sweeps

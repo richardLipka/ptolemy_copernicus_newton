@@ -157,6 +157,12 @@ export function renderControls(container: HTMLElement, store: Store): void {
   viewPanel.appendChild(scaleRow);
   viewPanel.appendChild(el('p', 'note', t('view.scaleHint')));
 
+  // The wheel has no visible affordance, so it needs saying — as does the way
+  // back. Deliberately static: putting the live magnification here would tie the
+  // controls to a value that changes on every wheel tick, and rebuilding the
+  // panels through a gesture is exactly the trap the clock readout fell into.
+  viewPanel.appendChild(el('p', 'note', t('view.zoomHint')));
+
   container.appendChild(viewPanel);
 
   // --- harness ----------------------------------------------------------

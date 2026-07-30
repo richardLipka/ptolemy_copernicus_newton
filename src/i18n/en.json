@@ -144,5 +144,6 @@
   "theme.lcars": "LCARS",
   "theme.lcars.short": "LCARS",
   "time.slower": "Slower",
-  "time.faster": "Faster"
+  "time.faster": "Faster",
+  "view.zoomHint": "The mouse wheel zooms the map, always about the stationary point. Double-click the map to return to the fitted view."
 }

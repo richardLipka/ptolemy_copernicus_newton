@@ -144,5 +144,6 @@
   "theme.lcars": "LCARS",
   "theme.lcars.short": "LCARS",
   "time.slower": "Zpomalit",
-  "time.faster": "Zrychlit"
+  "time.faster": "Zrychlit",
+  "view.zoomHint": "Kolečkem myši lze mapu přiblížit a oddálit, vždy k nehybnému bodu. Dvojklikem do mapy se vrátíte na základní zobrazení."
 }

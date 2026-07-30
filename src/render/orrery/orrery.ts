@@ -226,6 +226,9 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
   /** Signature of the last trail draw, so identical frames do no DOM work. */
   let lastTrailKey = '';
 
+  /** Last magnification written to the DOM. */
+  let lastZoom = Number.NaN;
+
   /**
    * The newest logged point per body, in screen units.
    *
@@ -504,6 +507,13 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     const sphereShift = `translate(calc(${sphere.x} * var(--unit)), calc(${sphere.y} * var(--unit)))`;
     ringLayer.style.transform = sphereShift;
     figureLayer.style.transform = sphereShift;
+
+    // Writing --unit's multiplier invalidates every descendant's transform, so
+    // it is set only when it actually changes rather than every frame.
+    if (state.zoom !== lastZoom) {
+      lastZoom = state.zoom;
+      instrument.style.setProperty('--zoom', String(state.zoom));
+    }
 
     // Only touch these when they change. The stylesheet hangs descendant rules
     // off them, so writing an attribute — even the same value — invalidates

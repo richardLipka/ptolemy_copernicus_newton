@@ -487,6 +487,25 @@ labels 6.3–14.1:1. Atelier's muted text was darkened from the inherited value,
 which only reached 3.4:1 against a near-white ground; Orrery keeps the original,
 since preserving that look is the point of having both.
 
+**Zoom** is the mouse wheel, and needs no centre of its own. Every element on the
+instrument is positioned in units of `--unit`, and the frame origin sits at the
+instrument's middle, so folding a multiplier into that unit magnifies *about the
+stationary point* by construction — no translation, no reprojection, no trail
+recomputed. Verified: with Mars as the stationary point, Mars stays pinned at zero
+offset while everything else moves out by exactly the zoom factor.
+
+The multiplier is written only when it changes, since it invalidates every
+descendant's transform; a wheel event on every frame still holds 60fps. The wheel
+is bound to `#app` rather than the instrument, whose box is smaller than the area
+its drawing covers once magnified, and events from inside a dock are left alone so
+the panels can still scroll. Double-click resets, because the wheel offers no
+obvious way back.
+
+The zoom hint in the controls is deliberately **static**: putting the live
+magnification there would tie the panels to a value that changes on every wheel
+tick, and rebuilding them through a gesture is the trap the clock readout fell
+into.
+
 **The rate ladder** (`RATE_LADDER`) is stepped by − and + buttons beside
 play/pause. It is geometric — 0.25, 1, 5, 20, 100, 400 days a second — because the
 useful range spans a factor of 1600 and a linear control would be unusable. The

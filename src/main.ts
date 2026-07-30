@@ -227,6 +227,41 @@ function render(): void {
   }
 }
 
+// --- zoom ----------------------------------------------------------------
+
+/**
+ * How sharply the wheel bites. Applied to an exponential, so a notch multiplies
+ * rather than adds and zooming feels the same at every magnification.
+ */
+const ZOOM_SENSITIVITY = 0.0016;
+
+/** Rough pixel equivalents, for wheels that report lines or pages. */
+const DELTA_TO_PIXELS = [1, 16, 400];
+
+/**
+ * Wheel zoom, listened for on the whole app rather than the instrument.
+ *
+ * The instrument's box is smaller than the area its drawing covers once
+ * magnified, so binding to it would leave dead zones. Events originating inside
+ * a dock are left alone, or the panels could not be scrolled.
+ */
+root.addEventListener(
+  'wheel',
+  (event: WheelEvent) => {
+    if ((event.target as Element | null)?.closest('.dock')) return;
+    event.preventDefault();
+    const pixels = event.deltaY * (DELTA_TO_PIXELS[event.deltaMode] ?? 1);
+    store.zoomBy(Math.exp(-pixels * ZOOM_SENSITIVITY));
+  },
+  { passive: false },
+);
+
+/** Double-click clears the magnification, since the wheel offers no way back. */
+root.addEventListener('dblclick', (event: MouseEvent) => {
+  if ((event.target as Element | null)?.closest('.dock')) return;
+  store.resetZoom();
+});
+
 store.subscribe(render);
 
 /**

@@ -44,10 +44,18 @@
   --ring-extent: 1.46;
   --field: 600px;
 
+  /*
+   * Magnification, from the wheel. Everything on the instrument is positioned
+   * in units of --unit and the frame origin sits at the centre, so folding zoom
+   * into the unit magnifies about the stationary point by construction — no
+   * translation, no reprojection, and no trail recomputed.
+   */
+  --zoom: 1;
+
   position: relative;
   width: calc(var(--field) / var(--ring-extent));
   aspect-ratio: 1;
-  --unit: calc(var(--field) / var(--ring-extent) / 2);
+  --unit: calc(var(--field) / var(--ring-extent) / 2 * var(--zoom));
 }
 
 /* --- zodiac ring -------------------------------------------------------- */
