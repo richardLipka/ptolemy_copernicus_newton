@@ -34,6 +34,9 @@ export const ENGINES: Record<EngineId, Engine> = {
 
 export type ScaleMode = 'compressed' | 'true';
 
+/** Which model the app opens on. */
+const INITIAL_MODE: ModeId = 'newton';
+
 export interface State {
   mode: ModeId;
   engineId: EngineId;
@@ -68,12 +71,17 @@ export class Store {
   constructor() {
     this.clock = new SimulationClock(jdFromDate(new Date()), 1);
 
+    // The canonical centre and vantage of the opening mode. They seed the state
+    // and are never applied again: switching models afterwards leaves both
+    // alone, so a comparison changes one thing at a time.
+    const opening = MODES[INITIAL_MODE];
+
     this.state = {
-      mode: 'newton',
-      engineId: 'nbody',
+      mode: INITIAL_MODE,
+      engineId: opening.engines[0]!,
       ghostEngineId: null,
-      frameOrigin: 'sun',
-      observationPoint: 'earth',
+      frameOrigin: opening.defaultFrameOrigin,
+      observationPoint: opening.defaultObservationPoint,
       selectedBody: null,
       zodiacScheme: 'signs',
       scaleMode: 'compressed',
@@ -109,14 +117,17 @@ export class Store {
   /**
    * Change model.
    *
-   * The frame origin moves to the mode's canonical centre — Earth for Ptolemy,
-   * the Sun for the other two — because that arrangement *is* what each model
-   * asserts, and opening Ptolemy with the Sun at the middle would misrepresent
-   * it. Everything else survives the switch: same date, same observer, same
-   * selection, same toggles.
+   * Only the engine changes. The frame origin, the observation point, the date,
+   * the selection and every view toggle survive, so switching models compares
+   * like with like — which is the entire purpose of the app, and is undermined
+   * the moment a switch quietly moves the centre as well.
    *
-   * Isolating the engine's contribution with the frame held fixed is what the
-   * ghost overlay is for, and the frame picker stays free in every mode.
+   * An earlier version snapped the frame origin to each mode's canonical centre,
+   * on the grounds that a mode called "Ptolemy" ought to open Earth-centred.
+   * That reasoning was wrong: it changed two things at once and so made it
+   * impossible to tell the model's contribution from the frame's. The canonical
+   * centres now seed the *initial* state only, and the frame picker is the one
+   * place the centre moves.
    */
   setMode(mode: ModeId): void {
     const engineId = MODES[mode].engines[0]!;
@@ -124,12 +135,7 @@ export class Store {
     // A trail records one model's history; carrying it into another would
     // attribute positions to an engine that never produced them.
     this.trails.reset();
-    this.patch({
-      mode,
-      engineId,
-      ghostEngineId: ghost,
-      frameOrigin: MODES[mode].defaultFrameOrigin,
-    });
+    this.patch({ mode, engineId, ghostEngineId: ghost });
   }
 
   setEngine(engineId: EngineId): void {

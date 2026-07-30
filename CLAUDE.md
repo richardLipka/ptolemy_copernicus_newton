@@ -127,10 +127,20 @@ A pure post-processing step applied to any engine's output:
 recenter(positions: Map<BodyId, Vec3>, originId: BodyId): Map<BodyId, Vec3>
 ```
 
-Free choice in every mode. Each mode has a default (Earth for Ptolemy, Sun for
-Copernicus, Sun for Newton) and the picker is one shared component. Selecting a
-non-canonical origin for a mode is allowed and unremarked in the math; the UI may
-note it in the info panel where historically relevant.
+Free choice in every mode, and the picker is one shared component. Selecting a
+non-canonical origin for a mode is allowed and unremarked in the math.
+
+Each mode declares a canonical centre (Earth for Ptolemy, the Sun for the other
+two), but **it is applied only to the app's opening state and never again**.
+Switching model leaves the frame origin and the observation point exactly where
+the user put them, along with the date, the selection and every view toggle — so
+a comparison changes one thing at a time.
+
+An earlier version snapped the frame origin to the mode's default on every
+switch, reasoning that a mode called "Ptolemy" ought to open Earth-centred. That
+was a mistake: moving the centre and the engine together makes it impossible to
+tell which produced the difference you are looking at, which is precisely the
+question the app exists to answer. `state/store.test.ts` pins this down.
 
 ### 4.5 Observation Point
 
