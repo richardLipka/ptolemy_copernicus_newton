@@ -33,7 +33,10 @@
     --panel-surface: #101014;
     --panel-inner: rgba(255, 156, 0, 0.06);
     --panel-edge: transparent;
-    --panel-radius: 0px;
+    /* The elbow below supplies the one heavily rounded corner; this softens the
+       other three so the whole thing reads as moulded plastic rather than as a
+       square hole. */
+    --panel-radius: 8px;
     --panel-blur: 0px;
     --panel-shadow: none;
     --control-radius: 999px;
@@ -85,15 +88,15 @@
       border-start-end-radius: 0;
     }
 
-    /* The elbow: one corner heavily rounded, the rest square. */
+    /* The elbow: one corner swung out much further than the others. */
     & .dock > * {
-      border-start-start-radius: 1.6rem;
+      border-start-start-radius: 2.2rem;
       overflow: hidden;
     }
 
     & .dock--left > * {
-      border-start-start-radius: 0;
-      border-end-start-radius: 1.6rem;
+      border-start-start-radius: var(--panel-radius);
+      border-end-start-radius: 2.2rem;
     }
 
     & button {

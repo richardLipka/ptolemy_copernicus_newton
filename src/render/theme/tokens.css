@@ -66,10 +66,11 @@
     --panel-surface: rgba(232, 220, 192, 0.92);
     --panel-inner: rgba(255, 250, 236, 0.35);
     --panel-edge: var(--accent-dark);
-    --panel-radius: 2px;
+    /* Every theme rounds its corners; only the amount differs. */
+    --panel-radius: 10px;
     --panel-blur: 0px;
     --panel-shadow: none;
-    --control-radius: 1px;
+    --control-radius: 7px;
     --hover-tint: rgba(212, 177, 106, 0.22);
 
     /* Unlit side of a body, and the same colour opaque for the phase disc. */

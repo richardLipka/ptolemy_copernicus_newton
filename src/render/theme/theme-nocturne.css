@@ -32,10 +32,10 @@
     --panel-surface: rgba(28, 24, 17, 0.82);
     --panel-inner: rgba(240, 230, 210, 0.04);
     --panel-edge: #6b552f;
-    --panel-radius: 3px;
-    --panel-blur: 10px;
+    --panel-radius: 14px;
+    --panel-blur: 12px;
     --panel-shadow: 0 6px 22px rgba(0, 0, 0, 0.55);
-    --control-radius: 2px;
+    --control-radius: 9px;
     --hover-tint: rgba(201, 164, 102, 0.18);
 
     /* Nights are darker than the unlit side of a planet ever is on paper, so

@@ -247,6 +247,15 @@
     flex-wrap: wrap;
   }
 
+  /* Toggle labels in a wrapping row are as cramped as the segmented ones. */
+  .button-row button:not(.icon-button) {
+    font-size: var(--size-label);
+    letter-spacing: 0.02em;
+    padding-inline: 0.45rem;
+    hyphens: auto;
+    overflow-wrap: break-word;
+  }
+
   .segmented {
     display: flex;
     border: var(--line-fine) solid var(--accent-dark);
@@ -254,6 +263,17 @@
     overflow: hidden;
   }
 
+  /*
+   * Segmented labels are the tightest text in the app: three or four of them
+   * share one dock-width row, and the longest are single Czech words that cannot
+   * wrap — "Ptolemaios", "Pergamen". They were overflowing their boxes.
+   *
+   * The letter-spacing was the biggest culprit rather than the font size: at
+   * 0.08em, a ten-character label spends about ten pixels on tracking alone.
+   * Dropping most of it and taking the label size back buys enough room, with
+   * hyphenation and word-breaking as backstops so a translation can never spill
+   * again.
+   */
   .segmented button {
     flex: 1;
     border: 0;
@@ -261,10 +281,27 @@
     border-inline-end: var(--line-hairline) solid var(--accent-dark);
     background: transparent;
     min-width: 0;
+    font-size: var(--size-label);
+    letter-spacing: 0.02em;
+    padding-inline: 0.3rem;
+    line-height: 1.2;
+    hyphens: auto;
+    overflow-wrap: break-word;
+    text-wrap: balance;
   }
 
   .segmented button:last-child {
     border-inline-end: 0;
+  }
+
+  /*
+   * The top bar is not width-constrained, so its buttons size to their text
+   * instead of sharing a fixed row. With `flex: 1` they were being squeezed
+   * below their content width and clipping the theme names.
+   */
+  .topbar .segmented button {
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 
   /* A square button for the transport and rate steppers. */

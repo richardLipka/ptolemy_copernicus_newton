@@ -34,11 +34,11 @@
     --panel-inner: rgba(160, 122, 66, 0.05);
     /* Elevation rather than a ruled border: the edge is barely there. */
     --panel-edge: rgba(35, 32, 27, 0.1);
-    --panel-radius: 12px;
+    --panel-radius: 18px;
     --panel-blur: 16px;
     --panel-shadow: 0 2px 4px rgba(35, 32, 27, 0.04),
       0 12px 32px rgba(35, 32, 27, 0.08);
-    --control-radius: 7px;
+    --control-radius: 10px;
     --hover-tint: rgba(160, 122, 66, 0.1);
 
     --shadow-fill: rgba(30, 26, 20, 0.78);
