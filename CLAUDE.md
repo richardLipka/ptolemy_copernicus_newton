@@ -414,19 +414,8 @@ regress.
   not the evection. Ptolemy's correction for it famously made the Moon's
   distance vary nearly 2:1, predicting an apparent size change that plainly does
   not happen — a good teaching point, and a candidate for later work.
-- **The nested spheres are not modelled, so Venus goes full.** Ptolemy's
-  construction fixes *angles*, not distances; his published epicycle ratio lets
-  Venus reach the far side of its epicycle and show a full disc. What actually
-  forbade a full Venus was the nested-sphere cosmology wrapped around the
-  construction, in which Venus's shell lay entirely inside the Sun's.
-
-  So switching engines does **not** reproduce Galileo's observation, and the
-  app must not claim it does — `core/venus-phases.test.ts` pins this down. The
-  underlying point is sharper than the usual telling: the phases were decisive
-  precisely because they attacked the one thing the geocentric longitude
-  machinery could never speak to. Adding a nested-spheres distance constraint
-  as a third Ptolemaic sub-mode would make this demonstrable, and is the single
-  most valuable candidate for future work.
+- **The nested spheres *are* modelled.** This was previously listed here as a
+  limitation, and it has been fixed — see §12.5.
 - **Ptolemy's latitude theory is not implemented.** The epicyclic engine places
   every body on the ecliptic. The app reads longitudes, so this is invisible
   except that Mercury's and Venus's latitudes are zero.
@@ -437,6 +426,49 @@ regress.
 - **Precession** is applied when mapping to tropical signs (11° across the
   supported range, so it cannot be ignored) but not to the underlying J2000
   frame.
+
+### 12.5 The nested spheres, and why they matter
+
+The Almagest fixes only the *ratio* r/R for each planet. The absolute size of a
+deferent is free, because scaling a planet's deferent, eccentricity and epicycle
+together leaves its direction from Earth exactly unchanged. Ptolemy settled the
+scale separately, in the *Planetary Hypotheses*, with a cosmological argument:
+the heavens contain no gaps, so each planet's shell begins where the one below
+it ends — Moon, Mercury, Venus, Sun, Mars, Jupiter, Saturn.
+
+`nestedDeferentRadii()` reproduces that chain, and it is what turns the engine
+from a calculating device into a physical claim. Two consequences, neither of
+which the angular construction alone produces:
+
+- **Mercury and Venus lie always between Earth and the Sun.** Measured over
+  3000 days: never once beyond it, Venus ranging 0.144–0.958 AU against the
+  Sun's 0.958–1.042. Venus's maximum sits precisely on the Sun's inner surface.
+- **The superior planets lie always beyond the Sun.** Mars 1.13–7.51 AU, never
+  nearer than the Sun on any day sampled.
+
+A subtlety worth keeping: the shell thickness must count the **eccentricity as
+well as the epicycle**. The deferent's centre sits a distance *e* from Earth, so
+the epicycle's centre already ranges over R ± e. A first version ignored that
+and left Mars nearer than the Sun on 82 days out of 3000 — precisely what the
+nesting exists to forbid.
+
+The chain is anchored on the **Sun**, not the Moon. Ptolemy's own chain started
+from his roughly correct lunar distance and arrived at a Sun some 1210 Earth
+radii away, about a nineteenth of the truth. Anchoring on the Sun keeps this
+model dimensionally comparable with the other two, which is the point of the
+app, and costs only the Moon's shell — whose drawn distance is exaggerated
+anyway.
+
+**This reverses an earlier finding.** The app used to anchor each deferent so the
+epicycle equalled the planet's true heliocentric orbit, which gets longitudes
+right but let Venus pass behind the Sun and show a full disc. That was documented
+here as a limitation and as the reason the app could not reproduce Galileo's
+observation. It can now: with Venus penned inside the Sun's shell it never
+exceeds 44% lit, so the model says crescent where the sky says full.
+
+The cost is that the epicycle is no longer visibly the heliocentric orbit — the
+correspondence that makes Copernicus's rearrangement obvious. That reading is a
+modern one, and the `ptolemaic-reframe` sub-mode already carries it.
 
 ## 13. UI Layer Notes
 
@@ -743,29 +775,28 @@ recentring the map must not change the Moon's phase.
 Phases come from the active engine, and the panel lists all three side by side.
 Worst disagreement in lit fraction, 2026–2034 seen from Earth, percentage points:
 
-| | vs reality (Copernicus) | vs reality (Ptolemy) | Ptolemy vs Copernicus |
+| | vs reality (Copernicus) | vs reality (Ptolemy) | Ptolemy's own range |
 |---|---|---|---|
-| Mercury | 22.1 | 18.1 | **20.9** |
-| Venus | 2.3 | 2.3 | 4.1 |
-| Mars | 5.8 | **1.3** | 6.2 |
-| Jupiter | 0.1 | 0.1 | 0.2 |
-| Saturn | 0.0 | 0.0 | 0.1 |
-| Moon | 8.4 | **2.9** | 6.4 |
+| Mercury | 22.1 | **99.9** | 0–8% |
+| Venus | 2.3 | **100.0** | 0–44% |
+| Mars | 5.8 | 12.2 | 96–100% |
+| Moon | 8.4 | **2.9** | 0–100% |
 
-The models mostly **agree** about phase, which is not the intuitive result and is
-worth stating plainly rather than overselling the differences. Lit fraction
-depends on nothing but the Sun-body-observer angle, and both historical
-constructions were fitted to reproduce that triangle, so they inherit its
-accuracy. Venus — the body whose phases settled the argument — agrees within four
-points across all three.
+This is the one measurement where the geocentric model fails **completely**
+rather than merely imprecisely, and the cause is the nested spheres (§12.5)
+rather than the angular construction. With Venus penned inside the Sun's shell it
+can never turn more than half its lit face toward Earth, so at superior
+conjunction Ptolemy says crescent where the sky says full — a whole disc apart.
 
-**Mercury is the exception**, and the one place a large divergence is visible:
-its eccentricity of 0.21 defeats a circle and an epicycle alike, and the models
-part by around twenty points. It is the body to select when demonstrating that
-the choice of model changes what you predict.
+**Longitude and phase rank the models in opposite orders.** Ptolemy beats
+Copernicus on where the planets appear (2.8° against 13.4° on Mars) and loses to
+him absolutely on how they are lit. That is the shape of the seventeenth-century
+argument in two rows of a table, and it is why the case was settled with a
+telescope rather than with an ephemeris.
 
-Note also that Ptolemy again beats Copernicus, on Mars and the Moon, in the same
-ordering the longitude errors show. `illumination.test.ts` asserts all of this.
+The Moon is the exception in Ptolemy's favour, being nobody's neighbour in the
+shell ordering and so unpenalised by the nesting.
+`illumination.test.ts` asserts all of this.
 
 ### 13.6 Overlays are all optional, and trails must not look like harness
 

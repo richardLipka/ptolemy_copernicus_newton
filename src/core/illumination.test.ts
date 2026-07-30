@@ -125,59 +125,64 @@ describe('how far the models disagree about phase', () => {
   });
 
   /**
-   * Measured worst disagreement in lit fraction, 2026-2034, seen from Earth,
-   * in percentage points:
+   * Measured worst disagreement in lit fraction against reality, 2026-2034, seen
+   * from Earth, in percentage points:
    *
-   *              vs reality              Ptolemy vs
-   *              Copernicus   Ptolemy    Copernicus
-   *   Mercury      22.1        18.1        20.9
-   *   Venus         2.3         2.3         4.1
-   *   Mars          5.8         1.3         6.2
-   *   Jupiter       0.1         0.1         0.2
-   *   Saturn        0.0         0.0         0.1
-   *   Moon          8.4         2.9         6.4
+   *              Copernicus   Ptolemy    Ptolemy's own range
+   *   Mercury      22.1        99.9         0-8%
+   *   Venus         2.3       100.0         0-44%
+   *   Mars          5.8        12.2        96-100%
+   *   Moon          8.4         2.9         0-100%
    *
-   * So the models mostly *agree* about phase, which is not the intuitive
-   * result. The lit fraction depends on nothing but the Sun-body-observer
-   * angle, and both historical constructions were fitted to reproduce that
-   * triangle, so they inherit its accuracy. Venus — the body whose phases
-   * settled the argument — comes out within four points across all three.
+   * This is the one measurement where the geocentric model fails *completely*
+   * rather than merely imprecisely, and the reason is the nested spheres rather
+   * than the angular construction: with Venus penned inside the Sun's shell it
+   * can never turn more than half its lit face toward Earth, so at superior
+   * conjunction the model says crescent where the sky says full.
    *
-   * Mercury is the exception, and the one place a large divergence is visible:
-   * its eccentricity of 0.21 defeats a circle and an epicycle alike.
+   * Longitude and phase therefore rank the models in opposite orders. Ptolemy
+   * beats Copernicus on where the planets *appear* — see accuracy.test.ts — and
+   * loses to him absolutely on how they are *lit*. That is the whole shape of the
+   * seventeenth-century argument in two rows of a table.
    */
-  it('keeps Venus within a few points across all three models', () => {
+  it('has Ptolemy fail totally on Venus, where Copernicus is nearly exact', () => {
     const kepler = keplerianPositions;
     expect(worstGap(kepler, circularPositions, 'venus')).toBeLessThan(0.05);
-    expect(worstGap(kepler, ptolemaicEpicyclicPositions, 'venus')).toBeLessThan(0.05);
-    expect(worstGap(circularPositions, ptolemaicEpicyclicPositions, 'venus'))
-      .toBeLessThan(0.06);
+    // A whole disc apart: crescent against full at superior conjunction.
+    expect(worstGap(kepler, ptolemaicEpicyclicPositions, 'venus')).toBeGreaterThan(0.9);
   });
 
-  it('disagrees sharply about Mercury, where both constructions struggle', () => {
-    expect(worstGap(circularPositions, ptolemaicEpicyclicPositions, 'mercury'))
-      .toBeGreaterThan(0.15);
+  it('confines Ptolemy’s inferior planets to crescents', () => {
+    expect(litRange(ptolemaicEpicyclicPositions, 'venus').max).toBeLessThan(0.5);
+    expect(litRange(ptolemaicEpicyclicPositions, 'mercury').max).toBeLessThan(0.5);
+    // Both still go through new, so the cycle itself is intact.
+    expect(litRange(ptolemaicEpicyclicPositions, 'venus').min).toBeLessThan(0.02);
+  });
+
+  it('has Copernicus beat Ptolemy on Mercury too', () => {
+    const kepler = keplerianPositions;
+    expect(worstGap(kepler, ptolemaicEpicyclicPositions, 'mercury')).toBeGreaterThan(
+      worstGap(kepler, circularPositions, 'mercury'),
+    );
   });
 
   it('barely disagrees at all about Jupiter and Saturn', () => {
-    // Both are always essentially full, so there is nothing to disagree about.
+    // Both are always essentially full whatever the model, so there is nothing
+    // to disagree about — which is why nobody settled the argument with them.
     for (const id of ['jupiter', 'saturn'] as BodyId[]) {
       expect(
         worstGap(circularPositions, ptolemaicEpicyclicPositions, id),
         id,
-      ).toBeLessThan(0.01);
+      ).toBeLessThan(0.05);
     }
   });
 
-  it('has Ptolemy beat Copernicus on Mars and the Moon, as with longitude', () => {
-    const kepler = keplerianPositions;
-    for (const id of ['mars', 'moon'] as BodyId[]) {
-      const copernican = worstGap(kepler, circularPositions, id);
-      const ptolemaic = worstGap(kepler, ptolemaicEpicyclicPositions, id);
-      // Circular orbits cost Copernicus more than geocentrism cost Ptolemy —
-      // the same ordering the longitude errors show.
-      expect(copernican, `${id}`).toBeGreaterThan(ptolemaic);
-    }
+  it('has Ptolemy still beat Copernicus on the Moon', () => {
+    // The Moon is the one body the nesting does not penalise, since it is
+    // nobody's neighbour in the shell ordering.
+    expect(worstGap(keplerianPositions, circularPositions, 'moon')).toBeGreaterThan(
+      worstGap(keplerianPositions, ptolemaicEpicyclicPositions, 'moon'),
+    );
   });
 
   it('has Newton agree with the reference to within a hair', () => {

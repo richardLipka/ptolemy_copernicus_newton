@@ -59,19 +59,49 @@ describe('phases of Venus', () => {
   });
 
   /**
-   * The epicyclic engine anchors Venus's deferent at the Sun's distance with
-   * Ptolemy's published epicycle ratio, which lets Venus reach the far side of
-   * its epicycle and therefore show a full disc.
+   * The observation that broke the model, reproduced.
    *
-   * That is *not* the cosmology Galileo refuted. In Ptolemy's nested spheres
-   * Venus's shell lies wholly inside the Sun's, so Venus could never pass
-   * beyond it and could never be more than a crescent. Reproducing that would
-   * mean modelling the nesting, not just the angular construction — the
-   * construction alone gets longitudes right and says nothing about distance,
-   * which is exactly why the phases were decisive and the longitudes were not.
+   * With the deferents scaled to Ptolemy's nested spheres, Venus's shell lies
+   * wholly inside the Sun's, so Venus can never pass beyond the Sun and can
+   * never turn more than half its lit face toward us. The disc waxes to a fat
+   * crescent and then wanes again — and that is what Galileo's telescope
+   * refuted when it showed Venus full and small.
+   *
+   * The nesting matters and the angular construction alone does not produce it:
+   * the Almagest fixes only r/R and says nothing about absolute distance, which
+   * is exactly why the phases were decisive where the longitudes were not.
    */
-  it('shows a full Venus, because the engine models angles and not the nested spheres', () => {
+  it('never lets Venus pass half-lit, which is what Galileo refuted', () => {
     const range = venusPhaseRange(ptolemaicEpicyclicPositions);
-    expect(range.max).toBeGreaterThan(0.9);
+    expect(range.max).toBeLessThan(0.5);
+    // It does still go through new, so the crescent cycle is intact.
+    expect(range.min).toBeLessThan(0.02);
+  });
+
+  it('keeps Venus inside the Sun’s sphere at all times', () => {
+    const start = jdFromCalendar(2024, 1, 1);
+    for (let d = 0; d < 900; d += 1) {
+      const positions = ptolemaicEpicyclicPositions(start + d);
+      const earth = positions.get('earth')!;
+      const distance = (id: 'venus' | 'sun'): number => {
+        const body = positions.get(id)!;
+        return Math.hypot(body.x - earth.x, body.y - earth.y, body.z - earth.z);
+      };
+      expect(distance('venus'), `day ${d}`).toBeLessThan(distance('sun'));
+    }
+  });
+
+  it('keeps the superior planets outside it', () => {
+    // The other half of the nesting: Mars can never come nearer than the Sun.
+    const start = jdFromCalendar(2024, 1, 1);
+    for (let d = 0; d < 900; d += 3) {
+      const positions = ptolemaicEpicyclicPositions(start + d);
+      const earth = positions.get('earth')!;
+      const distance = (id: 'mars' | 'sun'): number => {
+        const body = positions.get(id)!;
+        return Math.hypot(body.x - earth.x, body.y - earth.y, body.z - earth.z);
+      };
+      expect(distance('mars'), `day ${d}`).toBeGreaterThan(distance('sun'));
+    }
   });
 });

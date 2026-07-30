@@ -3,17 +3,15 @@
  *
  * The phase disc is the same CSS technique as the map markers at a larger size.
  *
- * Note what it does *not* show: switching to the epicyclic Ptolemaic engine
- * does not turn Venus into a permanent crescent. Ptolemy's construction fixes
- * angles, not distances — his epicycle ratio lets Venus reach the far side of
- * its epicycle and appear full. What forbade a full Venus was the nested-sphere
- * cosmology built around that construction, in which Venus's shell lay wholly
- * inside the Sun's, and this engine does not model the nesting.
+ * Select Venus and switch between the epicyclic engine and Newton to re-run the
+ * observation that broke the geocentric system. Ptolemy's deferents are scaled
+ * to his nested spheres, so Venus is penned inside the Sun's shell and never
+ * exceeds 44% lit: the model says crescent where the sky says full.
  *
- * That is the actual historical point, and a sharper one than the usual
- * telling: Galileo's observation was decisive precisely because it attacked
- * the one thing the geocentric longitude machinery had never been able to
- * speak to. See `core/venus-phases.test.ts`.
+ * That is the sharper form of the historical point. Ptolemy's longitudes beat
+ * Copernicus's — see `core/engines/accuracy.test.ts` — so the argument could not
+ * be settled on where the planets appear. It was settled on how they are lit,
+ * which is the one thing the angular machinery had never been able to speak to.
  */
 
 import { AU_IN_KM, BODIES, type BodyId } from '../../core/bodies';

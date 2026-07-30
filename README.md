@@ -175,13 +175,23 @@ Newton mode integrates the force law with a 4th-order symplectic scheme. Its own
 error stays an order of magnitude below the historical models', so a comparison
 measures the models rather than the integrator.
 
-Deliberate simplifications — Ptolemy's lunar crank, his latitude theory, and the
-nested spheres — are listed in [CLAUDE.md §12.4](CLAUDE.md). The nested spheres
-matter more than they sound: because this engine models Ptolemy's *angles* and
-not his cosmology, Venus goes full here, so switching engines does **not**
-reproduce Galileo's observation. That is the honest and sharper point — the
-phases were decisive precisely because they attacked the one thing the
-geocentric longitude machinery could never speak to.
+Ptolemy's deferents are scaled to his **nested spheres** — each planet's shell
+beginning where the one below it ends, as the *Planetary Hypotheses* has it. The
+Almagest fixes only the ratio r/R, and scaling a deferent, its eccentricity and
+its epicycle together leaves the direction from Earth untouched, so this changes
+the model's distances without altering a single longitude. It is what turns the
+engine from a calculating device into a physical claim: Mercury and Venus lie
+always between Earth and the Sun, the superior planets always beyond it.
+
+That is also what lets the app re-run the observation that settled the argument.
+Select Venus and switch between Ptolemy and Newton: penned inside the Sun's
+shell, Ptolemy's Venus never exceeds 44% lit, so the model says crescent where
+the sky says full. Note the direction of the two verdicts — Ptolemy's longitudes
+*beat* Copernicus's, so the case could not be made on where the planets appear.
+It was made on how they are lit.
+
+Remaining simplifications — Ptolemy's lunar crank and his latitude theory — are
+listed in [CLAUDE.md §12.4](CLAUDE.md).
 
 ## Licence
 

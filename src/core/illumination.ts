@@ -6,17 +6,15 @@
  * frame. Recentring the map on Jupiter must not change the Moon's phase.
  *
  * Phases are computed from whichever engine is active, so each model answers for
- * itself. What they disagree about is only the Sun-body-observer triangle, and
- * the historical constructions were fitted to get that roughly right, so the
- * disagreements are smaller than one might expect — see
- * `illumination.test.ts`, which pins down the actual figures.
+ * itself — and this is the one measurement where the geocentric model fails
+ * completely rather than merely imprecisely.
  *
- * In particular, switching to the epicyclic engine does *not* turn Venus into a
- * permanent crescent. Ptolemy's construction fixes angles, not distances, and
- * his own epicycle ratio lets Venus reach the far side of its epicycle and show
- * a full disc. What forbade a full Venus was the nested-sphere cosmology built
- * around the construction, which this engine does not model. See CLAUDE.md
- * §12.4 and `venus-phases.test.ts`.
+ * Ptolemy's deferents are scaled to his nested spheres, so Venus is penned
+ * inside the Sun's shell and can never turn more than half its lit face toward
+ * Earth. At superior conjunction the model therefore says crescent where the sky
+ * says full, which is exactly what Galileo's telescope refuted. Longitude and
+ * phase rank the models in opposite orders: see `accuracy.test.ts` for the one
+ * and `illumination.test.ts` for the other.
  */
 
 import type { BodyId } from './bodies';

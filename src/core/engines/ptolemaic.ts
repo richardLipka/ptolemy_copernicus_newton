@@ -100,6 +100,71 @@ const SOLAR_ECCENTRICITY = 2.5;
 const LUNAR_EPICYCLE_RADIUS = 5.25;
 const LUNAR_DEFERENT_KM = 385_000.56;
 
+/**
+ * Deferent radii from Ptolemy's nested spheres.
+ *
+ * The Almagest fixes only the *ratio* r/R for each planet; the absolute size of
+ * each deferent is free, because a direction seen from Earth is unchanged when a
+ * planet's deferent, eccentricity and epicycle are all scaled together. Ptolemy
+ * settled the scale separately, in the Planetary Hypotheses, with a cosmological
+ * argument: the heavens contain no gaps, so each planet's shell begins exactly
+ * where the one below it ends.
+ *
+ * That ordering — Moon, Mercury, Venus, Sun, Mars, Jupiter, Saturn — is what
+ * makes the model a physical claim rather than a calculating device, and it is
+ * the part Galileo overturned. It has two consequences visible here that the
+ * angular construction alone does not produce:
+ *
+ *   - Mercury and Venus lie *always* between Earth and the Sun, so they can
+ *     never show more than a half-lit disc.
+ *   - The superior planets lie always beyond the Sun, so Mars can never come
+ *     nearer than the Sun does.
+ *
+ * The shells are chained outward from the Sun rather than inward from the Moon.
+ * Ptolemy's own chain started at the Moon and, with his roughly correct lunar
+ * distance, put the Sun at some 1210 Earth radii — about a nineteenth of the
+ * truth. Anchoring on the Sun keeps this model comparable with the other two,
+ * which is the whole point of the app, and costs only the Moon's shell, whose
+ * distance is already exaggerated for display.
+ */
+function nestedDeferentRadii(): Partial<Record<BodyId, number>> {
+  const radii: Partial<Record<BodyId, number>> = {};
+
+  /*
+   * Half-thickness of a shell, as a fraction of its deferent radius.
+   *
+   * The epicycle is not the only thing that widens a shell: the deferent is
+   * eccentric, so its centre sits a distance e from Earth and the epicycle's own
+   * centre already ranges over R ± e. Both terms must be counted, or the shells
+   * overlap — leaving Mars nearer than the Sun on some days, which is precisely
+   * what the nesting is supposed to forbid.
+   */
+  const halfThickness = (id: BodyId): number =>
+    (ALMAGEST[id]!.epicycleRadius + ALMAGEST[id]!.eccentricity) / 60;
+
+  // Inward from the Sun's inner surface: Venus, then Mercury below it.
+  let boundary = 1 - SOLAR_ECCENTRICITY / 60;
+  for (const id of ['venus', 'mercury'] as BodyId[]) {
+    const half = halfThickness(id);
+    const deferent = boundary / (1 + half);
+    radii[id] = deferent;
+    boundary = deferent * (1 - half);
+  }
+
+  // Outward from the Sun's outer surface: Mars, Jupiter, Saturn.
+  boundary = 1 + SOLAR_ECCENTRICITY / 60;
+  for (const id of ['mars', 'jupiter', 'saturn'] as BodyId[]) {
+    const half = halfThickness(id);
+    const deferent = boundary / (1 - half);
+    radii[id] = deferent;
+    boundary = deferent * (1 + half);
+  }
+
+  return radii;
+}
+
+const NESTED_DEFERENT = nestedDeferentRadii();
+
 const apogeeInJ2000Frame = (almagestApogee: number): number =>
   almagestApogee + APOGEE_PRECESSION_TO_J2000;
 
@@ -199,13 +264,12 @@ function ptolemaicPlanetGeometry(
   id: BodyId,
   model: AlmagestModel,
 ): PtolemaicGeometry {
-  const semiMajorAxis = BODIES[id].orbit!.epoch.a;
   const apogee = apogeeInJ2000Frame(model.apogee);
 
-  // Ptolemy fixed only the ratio r/R. Anchoring the deferent to the orbit that
-  // actually is the deferent gives an absolute scale in AU while leaving every
-  // ratio he published untouched.
-  const deferentRadius = model.kind === 'superior' ? semiMajorAxis : 1;
+  // Ptolemy fixed only the ratio r/R; the scale comes from his nested spheres.
+  // Scaling all three together leaves the direction from Earth untouched, so
+  // this changes the model's distances without touching a single longitude.
+  const deferentRadius = NESTED_DEFERENT[id]!;
   const epicycleRadius = deferentRadius * (model.epicycleRadius / 60);
   const eccentricity = deferentRadius * (model.eccentricity / 60);
 
