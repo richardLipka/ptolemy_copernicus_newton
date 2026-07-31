@@ -66,12 +66,42 @@ export function projectRadius(au: number, scaleMode: ScaleMode): number {
  *
  * The Moon is 0.0026 AU from Earth. Projected honestly it would sit a third of
  * a pixel away and be invisible at any scale that also shows Saturn, so its
- * orbit is drawn at a fixed exaggerated radius that breathes with the real
- * distance. This is the one place the map knowingly lies about a distance, and
- * it lies the same way every orrery ever built has.
+ * orbit is drawn at an exaggerated radius that breathes with the real distance.
+ * This is the one place the map knowingly lies about a distance, and it lies the
+ * same way every orrery ever built has.
+ *
+ * The size is constrained, though, and by Ptolemy. Once his deferents were
+ * scaled to the nested spheres, Mercury came in to 0.058–0.143 AU — barely
+ * outside the Moon — and the old exaggeration of 0.055 drew the Moon *beyond*
+ * Mercury on a fifth of all days, inverting the one ordering his cosmology is
+ * most famous for.
  */
-const MOON_ORBIT_RADIUS = 0.055;
+const MOON_ORBIT_RADIUS = 0.03;
 const MOON_MEAN_DISTANCE_AU = 0.00257;
+
+/**
+ * Fraction of Mercury's drawn separation the Moon may occupy.
+ *
+ * A backstop for views where even the reduced exaggeration is too large — a
+ * Ptolemaic map recentred on the Sun draws Earth and Mercury almost on top of
+ * each other. The Moon shrinks rather than overtake the innermost planet, to
+ * nothing if it must: an invisible Moon is a smaller lie than one above Mercury.
+ */
+const MOON_MAX_SHARE_OF_MERCURY = 0.45;
+
+/** Drawn radius of the Moon's orbit about Earth, in map-radius units. */
+function moonDrawnRadius(trueDistanceAu: number, mercuryGap: number | null): number {
+  const exaggerated = MOON_ORBIT_RADIUS * (trueDistanceAu / MOON_MEAN_DISTANCE_AU);
+  if (mercuryGap === null) return exaggerated;
+  return Math.min(exaggerated, mercuryGap * MOON_MAX_SHARE_OF_MERCURY);
+}
+
+/** How far Mercury is drawn from Earth, or null if it is not on the map. */
+function mercuryGapFrom(earth: Point, projected: Map<BodyId, Point>): number | null {
+  const mercury = projected.get('mercury');
+  if (!mercury) return null;
+  return Math.hypot(mercury.x - earth.x, mercury.y - earth.y);
+}
 
 function projectVector(v: Vec3, scaleMode: ScaleMode): Point {
   const distance = Math.hypot(v.x, v.y);
@@ -106,9 +136,9 @@ export function projectPositions(
   const moon = centred.get('moon');
   const earth = projected.get('earth');
   if (moon && earth) {
-    const offset = sub(centred.get('moon')!, centred.get('earth')!);
+    const offset = sub(moon, centred.get('earth')!);
     const distance = Math.hypot(offset.x, offset.y);
-    const radius = MOON_ORBIT_RADIUS * (distance / MOON_MEAN_DISTANCE_AU);
+    const radius = moonDrawnRadius(distance, mercuryGapFrom(earth, projected));
     projected.set('moon', {
       x: earth.x + (offset.x / distance) * radius,
       y: earth.y + (offset.y / distance) * radius,
@@ -220,7 +250,17 @@ export function projectTrail(
         points.push(earthPoint);
         continue;
       }
-      const radius = MOON_ORBIT_RADIUS * (distance / MOON_MEAN_DISTANCE_AU);
+      // The same cap the marker uses, or the trail would part company with it.
+      const mercury = sample.positions.get('mercury');
+      const radius = moonDrawnRadius(
+        distance,
+        mercury
+          ? (() => {
+              const m = projectVector(sub(mercury, origin), scaleMode);
+              return Math.hypot(m.x - earthPoint.x, m.y - earthPoint.y);
+            })()
+          : null,
+      );
       points.push({
         x: earthPoint.x + (offset.x / distance) * radius,
         y: earthPoint.y + (offset.y / distance) * radius,
@@ -271,7 +311,16 @@ function constructionProjector(
     const offset = sub(point, earth);
     const distance = Math.hypot(offset.x, offset.y);
     if (distance === 0) return earthPoint;
-    const radius = MOON_ORBIT_RADIUS * (distance / MOON_MEAN_DISTANCE_AU);
+    const mercury = positions.get('mercury');
+    const radius = moonDrawnRadius(
+      distance,
+      mercury
+        ? (() => {
+            const m = projectVector(sub(mercury, origin), state.scaleMode);
+            return Math.hypot(m.x - earthPoint.x, m.y - earthPoint.y);
+          })()
+        : null,
+    );
     return {
       x: earthPoint.x + (offset.x / distance) * radius,
       y: earthPoint.y + (offset.y / distance) * radius,

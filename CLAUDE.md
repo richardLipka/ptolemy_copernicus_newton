@@ -710,6 +710,21 @@ Two consequences worth knowing:
   it carries. The mapping is linear in distance from Earth, so circles about
   Earth stay circles.
 
+  That exaggeration is bounded by Ptolemy. His nested spheres brought Mercury in
+  to 0.058–0.143 AU, and the original figure of 0.055 map units then drew the
+  **Moon outside Mercury on a fifth of all days** — inverting the one ordering
+  the system is most remembered for. It is now 0.03, and capped at 45% of
+  Mercury's drawn separation as a backstop for views where even that is too
+  much: a Ptolemaic map recentred on the Sun draws Earth and Mercury almost on
+  top of each other, and there the Moon shrinks to a few pixels rather than
+  overtake the innermost planet. An invisible Moon is a smaller lie than one
+  above Mercury.
+
+  All three places that draw the Moon — marker, trail and harness — share one
+  function, or its orbit would part company with its own trail.
+  `state/moonOrdering.test.ts` checks the ordering across every model, both
+  frames, both scales, and a few non-canonical centres.
+
 Ptolemy mode defaults to the **epicyclic** engine rather than the reframe: a
 mode under that name should open showing deferents and the equant, and it is
 the only Ptolemaic sub-mode with machinery to display.

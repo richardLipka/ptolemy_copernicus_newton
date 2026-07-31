@@ -107,10 +107,12 @@ describe('projectTrail', () => {
     const log = logRun(60, 0.5);
     const points = projectTrail(log.all(), 'moon', 'earth', 'compressed');
     const radii = points.map(radius);
-    // Fixed display radius, breathing with the real distance rather than
-    // vanishing at a third of a pixel.
-    expect(Math.min(...radii)).toBeGreaterThan(0.04);
-    expect(Math.max(...radii)).toBeLessThan(0.07);
+    // Exaggerated display radius, breathing with the real distance rather than
+    // vanishing at a third of a pixel. The bounds came down when the
+    // exaggeration was cut from 0.055: at the old size the Moon was drawn
+    // outside Ptolemy's Mercury, which the nested spheres forbid.
+    expect(Math.min(...radii)).toBeGreaterThan(0.02);
+    expect(Math.max(...radii)).toBeLessThan(0.04);
   });
 
   it('recentres recorded history without recomputing it', () => {
