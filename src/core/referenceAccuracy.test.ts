@@ -1,27 +1,29 @@
 /**
- * How well the reference ephemeris actually knows an event's *time*.
+ * How well the reference ephemeris knows an event's *time*.
  *
  * The event panel prints a clock time beside each model's prediction, so it is
  * worth being precise about what that time is worth. The solver bisects to under
- * a second, which means the precision on show is entirely the ephemeris's, and
- * the ephemeris here is JPL's *approximate* Keplerian elements.
+ * a second, which means the precision on show is entirely the ephemeris's.
  *
- * The error is not uniform across events, and the reason is worth understanding:
- * an event is found where an angle crosses zero, so a fixed angular error turns
- * into a time error divided by the rate at which the angle closes. Mars comes to
- * opposition briskly and its time is good to an hour or so. Jupiter and Saturn
- * converge at a few hundredths of a degree a day, and there the same angular
- * error becomes half a day.
+ * The error is not uniform across events, and the reason governs everything
+ * here: an event is found where an angle crosses zero, so a fixed angular error
+ * becomes a time error *divided by the rate at which the angle closes*. Mars
+ * comes to opposition briskly. Jupiter and Saturn converge at a few hundredths
+ * of a degree a day, which multiplies any angular error by roughly thirty.
+ *
+ * That is why the reference had to be VSOP87 rather than approximate Keplerian
+ * elements. The tests below hold both: the reference is minutes from published
+ * times, and the engine it replaced was hours.
  */
 
 import { describe, expect, it } from 'vitest';
 
 import { keplerianPositions } from './engines/keplerian';
 import { nbodyEngine } from './engines/nbody';
+import type { PositionSet } from './engines/types';
+import { vsop87Positions } from './engines/vsop87';
 import { findConjunctions, findOppositions } from './events';
 import { jdFromCalendar } from './time';
-
-import type { PositionSet } from './engines/types';
 
 type Ephemeris = (jd: number) => PositionSet;
 
@@ -48,47 +50,57 @@ const marsOpposition = (positionsAt: Ephemeris): number =>
     stepDays: 1,
   })[0]!.jd;
 
-const hours = (days: number) => Math.abs(days) * 24;
+const minutes = (days: number) => Math.abs(days) * 24 * 60;
 
-describe('a fast event is timed well', () => {
-  it('puts the 2020 Mars opposition within a couple of hours', () => {
-    // Measured: 1.5 hours early. Earth overtakes Mars at about half a degree a
-    // day, so the angular error barely registers as a time.
-    expect(hours(marsOpposition(keplerianPositions) - MARS_OPPOSITION_2020))
-      .toBeLessThan(3);
+describe('the reference ephemeris is good to minutes', () => {
+  /**
+   * Measured: 8 minutes early. The slowest event this app finds, and the one
+   * that decides whether a clock time can honestly be printed at all.
+   */
+  it('times the 2020 great conjunction to within a quarter of an hour', () => {
+    expect(minutes(greatConjunction(vsop87Positions) - GREAT_CONJUNCTION_2020))
+      .toBeLessThan(15);
   });
 
-  it('and the n-body integration agrees with it', () => {
-    expect(hours(marsOpposition(nbody) - marsOpposition(keplerianPositions)))
-      .toBeLessThan(1);
+  /** Measured: 7 minutes early. */
+  it('times the 2020 Mars opposition to within a quarter of an hour', () => {
+    expect(minutes(marsOpposition(vsop87Positions) - MARS_OPPOSITION_2020))
+      .toBeLessThan(15);
   });
 });
 
-describe('a slow event is not', () => {
+describe('why the approximate elements were not enough', () => {
   /**
-   * Measured: the reference lands 11 hours late, the n-body integration a day
-   * and a half early, and the two sit two days apart — on an event they agree
-   * about to a fraction of a degree.
-   *
-   * This is the number that decides whether a clock time can be printed
-   * honestly, and it is why the panel carries a note saying so.
+   * The engine VSOP87 replaced as reference. Kept as a test rather than deleted
+   * because it records *why* the change was worth making, and because that
+   * engine is still in use — it seeds the n-body integration and underpins the
+   * Ptolemaic reframe, where degrees rather than minutes are what matter.
    */
-  it('misses the 2020 great conjunction by hours, not minutes', () => {
-    const error = hours(greatConjunction(keplerianPositions) - GREAT_CONJUNCTION_2020);
-    expect(error).toBeGreaterThan(2);
-    expect(error).toBeLessThan(30);
+  it('was eleven hours out on the great conjunction', () => {
+    const error = minutes(greatConjunction(keplerianPositions) - GREAT_CONJUNCTION_2020);
+    expect(error).toBeGreaterThan(120);
   });
 
-  it('and the two modern engines disagree with each other by more still', () => {
-    const gap = hours(greatConjunction(nbody) - greatConjunction(keplerianPositions));
-    expect(gap).toBeGreaterThan(6);
+  it('and VSOP87 beats it by more than an order of magnitude there', () => {
+    const better = minutes(greatConjunction(vsop87Positions) - GREAT_CONJUNCTION_2020);
+    const worse = minutes(greatConjunction(keplerianPositions) - GREAT_CONJUNCTION_2020);
+    expect(worse / better).toBeGreaterThan(10);
+  });
+});
+
+describe('the n-body integration is a model, not a reference', () => {
+  /**
+   * It is out by a day and a half on the great conjunction — worse than the
+   * approximate elements — because a slowly closing angle magnifies the
+   * integrator's own drift just as it magnifies everything else. This is why the
+   * comparison table lists it as one of the models being judged rather than as
+   * the thing judging them.
+   */
+  it('is hours out where the reference is minutes', () => {
+    expect(minutes(greatConjunction(nbody) - GREAT_CONJUNCTION_2020)).toBeGreaterThan(60);
   });
 
-  it('though both agree on the day to within two', () => {
-    // The date remains sound even where the hour does not, which is the case
-    // for showing a date plainly and a time with a caveat.
-    expect(Math.abs(greatConjunction(keplerianPositions) - GREAT_CONJUNCTION_2020))
-      .toBeLessThan(2);
-    expect(Math.abs(greatConjunction(nbody) - GREAT_CONJUNCTION_2020)).toBeLessThan(2);
+  it('but still lands the right day on a fast event', () => {
+    expect(minutes(marsOpposition(nbody) - MARS_OPPOSITION_2020)).toBeLessThan(180);
   });
 });

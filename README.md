@@ -146,7 +146,7 @@ npm install && npm run dev
 Other commands:
 
 ```bash
-npm test          # 171 tests, mostly of the orbital mathematics
+npm test          # 185 tests, mostly of the orbital mathematics
 npm run typecheck # strict TypeScript, no emit
 npm run build     # static output in dist/
 ```
@@ -183,10 +183,16 @@ an 18th-century brass orrery on parchment.
 
 ### Accuracy
 
-The reference ephemeris uses JPL's Keplerian elements valid 3000 BC–3000 AD and
-is checked against published values: Meeus's worked lunar example, the recorded
+The reference ephemeris is **VSOP87** (variant B, referred to J2000), truncated
+to 2175 terms — sub-arcsecond over the supported range of 1600–2400. It is
+checked against published values: Meeus's worked example for Venus, the recorded
 great conjunctions of 1603 and 1623 (correct to the day), the Mars oppositions
-of 2018–2025, and the 2020 retrograde arc.
+of 2018–2025, and the 2020 retrograde arc. Against published event times it
+lands within about ten minutes, including the December 2020 great conjunction —
+the hardest case, because Jupiter and Saturn close so slowly that a small
+angular error becomes a large error in time.
+
+Event times are therefore shown to the hour and mean it.
 
 Newton mode integrates the force law with a 4th-order symplectic scheme. Its own
 error stays an order of magnitude below the historical models', so a comparison

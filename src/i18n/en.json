@@ -9,12 +9,12 @@
   "engine.ptolemaic-epicyclic": "Deferents and epicycles",
   "engine.circular": "Circular orbits",
   "engine.nbody": "Gravitational simulation",
-  "engine.keplerian": "Keplerian orbits",
+  "engine.keplerian": "Elliptical orbits (Kepler)",
   "engine.label": "Construction",
   "engine.help.ptolemaic-reframe": "Accurate positions expressed with Earth at the centre. What Ptolemy was approximating.",
   "engine.help.ptolemaic-epicyclic": "Ptolemy's actual construction with Almagest parameters, errors included.",
-  "engine.help.circular": "The heliocentric model with perfectly circular orbits, as Copernicus published it.",
-  "engine.help.nbody": "Numerical integration of Newton's law of gravity. Orbits are not prescribed; they emerge.",
+  "engine.help.circular": "The heliocentric model with perfectly circular orbits, as Copernicus published it in 1543. Ellipses arrived only with Kepler in 1609 — which is why this model predicts the superior planets less well than Ptolemy does.",
+  "engine.help.nbody": "Numerical integration of Newton's law of gravity. Orbits are not prescribed; they emerge — and what emerges is Kepler's ellipses, now as a consequence rather than an assumption.",
   "ghost.label": "Compare with",
   "ghost.none": "No comparison",
   "ghost.hint": "A second model is drawn faintly beside the active one.",
@@ -148,5 +148,7 @@
   "events.comparison.actual": "Actual (modern ephemeris)",
   "events.comparison.hours": "h",
   "events.comparison.onTime": "on time",
-  "events.comparison.referenceNote": "Reference from JPL approximate elements, times in UT. Good to about an hour for an opposition; for a slowly closing pair like Jupiter and Saturn a small angular error becomes a large one in time, and it can be ten hours or more out."
+  "events.comparison.referenceNote": "Reference from the VSOP87 theory, times in UT. Within minutes of published values — under ten for both the 2020 Mars opposition and the great conjunction of Jupiter and Saturn.",
+  "engine.vsop87": "Elliptical orbits — modern ephemeris",
+  "engine.help.vsop87": "VSOP87, the analytical theory used here as the reference. Elliptical orbits with their mutual perturbations; the yardstick the three historical models are measured against."
 }

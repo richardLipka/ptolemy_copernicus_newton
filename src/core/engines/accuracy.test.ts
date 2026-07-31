@@ -16,6 +16,7 @@ import { jdFromCalendar } from '../time';
 import { angleDiffDeg } from '../vec';
 import { circularPositions } from './circular';
 import { keplerianPositions } from './keplerian';
+import { vsop87Positions } from './vsop87';
 import { ptolemaicEpicyclicPositions } from './ptolemaic';
 
 const SAMPLE_JDS = [1600, 1700, 1800, 1900, 2000, 2100, 2250, 2400].map((year) =>
@@ -28,7 +29,7 @@ function worstError(
 ): number {
   let worst = 0;
   for (const jd of SAMPLE_JDS) {
-    const truth = apparentLongitude(keplerianPositions(jd), 'earth', body);
+    const truth = apparentLongitude(vsop87Positions(jd), 'earth', body);
     const modelled = apparentLongitude(positionsAt(jd), 'earth', body);
     worst = Math.max(worst, Math.abs(angleDiffDeg(modelled, truth)));
   }

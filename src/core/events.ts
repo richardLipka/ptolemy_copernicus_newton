@@ -214,7 +214,7 @@ export interface ModelComparison {
  * See CLAUDE.md §12.7 on what its accuracy actually is, and why that governs
  * whether a *time* of day can honestly be shown next to a date.
  */
-export const REFERENCE_ENGINE: EngineId = 'keplerian';
+export const REFERENCE_ENGINE: EngineId = 'vsop87';
 
 /**
  * Locate the same event under several engines and report the spread.

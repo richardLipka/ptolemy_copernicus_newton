@@ -4,6 +4,7 @@ import { apparentLongitude } from '../coordinates';
 import { jdFromCalendar } from '../time';
 import { angleDiffDeg } from '../vec';
 import { keplerianPositions } from './keplerian';
+import { vsop87Positions } from './vsop87';
 import {
   ptolemaicEpicyclicPositions,
   ptolemaicReframePositions,
@@ -20,14 +21,17 @@ const SAMPLE_JDS = [
   jdFromCalendar(2400, 1, 1),
 ];
 
-/** Largest error in apparent geocentric longitude across the sample dates. */
+/**
+ * Largest error in apparent geocentric longitude across the sample dates,
+ * measured against the reference ephemeris.
+ */
 function worstLongitudeError(
   body: Parameters<typeof apparentLongitude>[2],
   positionsAt: (jd: number) => ReturnType<typeof keplerianPositions>,
 ): number {
   let worst = 0;
   for (const jd of SAMPLE_JDS) {
-    const truth = apparentLongitude(keplerianPositions(jd), 'earth', body);
+    const truth = apparentLongitude(vsop87Positions(jd), 'earth', body);
     const modelled = apparentLongitude(positionsAt(jd), 'earth', body);
     worst = Math.max(worst, Math.abs(angleDiffDeg(modelled, truth)));
   }

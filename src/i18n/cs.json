@@ -9,12 +9,12 @@
   "engine.ptolemaic-epicyclic": "Deferenty a epicykly",
   "engine.circular": "Kruhové dráhy",
   "engine.nbody": "Gravitační simulace",
-  "engine.keplerian": "Keplerovské dráhy",
+  "engine.keplerian": "Eliptické dráhy (Kepler)",
   "engine.label": "Provedení",
   "engine.help.ptolemaic-reframe": "Přesné polohy vyjádřené se Zemí ve středu. To, co se Ptolemaios snažil napodobit.",
   "engine.help.ptolemaic-epicyclic": "Skutečná Ptolemaiova konstrukce s parametry z Almagestu, včetně jeho chyb.",
-  "engine.help.circular": "Heliocentrický model s dokonale kruhovými drahami, jak jej publikoval Koperník.",
-  "engine.help.nbody": "Numerická integrace Newtonova gravitačního zákona. Dráhy nejsou předepsány, ale vznikají.",
+  "engine.help.circular": "Heliocentrický model s dokonale kruhovými drahami, jak jej Koperník publikoval roku 1543. Elipsy přinesl až Kepler roku 1609 — proto tento model předpovídá vnější planety hůře než Ptolemaios.",
+  "engine.help.nbody": "Numerická integrace Newtonova gravitačního zákona. Dráhy nejsou předepsány, ale vznikají — a vznikají z nich Keplerovy elipsy, tentokrát jako důsledek, nikoli jako předpoklad.",
   "ghost.label": "Porovnat s",
   "ghost.none": "Bez porovnání",
   "ghost.hint": "Druhý model se vykreslí slabě vedle aktivního.",
@@ -148,5 +148,7 @@
   "events.comparison.actual": "Skutečnost (moderní efemerida)",
   "events.comparison.hours": "h",
   "events.comparison.onTime": "shoda",
-  "events.comparison.referenceNote": "Referenční hodnota z přibližných Keplerových elementů JPL, časy v UT. U opozic sedí asi na hodinu; u pomalu se míjející dvojice, jako je Jupiter se Saturnem, se malá úhlová chyba mění na velkou časovou a odchylka může být deset i více hodin."
+  "events.comparison.referenceNote": "Referenční hodnota z teorie VSOP87, časy v UT. Proti publikovaným časům sedí na jednotky minut — u opozice Marsu i u velké konjunkce Jupitera se Saturnem roku 2020 na necelých deset minut.",
+  "engine.vsop87": "Eliptické dráhy — moderní efemeridy",
+  "engine.help.vsop87": "VSOP87, analytická teorie použitá zde jako referenční hodnota. Eliptické dráhy včetně vzájemných poruch — měřítko, proti němuž se tři historické modely porovnávají."
 }

@@ -30,13 +30,16 @@ import { AU_IN_KM, BODIES, type BodyId } from '../bodies';
 import type { Construction } from '../construction';
 import { centuriesSinceJ2000, jdFromCalendar } from '../time';
 import { DEG, add, scale, sub, vec3, type Vec3 } from '../vec';
-import { elementsAt, keplerianPositions } from './keplerian';
+import { elementsAt } from './keplerian';
+import { vsop87Positions } from './vsop87';
 import type { Engine, PositionSet } from './types';
 
 // --- Sub-mode 1: Earth-centred reframe ----------------------------------
 
 export function ptolemaicReframePositions(jd: number): Map<BodyId, Vec3> {
-  const heliocentric = keplerianPositions(jd);
+  // The best positions available, since this sub-mode's whole claim is to show
+  // what Ptolemy was approximating rather than an approximation of it.
+  const heliocentric = vsop87Positions(jd);
   const earth = heliocentric.get('earth')!;
 
   const geocentric = new Map<BodyId, Vec3>();

@@ -91,15 +91,21 @@ interface Engine {
 
 Implementations:
 
+- **`vsop87Engine`** — the reference. Truncated VSOP87 (variant B, J2000),
+  sub-arcsecond across the supported range. This is the ground truth the other
+  engines' error is measured against, the basis for Ptolemy's reframe sub-mode,
+  and the source of the event panel's "actual" times. See §12.7.
 - **`keplerianEngine`** — two-body Keplerian ellipses from standard orbital
-  elements with secular rates. Serves as the accurate ground-truth ephemeris,
-  the basis for Ptolemy's reframe sub-mode, and the reference against which the
-  other engines' error is measured.
+  elements with secular rates. Was the reference before VSOP87 and remains the
+  supplier of *osculating elements*, which a positional series does not give:
+  it seeds the n-body integration and drives the Almagest engine's modern mean
+  longitudes.
 - **`circularEngine`** (Copernicus) — mean orbital radius and period per planet,
   perfect circles, Sun at center. Deliberately reproduces Copernicus's real
   error: heliocentrism right, circular orbits wrong. Divergence from
-  `keplerianEngine` grows visibly with time and is *content*, not a bug — the UI
-  may surface it as an error readout.
+  the reference grows visibly with time and is *content*, not a bug — the UI
+  surfaces it as an error readout. The circles are Copernicus's own; the ellipse
+  is Kepler's, sixty-six years later.
 - **`nbodyEngine`** (Newton) — numerical integration of Newtonian gravity over
   Sun + 7 bodies + Moon. Orbits are emergent; ellipses, varying speed, and
   apsidal precession fall out of the force law rather than being prescribed.
@@ -210,7 +216,9 @@ src/
     vec.ts               # small vector math helpers
     engines/
       types.ts           # Engine interface, mode registry
-      keplerian.ts       # ground-truth ellipses; basis for Ptolemy reframe
+      vsop87.ts          # reference ephemeris; basis for Ptolemy reframe
+      vsop87Data.ts      # GENERATED — see scripts/generate-vsop87.mjs
+      keplerian.ts       # osculating elements; n-body seed, Almagest motions
       circular.ts        # Copernicus: pure circles
       nbody.ts           # Newton: numerical gravity integrator
       ptolemaic.ts       # reframe + epicyclic sub-modes
@@ -353,14 +361,27 @@ custom-property tokens.
 
 ### 12.1 Where each engine's numbers come from
 
-- **Keplerian (ground truth)** — JPL's approximate Keplerian elements valid
+- **VSOP87 (reference)** — the analytical planetary theory, variant B
+  (heliocentric spherical, ecliptic and equinox of J2000, which is this app's
+  own frame, so no rotation is needed). Truncated by amplitude to 2175 terms;
+  see §12.7 for what that cost and why this is the reference rather than the
+  Keplerian elements. The Moon is carried over from the lunar theory below,
+  VSOP87 covering only the planets.
+- **Keplerian** — JPL's approximate Keplerian elements valid
   3000 BC–3000 AD, including the `b/c/s/f` great-inequality terms for Jupiter
   and Saturn. The Moon uses a truncated Meeus lunar theory (27 longitude and
   distance terms, 29 latitude terms). Validated against Meeus's worked example
   47.a and against the recorded great conjunctions of 1603 and 1623, which it
-  reproduces to the day.
+  reproduces to the day. No longer the reference, but still the source of the
+  osculating elements the other engines are built from: it seeds the n-body
+  integration and supplies the Almagest engine's modern mean longitudes.
 - **Copernican** — mean radius, mean longitude, correct orbital plane, zero
-  eccentricity.
+  eccentricity. The circles are not a simplification of Copernicus but a
+  faithful rendering of him: *De revolutionibus* is circles-and-epicycles
+  throughout, and the ellipse is Kepler's, sixty-six years later. Keeping the
+  error intact is what lets the app show that heliocentrism *alone* bought no
+  predictive gain — see §12.3, where Copernicus loses to Ptolemy on every
+  superior planet.
 - **Ptolemaic (epicyclic)** — Almagest apogees, eccentricities, and epicycle
   radii, shifted once into the star-fixed J2000 frame. Driven by modern mean
   longitudes rather than Ptolemy's own tables, so that what the engine shows is
@@ -526,53 +547,71 @@ below 0.05° near 137 AD and that the nested spheres are undisturbed.
 
 The event comparison shows four rows: the modern reference first, then each
 model with its miss beneath it. `REFERENCE_ENGINE` names the engine treated as
-ground truth — currently `keplerian`, JPL's *approximate* Keplerian elements
-valid 3000 BC–3000 AD.
+ground truth — `vsop87`.
 
 The solver bisects to under a second, so **the precision on show is entirely the
-ephemeris's**. That precision is not uniform, and the reason is worth knowing:
-an event is found where an angle crosses zero, so a fixed angular error becomes
-a time error *divided by the rate at which the angle closes*.
+ephemeris's**. That precision is not uniform, and the reason governs this whole
+section: an event is found where an angle crosses zero, so a fixed angular error
+becomes a time error *divided by the rate at which the angle closes*. Mars comes
+to opposition briskly. Jupiter and Saturn converge at a few hundredths of a
+degree a day, which multiplies any angular error by roughly thirty.
 
-Measured against published times:
+That amplification is what forced the change. Measured against published times:
 
-| event | closing rate | reference error |
+| event | approximate elements | VSOP87 |
 |---|---|---|
-| Mars opposition, Oct 2020 | brisk | **1.5 hours** |
-| Great conjunction, Dec 2020 | a few hundredths of a degree a day | **11 hours** |
+| Mars opposition, Oct 2020 | 1.5 hours | **7 minutes** |
+| Great conjunction, Dec 2020 | 11 hours | **8 minutes** |
 
-The n-body engine is worse on the slow one — a day and a half — and the two
-modern engines sit two days apart on an event they agree about to a fraction of a
-degree. `core/referenceAccuracy.test.ts` holds these figures.
+An **hour is now sound for both**, so the panel's printed time means what it
+appears to mean. `core/referenceAccuracy.test.ts` holds these figures, and keeps
+the old engine's error as a test too — it records why the change was worth
+making. The n-body engine remains far worse on the slow event, which is why the
+table lists it among the models being judged rather than as the thing judging.
 
-So a **date** is sound throughout and an **hour** is not always. The panel prints
-the time regardless, because for most events it is meaningful, and carries a note
-saying where it is not. That is the difference between a teaching tool and a
-false authority.
+#### Variant B, not D
 
-#### If the times need to be trustworthy
+Meeus works in VSOP87**D**, referred to the ecliptic and equinox *of date*. This
+app uses **B**, referred to J2000 — because J2000 is already the app's frame
+everywhere else, so B needs no rotation and D would need one applied and then
+undone. The consequence shows up in testing: the radius from Meeus's example 32.a
+matches to his last published digit, but his latitude differs by about two
+arcseconds. That gap is the frame, not an error — the ecliptic pole itself drifts
+some 47″ a century and the example sits eight years before the epoch.
 
-The upgrade path, in order of what I would actually do:
+#### The truncation, and how the table is generated
 
-1. **VSOP87D, truncated.** The standard choice for software that cannot ship a
-   JPL binary ephemeris: a semi-analytic series, public domain, accurate to about
-   an arcsecond over 1900–2100 and a few arcseconds across this app's whole
-   1600–2400 range — a hundredfold improvement, which would put the great
-   conjunction inside a few minutes. Meeus chapter 32 gives a truncated form; the
-   full tables are free from IMCCE/VizieR. No dependency, same architecture, and
-   the existing `Engine` interface would not change.
-2. **`astronomy-engine`** (MIT, TypeScript). VSOP87-derived, roughly an
-   arcminute, and it ships conjunction and opposition search functions. Fastest
-   route, at the cost of a dependency in an otherwise dependency-free core and of
-   giving up code that currently earns its keep as teaching material.
-3. **JPL DE440** is the gold standard and impractical here — the kernels are
-   hundreds of megabytes, against a 73 kB bundle.
-4. **JPL Horizons** is the right source for *validating* rather than computing:
-   pull exact times for a handful of events offline and assert against them, as
-   `referenceAccuracy.test.ts` already does for two.
+The full series is tens of thousands of terms. `scripts/generate-vsop87.mjs`
+emits `core/engines/vsop87Data.ts` by dropping every term below an amplitude
+threshold. The generator reads its coefficients from `astronomia`, a
+devDependency held **purely as a verified data source** — it is not imported by
+anything shipped, and the alternative was hand-transcribing thousands of
+coefficients, where a single typo would be invisible and wrong.
 
-The Moon would want ELP2000-82B alongside, though the truncated Meeus lunar
-theory already in `keplerian.ts` is close to that.
+`scripts/sweep-vsop87.mjs` measured the trade against the full series:
+
+| threshold | terms | worst angle | worst radius |
+|---|---|---|---|
+| 1e-6 | 1297 | 2.11″ | 2740 km |
+| **3e-7** | **2175** | **0.79″** | **989 km** |
+| 1e-7 | 3438 | 0.42″ | 379 km |
+| 1e-8 | 8973 | 0.06″ | 33 km |
+
+3e-7 is the chosen point: sub-arcsecond, which is far inside what any of the
+three historical models can resolve, at 80 kB of source. The bundle went from
+73 kB to 150 kB raw, 57 kB gzipped — the one real cost, and acceptable for a
+static teaching app.
+
+`vsop87.test.ts` re-derives the truncation error against the *full* `astronomia`
+tables rather than trusting the sweep, so a future regeneration that silently
+changed the threshold would fail the suite.
+
+#### Remaining limits
+
+The Moon is not covered by VSOP87 and is carried over from the truncated Meeus
+lunar theory in `keplerian.ts`; ELP2000-82B would be the upgrade. For validating
+rather than computing, JPL Horizons is the right source — pull exact times
+offline and assert against them, as `referenceAccuracy.test.ts` does for two.
 
 ## 13. UI Layer Notes
 

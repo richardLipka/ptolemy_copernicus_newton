@@ -48,6 +48,7 @@ export interface Engine {
 
 export type EngineId =
   | 'keplerian'
+  | 'vsop87'
   | 'circular'
   | 'ptolemaic-reframe'
   | 'ptolemaic-epicyclic'
