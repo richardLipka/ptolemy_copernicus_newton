@@ -2,8 +2,8 @@
  * The view configuration, carried in the URL.
  *
  * What a lecturer wants to hand round is not a screenshot but a *setup*: this
- * model, seen from there, centred on that. Those five fields go in the address
- * bar so the link in a slide deck reopens the same arrangement.
+ * model, seen from there, centred on that, on that day. Those six fields go in
+ * the address bar so a link in a slide deck reopens the same arrangement.
  *
  * Kept in the **hash** rather than the query string, for two reasons. The app is
  * served as static files from a host with no backend, so a path or query the
@@ -11,23 +11,31 @@
  * reaches the network. The keys are spelled out rather than minified because a
  * readable URL is itself a small piece of documentation.
  *
- * Deliberately *not* included: the date, the zoom, the theme and the language.
- * The first two would freeze a link to a moment and a magnification when what is
- * being shared is an arrangement; the last two are the reader's preference, not
- * the author's, and a link that silently repainted someone's interface would be
- * rude. Adding the date later is a two-line change if it turns out to be wanted.
+ * Still *not* included: the zoom, the theme and the language. Zoom is a way of
+ * looking rather than a thing to look at, and the other two are the reader's
+ * preference — a link that silently repainted someone's interface, or switched
+ * their language, would be rude.
  */
 
 import { BODY_IDS, type BodyId } from '../core/bodies';
 import { MODES, type EngineId, type ModeId } from '../core/engines/types';
+import { MAX_JD, MIN_JD, dateFromJd, jdFromDate } from '../core/time';
 import type { SphereCentre } from './store';
 
+/**
+ * Every field is optional, in both directions.
+ *
+ * A link may carry any subset — hand-written, truncated by a mail client, or
+ * produced by an older version that had fewer fields — and each is applied on
+ * its own, leaving anything absent as the reader found it.
+ */
 export interface UrlState {
   mode: ModeId;
   engineId: EngineId;
   frameOrigin: BodyId;
   observationPoint: BodyId;
   sphereCentre: SphereCentre;
+  julianDate: number;
 }
 
 const KEY = {
@@ -36,6 +44,7 @@ const KEY = {
   frame: 'centre',
   observer: 'observer',
   sphere: 'sphere',
+  date: 'date',
 } as const;
 
 const isMode = (value: string): value is ModeId =>
@@ -82,16 +91,48 @@ export function readUrlState(hash: string = window.location.hash): Partial<UrlSt
   const sphere = params.get(KEY.sphere);
   if (sphere && isSphereCentre(sphere)) state.sphereCentre = sphere;
 
+  const date = params.get(KEY.date);
+  if (date) {
+    const jd = jdFromIsoDate(date);
+    if (jd !== null) state.julianDate = jd;
+  }
+
   return state;
 }
 
-export function encodeUrlState(state: UrlState): string {
+/**
+ * A calendar date, to the day.
+ *
+ * Written as `2026-07-31` rather than as a Julian Date, which would be exact but
+ * unreadable, and a URL that says what it means is worth a few hours of
+ * precision. Day resolution is enough for what gets shared — a conjunction, an
+ * opposition, a retrograde arc — and matches the date field in the controls.
+ */
+function jdFromIsoDate(text: string): number | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
+  const parsed = new Date(`${text}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  const jd = jdFromDate(parsed);
+  // Outside the range the engines are valid over, a date is worse than none.
+  if (jd < MIN_JD || jd > MAX_JD) return null;
+  return jd;
+}
+
+const isoDateFromJd = (jd: number): string =>
+  dateFromJd(jd).toISOString().slice(0, 10);
+
+/** Encode whatever is given; absent fields are simply left out. */
+export function encodeUrlState(state: Partial<UrlState>): string {
   const params = new URLSearchParams();
-  params.set(KEY.mode, state.mode);
-  params.set(KEY.engine, state.engineId);
-  params.set(KEY.frame, state.frameOrigin);
-  params.set(KEY.observer, state.observationPoint);
-  params.set(KEY.sphere, state.sphereCentre);
+  if (state.mode) params.set(KEY.mode, state.mode);
+  if (state.engineId) params.set(KEY.engine, state.engineId);
+  if (state.frameOrigin) params.set(KEY.frame, state.frameOrigin);
+  if (state.observationPoint) params.set(KEY.observer, state.observationPoint);
+  if (state.sphereCentre) params.set(KEY.sphere, state.sphereCentre);
+  if (state.julianDate !== undefined) {
+    params.set(KEY.date, isoDateFromJd(state.julianDate));
+  }
   return `#${params.toString()}`;
 }
 
@@ -102,7 +143,7 @@ export function encodeUrlState(state: UrlState): string {
  * while comparing models, and one history entry per click would bury whatever
  * page the reader arrived from under a hundred of them.
  */
-export function writeUrlState(state: UrlState): void {
+export function writeUrlState(state: Partial<UrlState>): void {
   const encoded = encodeUrlState(state);
   if (encoded === window.location.hash) return;
   window.history.replaceState(null, '', encoded);

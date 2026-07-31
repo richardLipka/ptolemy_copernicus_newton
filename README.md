@@ -125,14 +125,17 @@ Text contrast was measured, not eyeballed: 10:1 or better in all four.
 The address bar tracks the arrangement, so a link reopens it:
 
 ```
-#model=ptolemy&type=ptolemaic-almagest&centre=earth&observer=mars&sphere=observer
+#model=ptolemy&type=ptolemaic-almagest&centre=earth&observer=mars&sphere=observer&date=1610-01-07
 ```
 
-Model, sub-mode, stationary point, observation point and where the celestial
-sphere is centred. Paste one into a slide and it comes back exactly as you left
-it. The date, zoom, theme and language are deliberately left out — the first two
-would freeze a link to a moment rather than a configuration, and the last two
-belong to whoever opens it.
+Model, sub-mode, stationary point, observation point, where the celestial sphere
+is centred, and the date. Paste one into a slide and it comes back as you left
+it.
+
+Every field is optional, so `#observer=jupiter&date=1610-01-07` is a perfectly
+good link — anything absent stays as the reader had it. Zoom, theme and language
+are deliberately left out: zoom is a way of looking rather than a thing to look
+at, and the other two belong to whoever opens the link.
 
 ## Running it
 
@@ -143,7 +146,7 @@ npm install && npm run dev
 Other commands:
 
 ```bash
-npm test          # 66 tests, mostly of the orbital mathematics
+npm test          # 171 tests, mostly of the orbital mathematics
 npm run typecheck # strict TypeScript, no emit
 npm run build     # static output in dist/
 ```

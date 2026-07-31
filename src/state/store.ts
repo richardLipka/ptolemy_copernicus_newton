@@ -51,7 +51,12 @@ export type SphereCentre = 'frame' | 'observer';
 /** The part of the state a shared link carries. See `urlState.ts`. */
 export type HydratableState = Pick<
   State,
-  'mode' | 'engineId' | 'frameOrigin' | 'observationPoint' | 'sphereCentre'
+  | 'mode'
+  | 'engineId'
+  | 'frameOrigin'
+  | 'observationPoint'
+  | 'sphereCentre'
+  | 'julianDate'
 >;
 
 /** Which model the app opens on. */
@@ -212,6 +217,13 @@ export class Store {
 
     const ghost = this.state.ghostEngineId === engineId ? null : this.state.ghostEngineId;
 
+    // The clock is the authority on time, so move it rather than only the
+    // mirrored field — patching `julianDate` alone would leave the two
+    // disagreeing until the next tick quietly undid the jump.
+    if (incoming.julianDate !== undefined) {
+      this.clock.setJd(clampJd(incoming.julianDate));
+    }
+
     this.trails.reset();
     this.patch({
       mode,
@@ -220,6 +232,7 @@ export class Store {
       frameOrigin: incoming.frameOrigin ?? this.state.frameOrigin,
       observationPoint: incoming.observationPoint ?? this.state.observationPoint,
       sphereCentre: incoming.sphereCentre ?? this.state.sphereCentre,
+      julianDate: this.clock.julianDate,
     });
   }
 

@@ -275,25 +275,52 @@ root.addEventListener('dblclick', (event: MouseEvent) => {
  * the back button, or a pasted link — through.
  */
 let lastWrittenHash = '';
+let lastUrlWriteAt = 0;
+
+/**
+ * Least time between URL writes while the clock is running, milliseconds.
+ *
+ * The date advances every frame during playback, and browsers rate-limit
+ * `replaceState` — Safari throttles it outright and logs a warning.
+ *
+ * The throttle applies *only* while playing. A creeping date that nobody is
+ * copying can wait; a deliberate jump — stepping a day, pressing Today, picking
+ * a date, pausing — is exactly the moment someone might reach for the address
+ * bar, and must land at once. Without that distinction the URL was left showing
+ * whatever date the last throttled write happened to catch.
+ */
+const URL_DATE_BUDGET_MS = 500;
+
+function currentUrlState() {
+  const state = store.get();
+  return {
+    mode: state.mode,
+    engineId: state.engineId,
+    frameOrigin: state.frameOrigin,
+    observationPoint: state.observationPoint,
+    sphereCentre: state.sphereCentre,
+    julianDate: state.julianDate,
+  };
+}
 
 function syncUrl(): void {
-  const state = store.get();
-  const encoded = encodeUrlState({
-    mode: state.mode,
-    engineId: state.engineId,
-    frameOrigin: state.frameOrigin,
-    observationPoint: state.observationPoint,
-    sphereCentre: state.sphereCentre,
-  });
+  const next = currentUrlState();
+  const encoded = encodeUrlState(next);
   if (encoded === lastWrittenHash) return;
+
+  // Was anything but the date touched? Those go out immediately.
+  const configurationChanged =
+    encodeUrlState({ ...next, julianDate: undefined }) !==
+    encodeUrlState({ ...readUrlState(lastWrittenHash), julianDate: undefined });
+
+  const now = performance.now();
+  const throttled =
+    store.get().playing && !configurationChanged && now - lastUrlWriteAt < URL_DATE_BUDGET_MS;
+  if (throttled) return;
+
+  lastUrlWriteAt = now;
   lastWrittenHash = encoded;
-  writeUrlState({
-    mode: state.mode,
-    engineId: state.engineId,
-    frameOrigin: state.frameOrigin,
-    observationPoint: state.observationPoint,
-    sphereCentre: state.sphereCentre,
-  });
+  writeUrlState(next);
 }
 
 window.addEventListener('hashchange', () => {

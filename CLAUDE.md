@@ -597,26 +597,35 @@ buttons clamp at both ends rather than wrapping.
 
 ### 13.0b Shareable configuration
 
-Five fields live in the URL, so a link in a slide deck reopens the same
+Six fields live in the URL, so a link in a slide deck reopens the same
 arrangement:
 
 ```
-#model=ptolemy&type=ptolemaic-almagest&centre=earth&observer=mars&sphere=observer
+#model=ptolemy&type=ptolemaic-almagest&centre=earth&observer=mars&sphere=observer&date=1610-01-07
 ```
 
-Model, engine, stationary point, observation point, sphere centring. Kept in the
-**hash**, not the query string: the app is static files on a host with no
+Model, engine, stationary point, observation point, sphere centring, date. Kept
+in the **hash**, not the query string: the app is static files on a host with no
 backend, so a query the server has never heard of risks a 404 on reload, and a
 hash change never reaches the network. Keys are spelled out because a readable
 URL is itself a small piece of documentation.
 
-**Not included**, deliberately: the date, the zoom, the theme and the language.
-The first two would freeze a link to a moment and a magnification when what is
-being shared is an arrangement. The last two are the reader's preference rather
-than the author's, and a link that silently repainted someone's interface would
-be rude. Adding the date is a two-line change if it turns out to be wanted.
+**Every field is optional in both directions.** A link may carry any subset —
+hand-written, truncated by a mail client, or produced by an older version with
+fewer fields — and each is applied on its own, leaving anything absent as the
+reader found it. `#observer=jupiter&date=1610-01-07` is a perfectly good link.
 
-Three things the implementation has to get right:
+The date is written as a **calendar date** rather than a Julian Day: exactness is
+worth trading for a URL that says what it means, and day resolution matches both
+what gets shared (a conjunction, an opposition) and the date field in the
+controls. Dates outside 1600–2400 are rejected, since beyond that the elements
+are extrapolation and no date beats a bad one.
+
+**Still not included**: the zoom, the theme and the language. Zoom is a way of
+looking rather than a thing to look at; the other two belong to whoever opens the
+link, and one that silently repainted someone's interface would be rude.
+
+Four things the implementation has to get right:
 
 - **Validation is per field.** A hand-edited or truncated link must degrade to a
   working app, so a bad value is dropped and the rest kept. The engine is also
@@ -631,6 +640,13 @@ Three things the implementation has to get right:
   reader came from. And since writing the hash fires `hashchange`, the last
   written value is remembered — otherwise the app would read its own write back
   and re-hydrate on every click.
+- **The date is throttled, but only while playing.** It advances every frame
+  during playback and browsers rate-limit `replaceState` — Safari throttles it
+  and logs a warning. Measured: 60 day-steps in 300ms produced one write rather
+  than sixty. But the throttle must *not* apply when paused, or the URL is left
+  showing whatever date the last throttled write happened to catch. A deliberate
+  jump — a step, Today, picking a date, pausing — is exactly when someone might
+  reach for the address bar, so those land at once.
 
 ### 13.1 Ghost overlay
 
