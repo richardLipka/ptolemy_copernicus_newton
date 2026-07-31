@@ -347,11 +347,109 @@ root.addEventListener(
   { passive: false },
 );
 
-/** Double-click clears the magnification, since the wheel offers no way back. */
+/**
+ * Double-click clears the magnification *and* the drag, since neither the wheel
+ * nor a pan offers an obvious way back to the fitted view.
+ */
 root.addEventListener('dblclick', (event: MouseEvent) => {
   if ((event.target as Element | null)?.closest('.dock')) return;
   store.resetZoom();
 });
+
+// --- panning -------------------------------------------------------------
+
+/**
+ * How far the pointer must travel before a press becomes a drag, in pixels.
+ *
+ * Without it every click on a planet would pan the map by the two or three
+ * pixels a hand moves while pressing a button, and selecting Mars would nudge
+ * the sky each time.
+ */
+const DRAG_THRESHOLD_PX = 3;
+
+let dragPointer: number | null = null;
+let dragX = 0;
+let dragY = 0;
+let dragging = false;
+
+const instrumentEl = (): HTMLElement | null => root.querySelector('.instrument');
+
+root.addEventListener('pointerdown', (event: PointerEvent) => {
+  // Docks scroll, overlays are read; neither should move the map underneath.
+  const target = event.target as Element | null;
+  if (target?.closest('.dock') || target?.closest('.overlay')) return;
+  if (event.button !== 0) return;
+
+  dragPointer = event.pointerId;
+  dragX = event.clientX;
+  dragY = event.clientY;
+  dragging = false;
+});
+
+root.addEventListener('pointermove', (event: PointerEvent) => {
+  if (dragPointer !== event.pointerId) return;
+
+  const dx = event.clientX - dragX;
+  const dy = event.clientY - dragY;
+
+  if (!dragging) {
+    if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
+    dragging = true;
+    instrumentEl()?.setAttribute('data-dragging', 'on');
+
+    // Keep receiving moves even when the pointer leaves the element, so a drag
+    // that runs off the map does not stick. Guarded because capture throws
+    // NotFoundError if the pointer is no longer active — which can happen
+    // between a move and its handler — and an exception here would abort the
+    // rest of this handler and drop the frame's pan.
+    try {
+      root.setPointerCapture(event.pointerId);
+    } catch {
+      // Without capture the drag still works; it just ends if the pointer
+      // leaves the element.
+    }
+  }
+
+  dragX = event.clientX;
+  dragY = event.clientY;
+
+  const unit = orrery.unitPx();
+  if (unit > 0) store.panBy(dx / unit, dy / unit);
+});
+
+// An arrow rather than a declaration: a hoisted function is analysed above the
+// `if (!root) throw` guard, so TypeScript loses the non-null narrowing there.
+const endDrag = (event: PointerEvent): void => {
+  if (dragPointer !== event.pointerId) return;
+  if (dragging && root.hasPointerCapture(event.pointerId)) {
+    try {
+      root.releasePointerCapture(event.pointerId);
+    } catch {
+      // Already released, or the pointer is gone. Either way there is nothing
+      // left to let go of.
+    }
+  }
+  dragPointer = null;
+  instrumentEl()?.removeAttribute('data-dragging');
+  // Cleared on the next tick so the click this pointerup generates can still be
+  // suppressed — a drag that ends over Mars must not also select it.
+  setTimeout(() => {
+    dragging = false;
+  }, 0);
+};
+
+root.addEventListener('pointerup', endDrag);
+root.addEventListener('pointercancel', endDrag);
+
+root.addEventListener(
+  'click',
+  (event: MouseEvent) => {
+    if (!dragging) return;
+    event.stopPropagation();
+    event.preventDefault();
+  },
+  true,
+);
 
 // --- keyboard ------------------------------------------------------------
 

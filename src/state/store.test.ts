@@ -165,3 +165,57 @@ describe('running off the end of the supported range', () => {
     expect(store.get().playing).toBe(true);
   });
 });
+
+describe('dragging the map', () => {
+  it('accumulates offsets in map-radius units', () => {
+    const store = new Store();
+    store.panBy(0.25, -0.5);
+    store.panBy(0.25, 0.1);
+
+    expect(store.get().panX).toBeCloseTo(0.5, 9);
+    expect(store.get().panY).toBeCloseTo(-0.4, 9);
+  });
+
+  /**
+   * The point of the request: choosing a stationary point should actually
+   * centre on it. Keeping an earlier drag would be the literal reading of "hold
+   * that body still" and the wrong one — asking to look at Mars and finding it
+   * off the edge of the screen is not what was meant.
+   */
+  it('recentres when a new stationary point is chosen', () => {
+    const store = new Store();
+    store.panBy(0.8, 0.3);
+    store.setFrameOrigin('mars');
+
+    expect(store.get().frameOrigin).toBe('mars');
+    expect(store.get().panX).toBe(0);
+    expect(store.get().panY).toBe(0);
+  });
+
+  it('leaves the drag alone when the observation point changes', () => {
+    // The vantage is a different question from where the map is looking.
+    const store = new Store();
+    store.panBy(0.8, 0.3);
+    store.setObservationPoint('mars');
+
+    expect(store.get().panX).toBeCloseTo(0.8, 9);
+  });
+
+  /** Double-click is the way back from both a zoom and a drag. */
+  it('is cleared along with the zoom', () => {
+    const store = new Store();
+    store.setZoom(6);
+    store.panBy(1.5, -2);
+    store.resetZoom();
+
+    expect(store.get().zoom).toBe(1);
+    expect(store.get().panX).toBe(0);
+    expect(store.get().panY).toBe(0);
+  });
+
+  it('starts centred', () => {
+    const store = new Store();
+    expect(store.get().panX).toBe(0);
+    expect(store.get().panY).toBe(0);
+  });
+});

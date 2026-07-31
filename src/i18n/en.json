@@ -141,7 +141,7 @@
   "theme.lcars.short": "LCARS",
   "time.slower": "Slower",
   "time.faster": "Faster",
-  "view.zoomHint": "The mouse wheel zooms the map, always about the stationary point. Double-click the map to return to the fitted view.",
+  "view.zoomHint": "The mouse wheel zooms the map and dragging moves it, both about the stationary point. Double-click returns to the fitted view.",
   "info.modelDistanceRatio": "Distance ratio",
   "engine.ptolemaic-almagest": "Almagest — Ptolemy's own tables",
   "engine.help.ptolemaic-almagest": "The same construction driven by Ptolemy's own mean motions and his precession — what a second-century astronomer would actually have computed. His rates are excellent, but the error is paid once per revolution: over nineteen centuries the outer planets drift about a degree, Venus and Mercury by tens.",

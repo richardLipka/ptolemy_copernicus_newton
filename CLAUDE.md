@@ -704,6 +704,38 @@ magnification there would tie the panels to a value that changes on every wheel
 tick, and rebuilding them through a gesture is the trap the clock readout fell
 into.
 
+**Panning** is a pointer drag anywhere on the map. The offset is stored in
+**map-radius units, not pixels**, and applied as a single transform on
+`.instrument` rather than folded into every element: one property write, no
+layout change, so the ResizeObserver that sizes the field is untouched and each
+marker's hit box travels with its drawing.
+
+Units rather than pixels because of how it composes with zoom. A body renders at
+`centre + (p + pan) . unit`, so the world point that stays put under a
+magnification is `-pan`, whatever the zoom — that is, whatever sits in the middle
+of the screen stays in the middle of the screen. At pan zero that point is the
+frame origin, which is exactly the zoom-about-the-stationary-point behaviour the
+wheel was built around, so the older rule survives as the special case.
+
+Two details that are easy to get wrong:
+
+- A drag only begins after **3px** of travel. Without a threshold, every click on
+  a planet would pan the map by the two or three pixels a hand moves while
+  pressing a button. A click that follows a real drag is then swallowed in the
+  capture phase, so a drag ending over Mars does not also select it.
+- `setPointerCapture` is wrapped in a `try`. It throws `NotFoundError` when the
+  pointer is no longer active, and an uncaught throw inside `pointermove` aborts
+  the rest of the handler and drops that frame's pan. Without capture the drag
+  still works, it merely ends if the pointer leaves the element.
+
+**Choosing a new stationary point resets the pan**, so the map actually centres
+on it. Keeping the drag would be the literal reading of "hold that body still"
+and the wrong one: someone who asks to look at Mars and finds it off the edge of
+the screen, because of where they had dragged five minutes earlier, has not been
+given what they asked for. Changing the *observation* point leaves the pan alone
+— that is a different question from where the map is looking. Double-click still
+clears both zoom and pan, since neither offers an obvious way back on its own.
+
 **The rate ladder** (`RATE_LADDER`) is stepped by − and + buttons beside
 play/pause. It is geometric — 0.25, 1, 5, 20, 100, 400 days a second — because the
 useful range spans a factor of 1600 and a linear control would be unusable. The

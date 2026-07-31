@@ -112,6 +112,18 @@ export interface State {
   scaleMode: ScaleMode;
   /** Magnification of the map, 1 being the fitted view. */
   zoom: number;
+  /**
+   * How far the view has been dragged from the stationary point, in map-radius
+   * units — the same units every position is expressed in, *not* pixels.
+   *
+   * Units rather than pixels so that zooming keeps whatever is at the middle of
+   * the screen in the middle of the screen. A body renders at
+   * `centre + (p + pan) · unit`, so the world point that stays put under a zoom
+   * is `−pan` regardless of the magnification. At pan zero that point is the
+   * frame origin, which is the behaviour the wheel zoom was built around.
+   */
+  panX: number;
+  panY: number;
   showOrbits: boolean;
   showSightLines: boolean;
   showStarFigures: boolean;
@@ -159,6 +171,8 @@ export class Store {
       sphereCentre: 'frame',
       scaleMode: 'compressed',
       zoom: 1,
+      panX: 0,
+      panY: 0,
       showOrbits: true,
       showSightLines: true,
       showStarFigures: true,
@@ -274,10 +288,20 @@ export class Store {
    * Recentre the map. The trail survives: whole snapshots are logged, so the
    * recorded history simply reprojects about the new origin — the same past,
    * seen from a different chair.
+   *
+   * The pan resets, so choosing a new stationary point actually centres on it.
+   * Keeping the drag would be the literal reading of "hold that body still" and
+   * the wrong one: the user asked to look at Mars, and leaving Mars off the edge
+   * of the screen because of where they had dragged earlier is not that.
    */
   setFrameOrigin(frameOrigin: BodyId): void {
     this.trails.invalidateProjection();
-    this.patch({ frameOrigin });
+    this.patch({ frameOrigin, panX: 0, panY: 0 });
+  }
+
+  /** Drag the view. Offsets are in map-radius units, as `panX` documents. */
+  panBy(dx: number, dy: number): void {
+    this.patch({ panX: this.state.panX + dx, panY: this.state.panY + dy });
   }
 
   setObservationPoint(observationPoint: BodyId): void {
@@ -320,8 +344,13 @@ export class Store {
     this.patch({ zoom: clamped });
   }
 
+  /** Back to the fitted, centred view — the way out of both a zoom and a drag. */
   resetZoom(): void {
-    this.setZoom(1);
+    this.patch({
+      zoom: 1,
+      panX: 0,
+      panY: 0,
+    });
   }
 
   toggle(

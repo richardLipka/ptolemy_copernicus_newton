@@ -52,10 +52,44 @@
    */
   --zoom: 1;
 
+  /*
+   * How far the view has been dragged, in the same map-radius units everything
+   * else is positioned in — so a pan survives a zoom without the content
+   * sliding out from under the cursor.
+   */
+  --pan-x: 0;
+  --pan-y: 0;
+
   position: relative;
   width: calc(var(--field) / var(--ring-extent));
   aspect-ratio: 1;
   --unit: calc(var(--field) / var(--ring-extent) / 2 * var(--zoom));
+
+  /*
+   * One transform for the whole drawing rather than a pan folded into every
+   * element. It changes no layout, so the ResizeObserver that sizes the field
+   * is unaffected and each marker's hit box travels with its drawing.
+   */
+  transform: translate(
+    calc(var(--pan-x) * var(--unit)),
+    calc(var(--pan-y) * var(--unit))
+  );
+
+  cursor: grab;
+  /* Or a touch drag scrolls the page instead of moving the map. */
+  touch-action: none;
+}
+
+.instrument[data-dragging='on'] {
+  cursor: grabbing;
+}
+
+/*
+ * A body is a target, not a handle: the pointer should say "click me" over
+ * Mars and "drag me" over the empty sky between the planets.
+ */
+.instrument .body {
+  cursor: pointer;
 }
 
 /* --- zodiac ring -------------------------------------------------------- */

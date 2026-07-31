@@ -77,6 +77,8 @@ const div = (className: string): HTMLDivElement => {
 export interface OrreryRenderer {
   update(): void;
   rebuildRing(): void;
+  /** Pixels per map-radius unit, for translating a drag into map coordinates. */
+  unitPx(): number;
 }
 
 export function createOrrery(container: HTMLElement, store: Store): OrreryRenderer {
@@ -249,6 +251,8 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
 
   /** Last magnification written to the DOM. */
   let lastZoom = Number.NaN;
+  let lastPanX = Number.NaN;
+  let lastPanY = Number.NaN;
 
   /**
    * The newest logged point per body, in screen units.
@@ -537,6 +541,19 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
 
     // Writing --unit's multiplier invalidates every descendant's transform, so
     // it is set only when it actually changes rather than every frame.
+    /*
+     * Panning translates the whole instrument rather than every element in it.
+     * One transform on one node costs nothing and, being a transform, changes no
+     * layout — so the ResizeObserver that sizes the field is untouched and the
+     * body markers' hit boxes travel with their drawings.
+     */
+    if (state.panX !== lastPanX || state.panY !== lastPanY) {
+      lastPanX = state.panX;
+      lastPanY = state.panY;
+      instrument.style.setProperty('--pan-x', String(state.panX));
+      instrument.style.setProperty('--pan-y', String(state.panY));
+    }
+
     if (state.zoom !== lastZoom) {
       lastZoom = state.zoom;
       instrument.style.setProperty('--zoom', String(state.zoom));
@@ -739,5 +756,12 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
   rebuildRing();
   update();
 
-  return { update, rebuildRing };
+  /*
+   * --unit is `width / 2 * zoom`, so it can be recovered from the laid-out
+   * element without parsing a calc() out of the computed style.
+   */
+  const unitPx = (): number =>
+    (instrument.clientWidth / 2) * store.get().zoom;
+
+  return { update, rebuildRing, unitPx };
 }
