@@ -762,6 +762,50 @@ Four things the implementation has to get right:
   jump — a step, Today, picking a date, pausing — is exactly when someone might
   reach for the address bar, so those land at once.
 
+### 13.0c The calculation overlay, and the demonstrations
+
+The rest of the app shows the four models as *pictures*. None of them was a
+picture. Each was a procedure for turning a date into a number, and the numbers
+were the product — the *Almagest* is a book of tables, the Alfonsine Tables ran
+European astronomy for three centuries, and Kepler spent the better part of
+thirty years on the *Rudolphine Tables*. `core/calculation.ts` reproduces each
+model'''s working for one body on one date, in the order an astronomer would have
+carried it out.
+
+The point it makes is that **the models improve and grow more expensive in the
+same order**:
+
+| model | what it cost |
+|---|---|
+| Ptolemy | two table look-ups and two additions |
+| Copernicus | one look-up, no correction at all |
+| Kepler | a transcendental equation, solved by iteration, per body per date |
+| Newton | ~1.7 million force evaluations to reach 1602 |
+
+Worth reading beside the accuracy table in §12.1, which runs the other way. The
+panel is an *overlay* rather than a dock because four columns of working are
+wider than any dock, and it is rebuilt only while open, on a wall-clock budget —
+it evaluates four engines.
+
+Values leave `calculation.ts` as **raw numbers plus a unit tag**, and the view
+formats them. Czech writes 141,500 where English writes 141.500, and this is the
+one panel in the app that is nothing but numbers. A first version formatted in
+core and hard-coded a decimal point into every line.
+
+**Demonstrations** (`core/demonstrations.ts`) are the handful of moments when the
+models disagreed about something the sky could settle: Venus gibbous in 1610,
+the Mercury transit of 1631, the great conjunctions of 1603 and 2020, the Mars
+opposition of 1602. Each sets date, model, centre, vantage and selection at
+once — deliberately unlike `setMode`, which changes one thing at a time, because
+a demonstration is a whole scene rather than a controlled comparison.
+
+**Every date was found with the app'''s own solver, and `demonstrations.test.ts`
+re-derives them.** A teaching tool that cites a wrong date is worse than one
+that cites none. The 1631 transit is checked twice over: that Mercury is in
+conjunction with the Sun, *and* that its geocentric latitude is inside the solar
+disc — and that the neighbouring conjunctions that year are not transits, so the
+date is doing real work.
+
 ### 13.1 Ghost overlay
 
 The user picks a comparison model; its bodies render faintly beside the active

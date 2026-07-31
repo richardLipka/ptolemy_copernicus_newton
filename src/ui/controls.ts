@@ -76,6 +76,13 @@ export function renderControls(container: HTMLElement, store: Store): void {
     ),
   );
 
+  // The one control that opens something rather than changing something, so it
+  // sits apart from the pickers above it.
+  const calculation = el('button', 'wide-button', t('calc.open'));
+  calculation.type = 'button';
+  calculation.addEventListener('click', () => store.setCalculationOpen(true));
+  modelPanel.appendChild(calculation);
+
   container.appendChild(modelPanel);
 
   // --- vantage ----------------------------------------------------------

@@ -11,6 +11,7 @@
  */
 
 import type { BodyId } from '../core/bodies';
+import type { Demonstration } from '../core/demonstrations';
 import { circularEngine } from '../core/engines/circular';
 import { keplerianEngine } from '../core/engines/keplerian';
 import { nbodyEngine } from '../core/engines/nbody';
@@ -111,6 +112,8 @@ export interface State {
   showConstruction: boolean;
   locale: Locale;
   theme: ThemeId;
+  /** The calculation and demonstrations overlay, opened on demand. */
+  showCalculation: boolean;
   /** Mirrors the clock so subscribers see time changes like any other change. */
   julianDate: number;
   playing: boolean;
@@ -151,6 +154,7 @@ export class Store {
       showConstruction: true,
       locale: getLocale(),
       theme: readStoredTheme(),
+      showCalculation: false,
       julianDate: this.clock.julianDate,
       playing: false,
       rateDaysPerSecond: 1,
@@ -311,6 +315,39 @@ export class Store {
     key: 'showOrbits' | 'showSightLines' | 'showStarFigures' | 'showConstruction',
   ): void {
     this.patch({ [key]: !this.state[key] } as Partial<State>);
+  }
+
+  setCalculationOpen(showCalculation: boolean): void {
+    if (showCalculation === this.state.showCalculation) return;
+    this.patch({ showCalculation });
+  }
+
+  /**
+   * Jump to a decisive observation.
+   *
+   * Unlike `setMode`, this deliberately *does* move the centre and the vantage.
+   * The rule that a model switch changes one thing at a time exists so that a
+   * comparison stays honest; a demonstration is the opposite errand — it sets up
+   * a whole scene at once, and the point is the scene rather than the isolation.
+   *
+   * Playback stops. These are moments to look at, and arriving at one already
+   * drifting away from it would be perverse.
+   */
+  applyDemonstration(demonstration: Demonstration): void {
+    this.clock.setJd(clampJd(demonstration.jd));
+    this.clock.pause();
+    this.trails.reset();
+
+    this.patch({
+      mode: demonstration.mode,
+      engineId: MODES[demonstration.mode].engines[0]!,
+      ghostEngineId: null,
+      frameOrigin: demonstration.frameOrigin,
+      observationPoint: demonstration.observationPoint,
+      selectedBody: demonstration.body,
+      julianDate: this.clock.julianDate,
+      playing: false,
+    });
   }
 
   setLocale(locale: Locale): void {

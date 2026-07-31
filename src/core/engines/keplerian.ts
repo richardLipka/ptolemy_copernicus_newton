@@ -76,17 +76,41 @@ export function meanAnomalyAt(jd: number, model: OrbitalModel): number {
  * angles in degrees and e* = e in degrees per the JPL formulation.
  */
 export function solveKepler(meanAnomalyDeg: number, e: number): number {
+  return solveKeplerTraced(meanAnomalyDeg, e).eccentricAnomaly;
+}
+
+export interface KeplerSolution {
+  /** Eccentric anomaly, degrees. */
+  eccentricAnomaly: number;
+  /** Newton–Raphson passes needed to converge. */
+  iterations: number;
+  /** Size of the final correction, degrees — how nearly it had converged. */
+  finalCorrection: number;
+}
+
+/**
+ * The same solve, reporting what it cost.
+ *
+ * Kepler's equation has no closed-form solution, which is not a footnote — it is
+ * the reason the *Rudolphine Tables* took Kepler the better part of thirty years
+ * while Ptolemy's tables need only addition. The calculation panel shows this
+ * count so the price of the better model is visible rather than asserted.
+ */
+export function solveKeplerTraced(meanAnomalyDeg: number, e: number): KeplerSolution {
   const eStar = (180 / Math.PI) * e;
   let ecc = meanAnomalyDeg + eStar * Math.sin(meanAnomalyDeg * DEG);
+  let iterations = 0;
+  let deltaE = 0;
 
   for (let iter = 0; iter < 32; iter++) {
     const deltaM = meanAnomalyDeg - (ecc - eStar * Math.sin(ecc * DEG));
-    const deltaE = deltaM / (1 - e * Math.cos(ecc * DEG));
+    deltaE = deltaM / (1 - e * Math.cos(ecc * DEG));
     ecc += deltaE;
+    iterations = iter + 1;
     if (Math.abs(deltaE) < 1e-9) break;
   }
 
-  return ecc;
+  return { eccentricAnomaly: ecc, iterations, finalCorrection: deltaE };
 }
 
 /** Rotate in-plane orbital coordinates into the ecliptic frame. */

@@ -431,6 +431,200 @@
     width: 100%;
   }
 
+  /* A button that opens something, rather than one of a set of choices. */
+  .wide-button {
+    width: 100%;
+    margin-top: 0.55rem;
+  }
+
+  /* --- the calculation overlay ------------------------------------------- */
+
+  /*
+   * Covers the stage rather than docking, because four columns of working are
+   * wider than any dock and are meant to be read rather than driven.
+   */
+  .overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: grid;
+    place-items: center;
+    padding: var(--dock-gap);
+    background: color-mix(in srgb, var(--surface) 70%, transparent);
+    backdrop-filter: blur(3px);
+  }
+
+  .overlay[hidden] {
+    display: none;
+  }
+
+  .overlay__sheet {
+    width: min(62rem, 100%);
+    max-height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    padding: 1rem 1.15rem 1.3rem;
+    border: var(--line-fine) solid var(--panel-edge);
+    border-radius: var(--panel-radius);
+    background: var(--panel-surface);
+    box-shadow: var(--panel-shadow);
+  }
+
+  .overlay__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .overlay__title {
+    font-family: var(--face-display);
+    font-size: var(--size-title);
+    margin: 0;
+  }
+
+  .overlay__close {
+    font-size: 1.2rem;
+    line-height: 1;
+    padding: 0.1rem 0.5rem;
+    flex: 0 0 auto;
+  }
+
+  .overlay__section {
+    font-family: var(--face-display);
+    font-size: var(--size-label);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 1.2rem 0 0.4rem;
+    padding-bottom: 0.25rem;
+    border-bottom: var(--line-hairline) solid var(--accent-dark);
+  }
+
+  /* --- demonstrations ---------------------------------------------------- */
+
+  .demos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+  }
+
+  .demo {
+    display: grid;
+    gap: 0.2rem;
+    text-align: start;
+    padding: 0.55rem 0.65rem;
+    height: 100%;
+    border-radius: var(--panel-radius);
+  }
+
+  .demo__date {
+    font-size: var(--size-label);
+    letter-spacing: var(--tracking-label);
+    color: var(--text-muted);
+  }
+
+  .demo__title {
+    font-family: var(--face-display);
+    font-size: var(--size-heading);
+    line-height: 1.2;
+  }
+
+  .demo__note {
+    font-size: 0.68rem;
+    line-height: 1.45;
+    font-style: italic;
+    color: var(--text-muted);
+    white-space: normal;
+  }
+
+  /* Muted text on the accent fill would vanish once the card is hovered. */
+  .demo:hover .demo__date,
+  .demo:hover .demo__note {
+    color: inherit;
+  }
+
+  /* --- the working ------------------------------------------------------- */
+
+  .workings {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 0.6rem;
+    margin-top: 0.6rem;
+  }
+
+  .working {
+    border: var(--line-hairline) solid var(--accent-dark);
+    border-radius: var(--panel-radius);
+    padding: 0.55rem 0.65rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .working__title {
+    font-family: var(--face-display);
+    font-size: var(--size-heading);
+    margin: 0 0 0.45rem;
+    line-height: 1.2;
+  }
+
+  .working__lines {
+    display: grid;
+    gap: 0.3rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .working__line {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-size: 0.72rem;
+  }
+
+  .working__label {
+    color: var(--text-muted);
+    line-height: 1.3;
+  }
+
+  /* Notation, so it is set apart from the prose label and never wraps oddly. */
+  .working__formula {
+    display: block;
+    font-family: var(--face-numeric);
+    font-size: 0.68rem;
+    color: var(--accent-dark);
+  }
+
+  .working__value {
+    font-family: var(--face-numeric);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* The answer, which is what every line above it was for. */
+  .working__line--result {
+    padding-top: 0.3rem;
+    border-top: var(--line-hairline) solid var(--accent-dark);
+    font-weight: 600;
+  }
+
+  .working__line--result .working__label {
+    color: var(--text-strong);
+  }
+
+  /* Pushed to the bottom so the cost lines up across columns of unequal length. */
+  .working__cost {
+    margin: auto 0 0;
+    padding-top: 0.45rem;
+    font-size: 0.68rem;
+    line-height: 1.45;
+    font-style: italic;
+    color: var(--text-muted);
+  }
+
   /* --- readouts ---------------------------------------------------------- */
 
   .readout {

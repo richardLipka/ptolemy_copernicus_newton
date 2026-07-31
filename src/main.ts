@@ -23,6 +23,7 @@ import { applyTheme } from './render/theme/themes';
 import { renderControls } from './ui/controls';
 import { renderTimeDock } from './ui/timeDock';
 import { renderTopBar } from './ui/topBar';
+import { renderCalculationOverlay } from './ui/calculationOverlay';
 import { el } from './ui/dom';
 import { dateFromJd } from './core/time';
 import { formatDateTime, setLocale, t } from './i18n/i18n';
@@ -108,6 +109,15 @@ const eventsHost = document.createElement('div');
 eventsHost.style.display = 'contents';
 dockRight.append(infoHost, eventsHost);
 
+/**
+ * The overlay lives outside the docks, so it can cover the whole stage and is
+ * not caught by the dock rules that stop wheel and double-click events.
+ */
+const overlayHost = document.createElement('div');
+overlayHost.className = 'overlay';
+overlayHost.hidden = true;
+root.appendChild(overlayHost);
+
 const orrery = createOrrery(field, store);
 
 /** Handed back by the time dock so the clock can update without a rebuild. */
@@ -171,6 +181,28 @@ function controlsSignature(): string {
     state.rateDaysPerSecond,
   ].join('|');
 }
+
+/**
+ * The overlay's own dependencies.
+ *
+ * It shows four models' working for the selected body, so it must follow the
+ * selection and the date — but rebuilding it per frame would evaluate four
+ * engines on the animation path, hence the same wall-clock budget the info
+ * panel uses.
+ */
+function overlaySignature(): string {
+  const state = store.get();
+  return [
+    state.showCalculation,
+    state.selectedBody,
+    state.observationPoint,
+    state.locale,
+  ].join('|');
+}
+
+const OVERLAY_BUDGET_MS = 250;
+let lastOverlay = '';
+let lastOverlayAt = 0;
 
 /** What the read-only panels depend on, excluding the date. */
 function contextSignature(): string {
@@ -237,6 +269,16 @@ function render(): void {
     document.title = t('app.title');
   }
 
+  const overlay = overlaySignature();
+  if (
+    overlay !== lastOverlay ||
+    (state.showCalculation && now - lastOverlayAt > OVERLAY_BUDGET_MS)
+  ) {
+    lastOverlay = overlay;
+    lastOverlayAt = now;
+    renderCalculationOverlay(overlayHost, store);
+  }
+
   if (contextChanged || state.selectedBody !== lastSelected || now - lastInfoAt > INFO_BUDGET_MS) {
     lastInfoAt = now;
     lastSelected = state.selectedBody;
@@ -295,6 +337,47 @@ root.addEventListener(
 root.addEventListener('dblclick', (event: MouseEvent) => {
   if ((event.target as Element | null)?.closest('.dock')) return;
   store.resetZoom();
+});
+
+// --- keyboard ------------------------------------------------------------
+
+/**
+ * Transport keys, for the lectern.
+ *
+ * This is a teaching tool that gets driven from the front of a room, where
+ * hunting for a small button on a projected screen is its own small disaster.
+ * Space plays, the arrows step a day.
+ *
+ * Ignored while a control has focus, or space would toggle the button under the
+ * cursor and the arrows would walk a select through its options.
+ */
+window.addEventListener('keydown', (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && store.get().showCalculation) {
+    store.setCalculationOpen(false);
+    return;
+  }
+
+  const active = document.activeElement;
+  if (active instanceof HTMLInputElement || active instanceof HTMLSelectElement) return;
+  if (event.altKey || event.ctrlKey || event.metaKey) return;
+
+  switch (event.key) {
+    case ' ':
+      if (active instanceof HTMLButtonElement) return;
+      event.preventDefault();
+      store.togglePlay();
+      break;
+    case 'ArrowLeft':
+      event.preventDefault();
+      store.stepDays(-1);
+      break;
+    case 'ArrowRight':
+      event.preventDefault();
+      store.stepDays(1);
+      break;
+    default:
+      break;
+  }
 });
 
 // --- shareable configuration --------------------------------------------
