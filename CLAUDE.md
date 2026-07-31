@@ -620,7 +620,9 @@ offline and assert against them, as `referenceAccuracy.test.ts` does for two.
 **Layout.** The map is full-bleed and the controls float over it in docks:
 model/vantage/overlay controls on the left, a slim language-and-theme bar hugging
 the top-right corner, the selected-body detail directly beneath it, and time with
-the simulation transport at bottom right.
+the simulation transport at bottom right — with an unboxed credit line tucked
+beneath that last panel, built once rather than on every controls rebuild,
+since nothing in it ever changes.
 
 The instrument is *not* measured against the viewport but against
 `.stage__field`, an element inset by the dock widths. That is what keeps the map

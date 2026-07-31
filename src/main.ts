@@ -23,6 +23,7 @@ import { applyTheme } from './render/theme/themes';
 import { renderControls } from './ui/controls';
 import { renderTimeDock } from './ui/timeDock';
 import { renderTopBar } from './ui/topBar';
+import { el } from './ui/dom';
 import { dateFromJd } from './core/time';
 import { formatDateTime, setLocale, t } from './i18n/i18n';
 import { store } from './state/store';
@@ -61,6 +62,30 @@ dockRight.className = 'dock dock--right';
 
 const dockBottomRight = document.createElement('div');
 dockBottomRight.className = 'dock dock--bottom-right';
+
+/*
+ * renderTimeDock() replaces the *whole* contents of whatever container it is
+ * given, every time the controls rebuild (theme, locale, play/pause, rate…).
+ * Handing it dockBottomRight directly would wipe the credit line below along
+ * with the panel it is meant to sit under, so the clock gets its own host.
+ */
+const timeDockHost = document.createElement('div');
+timeDockHost.style.display = 'contents';
+dockBottomRight.appendChild(timeDockHost);
+
+const credit = el('footer', 'credit');
+credit.append(`${t('footer.copyright', { year: new Date().getFullYear() })} · `);
+
+const contactLink = el('a', undefined, 'lipka@fav.zcu.cz');
+contactLink.href = 'mailto:lipka@fav.zcu.cz';
+credit.append(contactLink, ' · ');
+
+const homeLink = el('a', undefined, 'home.zcu.cz/~lipka');
+homeLink.href = 'http://home.zcu.cz/~lipka';
+homeLink.target = '_blank';
+homeLink.rel = 'noopener noreferrer';
+credit.appendChild(homeLink);
+dockBottomRight.appendChild(credit);
 
 /** Wrapper the narrow-viewport rules turn into a stacked column. */
 const dockStack = document.createElement('div');
@@ -205,7 +230,7 @@ function render(): void {
     renderMasthead();
     renderTopBar(dockTopRight, store);
     renderControls(controlsHost, store);
-    const dock = renderTimeDock(dockBottomRight, store);
+    const dock = renderTimeDock(timeDockHost, store);
     dateInput = dock.dateInput;
     clockReadout = dock.clock;
     clockReadout.textContent = reading;

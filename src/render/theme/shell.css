@@ -174,6 +174,31 @@
     margin: 0.15rem 0 0;
   }
 
+  /*
+   * --- credit --------------------------------------------------------------
+   * An imprint line, not a control: unboxed and small, so it sits under the
+   * time panel without reading as a fifth instrument on the map.
+   */
+  .credit {
+    padding: 0 0.2rem;
+    font-size: 0.68rem;
+    line-height: 1.4;
+    color: var(--text-muted);
+    text-align: end;
+  }
+
+  .credit a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--accent-dark);
+    text-underline-offset: 0.15em;
+  }
+
+  .credit a:hover {
+    color: var(--accent-bright);
+    text-decoration-color: currentColor;
+  }
+
   /* --- fields and controls ---------------------------------------------- */
 
   .field {
@@ -236,7 +261,8 @@
 
   button:focus-visible,
   select:focus-visible,
-  input:focus-visible {
+  input:focus-visible,
+  a:focus-visible {
     outline: var(--line-heavy) solid var(--accent-bright);
     outline-offset: 1px;
   }

@@ -150,5 +150,6 @@
   "events.comparison.onTime": "shoda",
   "events.comparison.referenceNote": "Referenční hodnota z teorie VSOP87, časy v UT. Proti publikovaným časům sedí na jednotky minut — u opozice Marsu i u velké konjunkce Jupitera se Saturnem roku 2020 na necelých deset minut.",
   "engine.vsop87": "Eliptické dráhy — moderní efemeridy",
-  "engine.help.vsop87": "VSOP87, analytická teorie použitá zde jako referenční hodnota. Eliptické dráhy včetně vzájemných poruch — měřítko, proti němuž se tři historické modely porovnávají."
+  "engine.help.vsop87": "VSOP87, analytická teorie použitá zde jako referenční hodnota. Eliptické dráhy včetně vzájemných poruch — měřítko, proti němuž se tři historické modely porovnávají.",
+  "footer.copyright": "© {{year}} Richard Lipka"
 }

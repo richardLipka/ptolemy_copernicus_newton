@@ -150,5 +150,6 @@
   "events.comparison.onTime": "on time",
   "events.comparison.referenceNote": "Reference from the VSOP87 theory, times in UT. Within minutes of published values — under ten for both the 2020 Mars opposition and the great conjunction of Jupiter and Saturn.",
   "engine.vsop87": "Elliptical orbits — modern ephemeris",
-  "engine.help.vsop87": "VSOP87, the analytical theory used here as the reference. Elliptical orbits with their mutual perturbations; the yardstick the three historical models are measured against."
+  "engine.help.vsop87": "VSOP87, the analytical theory used here as the reference. Elliptical orbits with their mutual perturbations; the yardstick the three historical models are measured against.",
+  "footer.copyright": "© {{year}} Richard Lipka"
 }
