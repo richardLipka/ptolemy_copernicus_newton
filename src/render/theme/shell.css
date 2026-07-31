@@ -290,6 +290,20 @@
     text-wrap: balance;
   }
 
+  /*
+   * Restore the pressed fill inside a segmented control.
+   *
+   * `.segmented button` and `button[aria-pressed='true']` have identical
+   * specificity, so the later of the two wins — which meant the segment kept
+   * `background: transparent` while still taking the pressed rule's pale
+   * `color`. Pale text on a pale panel: the *selected* model, theme and zodiac
+   * division were the only labels in the app that could not be read.
+   */
+  .segmented button[aria-pressed='true'] {
+    background: var(--accent);
+    color: var(--surface);
+  }
+
   .segmented button:last-child {
     border-inline-end: 0;
   }
