@@ -1,17 +1,25 @@
-# Ptolemy — 2D Solar System Model (Ptolemy / Copernicus / Newton)
+# Ptolemy — 2D Solar System Model (Ptolemy / Copernicus / Kepler / Newton)
 
 ## 1. Purpose
 
 An interactive, browser-based 2D model of the solar system (Sun, Mercury, Venus,
 Earth, Moon, Mars, Jupiter, Saturn) whose **primary teaching goal** is to make the
-differences and similarities between three historical/physical world-models
+differences and similarities between four historical/physical world-models
 tangible:
 
 - **Ptolemaic** — geocentric, deferents and epicycles
 - **Copernican** — heliocentric, circular orbits
+- **Keplerian** — heliocentric, elliptical orbits, Sun at a focus
 - **Newtonian** — gravitational n-body simulation, emergent elliptical orbits
 
-The same sky, shown three ways. The user can pick an arbitrary body as the
+The four are ordered chronologically in the UI, and the order carries the
+argument. Copernicus moved the centre and kept the circles, and gained nothing
+in accuracy for it; Kepler kept the centre and dropped the circles, and the
+error fell by a factor of ten to five hundred. Setting those two side by side is
+what shows that **the ellipse, not heliocentrism, was what actually paid** —
+and Newton then explains the residual Kepler could not.
+
+The same sky, shown four ways. The user can pick an arbitrary body as the
 stationary center and watch every orbit redraw around it, follow sight-lines out
 to the zodiac to see apparent positions, and step through history to compare when
 each model predicts conjunctions, oppositions, and retrograde loops.
@@ -49,10 +57,11 @@ separate code path.
 | Ptolemaic engine | **Both, toggleable**: Earth-fixed reframe of accurate positions *and* authentic Almagest epicycle reconstruction, as two sub-modes |
 | Frame origin picker | **Free in all modes** — any body can be centered in any mode |
 | Copernicus orbits | **Pure circles** — reproduces the historical error deliberately |
+| Kepler orbits | **Two-body ellipses**, no mutual perturbation — the residual is Newton's to explain |
 | Stack | **TypeScript + Vite, vanilla DOM**, no UI framework |
 | Zodiac division | **Both, toggleable**: 12 equal 30° signs (default) and real IAU boundaries |
 | Time range | **1600–2400**, opens at today's date |
-| Events | **Auto-list + on-demand search**, with **all three models' predicted dates shown side by side** |
+| Events | **Auto-list + on-demand search**, with **every model's predicted date shown side by side** against the reference |
 | Layout | **Map centered and dominant; celestial sphere as a ring around it; sight-lines from the observation point through each body out to the ring** |
 | Default locale | **Czech**, English via toggle |
 | Deployment | **Static files on a university web server** — no backend, no database, no server-side writes |
@@ -95,11 +104,19 @@ Implementations:
   sub-arcsecond across the supported range. This is the ground truth the other
   engines' error is measured against, the basis for Ptolemy's reframe sub-mode,
   and the source of the event panel's "actual" times. See §12.7.
-- **`keplerianEngine`** — two-body Keplerian ellipses from standard orbital
-  elements with secular rates. Was the reference before VSOP87 and remains the
-  supplier of *osculating elements*, which a positional series does not give:
-  it seeds the n-body integration and drives the Almagest engine's modern mean
-  longitudes.
+- **`keplerianEngine`** (Kepler) — two-body ellipses from standard orbital
+  elements with secular rates. Wears two hats. As a *model* it is the fourth
+  selectable mode, with a construction showing the ellipse, both foci and the
+  radius vector. As *infrastructure* it remains the supplier of osculating
+  elements, which a positional series like VSOP87 does not give: it seeds the
+  n-body integration and drives the Almagest engine's modern mean longitudes.
+  It was also the reference before VSOP87 replaced it.
+
+  Its error against the reference is the *perturbation* it omits — measured
+  worst-case over 1700–2300: Mercury 0.013°, Venus 0.025°, Mars 0.062°, Jupiter
+  0.221°, Saturn 0.330°. Largest for Jupiter and Saturn, the heaviest pair,
+  which is exactly the signature of mutual attraction and exactly what Newton
+  went on to account for. `engines/kepler.test.ts` asserts that ordering.
 - **`circularEngine`** (Copernicus) — mean orbital radius and period per planet,
   perfect circles, Sun at center. Deliberately reproduces Copernicus's real
   error: heliocentrism right, circular orbits wrong. Divergence from
@@ -381,7 +398,11 @@ custom-property tokens.
   throughout, and the ellipse is Kepler's, sixty-six years later. Keeping the
   error intact is what lets the app show that heliocentrism *alone* bought no
   predictive gain — see §12.3, where Copernicus loses to Ptolemy on every
-  superior planet.
+  superior planet, and §12.1's Kepler figures, where the same arrangement with
+  ellipses instead of circles beats him by a factor of five hundred at Mars.
+- **Keplerian** — the same JPL elements solved properly: Kepler's equation for
+  the eccentric anomaly, the Sun at a focus. See the `keplerianEngine` note
+  above for what its residual error is and why it is interesting.
 - **Ptolemaic (epicyclic)** — Almagest apogees, eccentricities, and epicycle
   radii, shifted once into the star-fixed J2000 frame. Driven by modern mean
   longitudes rather than Ptolemy's own tables, so that what the engine shows is
@@ -793,13 +814,39 @@ deferent and epicycle circles, the deferent's centre, the equant, the arms
 joining them, and the apsidal axis. The view draws it for the selected body
 under a **Konstrukce / Construction** toggle.
 
-Only two engines have one. The Ptolemaic epicyclic engine gives the full
-harness; the Copernican engine gives a circle and a radius arm, and that
-spareness is itself the lesson — set beside deferent-plus-eccentric-plus-
-equant-plus-epicycle, it is what made Copernicus feel like an enormous
-simplification even though he predicted no better. The n-body integrator has no
-construction, and the Earth-centred reframe borrows accurate positions rather
-than deriving them, so both leave the method undefined and the toggle hides.
+Three engines have one, and read as a sequence they are the argument in
+miniature. The Ptolemaic epicyclic engine gives the full harness. The Copernican
+engine gives a circle and a radius arm, and that spareness is itself the lesson —
+set beside deferent-plus-eccentric-plus-equant-plus-epicycle, it is what made
+Copernicus feel like an enormous simplification even though he predicted no
+better. Kepler gives one curve, two foci and a radius vector, which is fewer
+parts still and the only one of the three that is actually right. The n-body
+integrator has no construction, and the Earth-centred reframe borrows accurate
+positions rather than deriving them, so both leave the method undefined and the
+toggle hides.
+
+#### Kepler's harness shows what is absent
+
+The construction marks **both foci** — the Sun on one, nothing whatever on the
+other — and the geometric centre as a third, separate point that now governs
+nothing. That absence is the entire content of the first law and is invisible
+unless the empty focus is drawn, so it is drawn. Set against the Ptolemaic panel,
+where the equant is marked most strongly of anything in the app, the pair makes
+the point that a century of eccentrics and equants was an elaborate way of
+approximating a focus.
+
+The radius vector is drawn brightest because its *sweep* is the second law, which
+no static figure can show: run the clock and watch it move quickly at perihelion
+and slowly at aphelion.
+
+**Ellipses are a distinct primitive** (`ConstructionEllipse`), given as a centre
+plus two semi-axis *vectors* rather than lengths and an angle. An angle would
+need a plane to be measured in, forcing every consumer to agree on a convention;
+two vectors carry orientation, orbital tilt and both lengths at once, and
+sampling reduces to `centre + major·cos θ + minor·sin θ`. Circles and ellipses
+are then sampled into the same array of projected polylines — after the
+nonlinear compressed-scale projection neither survives as the shape it started
+as, so nothing downstream needs to tell them apart.
 
 #### Newton's machinery is vectors, not circles
 

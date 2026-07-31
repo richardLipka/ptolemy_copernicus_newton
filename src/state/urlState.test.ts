@@ -207,4 +207,19 @@ describe('applying a link to the store', () => {
     store.hydrate({ mode: 'copernicus' });
     expect(store.get().ghostEngineId).toBeNull();
   });
+
+  /**
+   * The mode list is read from MODES rather than enumerated, so a fourth model
+   * needs no URL work of its own — but a link is the thing most likely to be
+   * pasted into a slide deck and never tested again, so it is worth asserting.
+   */
+  it('carries the Kepler mode', () => {
+    const link = encodeUrlState({ mode: 'kepler', engineId: 'keplerian' });
+    expect(link).toContain('model=kepler');
+    expect(readUrlState(link)).toEqual({ mode: 'kepler', engineId: 'keplerian' });
+
+    store.hydrate(readUrlState(link));
+    expect(store.get().mode).toBe('kepler');
+    expect(store.get().engineId).toBe('keplerian');
+  });
 });

@@ -63,6 +63,7 @@ function formatShare(share: number): string {
 /** One engine per model, for the side-by-side phase figures. */
 const PHASE_COMPARISON_ENGINES: readonly EngineId[] = [
   'nbody',
+  'keplerian',
   'circular',
   'ptolemaic-epicyclic',
 ];

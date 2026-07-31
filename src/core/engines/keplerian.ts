@@ -15,6 +15,7 @@ import {
   type KeplerianElements,
   type OrbitalModel,
 } from '../bodies';
+import type { Construction } from '../construction';
 import { centuriesSinceJ2000 } from '../time';
 import { DEG, add, scale, sub, vec3, type Vec3 } from '../vec';
 import type { Engine, PositionSet, StateVector } from './types';
@@ -314,9 +315,79 @@ export function keplerianStates(jd: number): Map<BodyId, StateVector> {
   return states;
 }
 
+// --- Kepler's construction ----------------------------------------------
+
+/**
+ * The first law, drawn.
+ *
+ * Where Ptolemy needs four devices and Copernicus needs a circle and an arm,
+ * Kepler needs one curve and one point on it. The harness shows what is *not*
+ * there as much as what is: two foci with the Sun on one and nothing at all on
+ * the other, and a geometric centre that no longer governs anything. Set beside
+ * the Ptolemaic panel — where the equant is marked most strongly of all — the
+ * pair makes the argument that a century of eccentrics and equants was an
+ * elaborate way of approximating this.
+ *
+ * The radius vector is drawn brightest because its *sweep* is the second law,
+ * which the first law alone cannot show: run the clock and watch it move
+ * quickly at perihelion and slowly at aphelion.
+ */
+export function keplerianConstruction(jd: number, id: BodyId): Construction | null {
+  // The Sun is the focus everything else is drawn about, so it has no orbit of
+  // its own here. The Moon's position comes from the Meeus lunar theory — a sum
+  // of periodic terms, not an ellipse — so there is no ellipse to draw for it
+  // and inventing one would misrepresent what the engine actually computes.
+  if (id === 'sun' || id === 'moon') return null;
+
+  const model = BODIES[id].orbit;
+  if (!model) return null;
+
+  const el = elementsAt(jd, model);
+  const { a, e } = el;
+  const semiMinor = a * Math.sqrt(1 - e * e);
+
+  /*
+   * `orbitalPlaneToEcliptic` is a pure rotation — no translation — so it maps
+   * free vectors exactly as it maps points, and the semi-axes can be carried
+   * into the ecliptic frame directly.
+   *
+   * In the plane coordinates that `positionFromElements` uses, x = a(cos E − e)
+   * and y = b sin E, which puts the occupied focus at the origin and the
+   * geometric centre a distance ae behind it, along the line of apsides.
+   */
+  const centre = orbitalPlaneToEcliptic(-a * e, 0, el);
+  const majorAxis = orbitalPlaneToEcliptic(a, 0, el);
+  const minorAxis = orbitalPlaneToEcliptic(0, semiMinor, el);
+
+  const occupiedFocus = vec3(0, 0, 0);
+  const emptyFocus = orbitalPlaneToEcliptic(-2 * a * e, 0, el);
+  const perihelion = orbitalPlaneToEcliptic(a * (1 - e), 0, el);
+  const aphelion = orbitalPlaneToEcliptic(-a * (1 + e), 0, el);
+
+  // A point on the ellipse by construction. For Earth this is the Earth–Moon
+  // barycentre rather than the marker's own position, the two differing by
+  // about 4700 km — some three hundredths of a pixel at this scale.
+  const body = positionFromElements(el, meanAnomalyAt(jd, model));
+
+  return {
+    circles: [],
+    ellipses: [{ centre, majorAxis, minorAxis, role: 'orbit' }],
+    arms: [
+      { from: perihelion, to: aphelion, role: 'apsidal' },
+      { from: occupiedFocus, to: body, role: 'radius' },
+    ],
+    markers: [
+      { at: occupiedFocus, role: 'focus' },
+      { at: emptyFocus, role: 'focus' },
+      { at: centre, role: 'centre' },
+    ],
+  };
+}
+
 export const keplerianEngine: Engine = {
   id: 'keplerian',
   positionsAt: (jd: number): PositionSet => keplerianPositions(jd),
+  construction: keplerianConstruction,
 };
 
 export const ALL_BODY_IDS = BODY_IDS;

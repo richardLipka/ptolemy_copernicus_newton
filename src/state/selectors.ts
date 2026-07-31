@@ -277,12 +277,17 @@ export function projectTrail(
 // --- construction ("the harness") ---------------------------------------
 
 export interface ProjectedConstruction {
-  circles: { points: Point[]; role: ConstructionRole }[];
+  /**
+   * Closed curves, already flattened to polylines — circles and ellipses alike,
+   * since after sampling and projection nothing distinguishes them but the role
+   * they carry.
+   */
+  curves: { points: Point[]; role: ConstructionRole }[];
   arms: { from: Point; to: Point; role: ConstructionRole }[];
   markers: { at: Point; role: ConstructionRole }[];
 }
 
-/** How finely construction circles are sampled. */
+/** How finely construction curves are sampled. */
 const CIRCLE_SAMPLES = 72;
 
 /**
@@ -349,19 +354,45 @@ export function buildConstruction(
   const positions = engine.positionsAt(state.julianDate);
   const project = constructionProjector(state, bodyId, positions);
 
-  return {
-    circles: construction.circles.map(({ centre, radius, role }) => {
+  const circles = construction.circles.map(({ centre, radius, role }) => {
+    const points: Point[] = [];
+    for (let i = 0; i <= CIRCLE_SAMPLES; i++) {
+      const angle = (i / CIRCLE_SAMPLES) * Math.PI * 2;
+      points.push(
+        project(
+          vec3(centre.x + Math.cos(angle) * radius, centre.y + Math.sin(angle) * radius, centre.z),
+        ),
+      );
+    }
+    return { points, role };
+  });
+
+  // Sampled the same way and into the same array: the projection is nonlinear,
+  // so an ellipse would not survive as an ellipse any more than a circle
+  // survives as a circle. Both become polylines and are drawn as such.
+  const ellipses = (construction.ellipses ?? []).map(
+    ({ centre, majorAxis, minorAxis, role }) => {
       const points: Point[] = [];
       for (let i = 0; i <= CIRCLE_SAMPLES; i++) {
         const angle = (i / CIRCLE_SAMPLES) * Math.PI * 2;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
         points.push(
           project(
-            vec3(centre.x + Math.cos(angle) * radius, centre.y + Math.sin(angle) * radius, centre.z),
+            vec3(
+              centre.x + majorAxis.x * cos + minorAxis.x * sin,
+              centre.y + majorAxis.y * cos + minorAxis.y * sin,
+              centre.z + majorAxis.z * cos + minorAxis.z * sin,
+            ),
           ),
         );
       }
       return { points, role };
-    }),
+    },
+  );
+
+  return {
+    curves: [...circles, ...ellipses],
     arms: construction.arms.map(({ from, to, role }) => ({
       from: project(from),
       to: project(to),

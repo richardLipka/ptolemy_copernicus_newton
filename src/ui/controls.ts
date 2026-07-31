@@ -26,7 +26,8 @@ export function renderControls(container: HTMLElement, store: Store): void {
 
   const modelPanel = panel(t('mode.label'));
 
-  const modeRow = el('div', 'segmented');
+  // Two rows of two: four model names do not fit across one dock-width row.
+  const modeRow = el('div', 'segmented segmented--grid');
   for (const mode of Object.keys(MODES) as ModeId[]) {
     const button = toggleButton(t(`mode.${mode}`), state.mode === mode, () =>
       store.setMode(mode),
@@ -240,16 +241,16 @@ export function renderControls(container: HTMLElement, store: Store): void {
   }
 
   if (hasMachinery && state.showConstruction) {
+    // Each model's machinery needs its own key: the Ptolemaic legend names a
+    // deferent, an epicycle and an equant, none of which Kepler has.
+    const legend = store.engine.dynamics
+      ? 'view.forcesLegend'
+      : state.engineId === 'keplerian'
+        ? 'view.ellipseLegend'
+        : 'view.constructionLegend';
+
     harnessPanel.appendChild(
-      el(
-        'p',
-        'note',
-        !state.selectedBody
-          ? t('view.constructionHint')
-          : store.engine.dynamics
-            ? t('view.forcesLegend')
-            : t('view.constructionLegend'),
-      ),
+      el('p', 'note', !state.selectedBody ? t('view.constructionHint') : t(legend)),
     );
 
     // Under the compressed scale a circle not centred on the frame origin does

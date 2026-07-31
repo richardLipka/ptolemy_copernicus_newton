@@ -55,7 +55,7 @@ export type EngineId =
   | 'ptolemaic-almagest'
   | 'nbody';
 
-export type ModeId = 'ptolemy' | 'copernicus' | 'newton';
+export type ModeId = 'ptolemy' | 'copernicus' | 'kepler' | 'newton';
 
 export interface Mode {
   id: ModeId;
@@ -79,6 +79,22 @@ export const MODES: Record<ModeId, Mode> = {
   copernicus: {
     id: 'copernicus',
     engines: ['circular'],
+    defaultFrameOrigin: 'sun',
+    defaultObservationPoint: 'earth',
+  },
+  /*
+   * Between Copernicus and Newton, where it belongs both chronologically and
+   * argumentatively. Copernicus moved the centre and kept the circles, and
+   * gained no accuracy for it; Kepler kept the centre and dropped the circles,
+   * and the error fell by an order of magnitude. Putting the two side by side is
+   * what shows that the ellipse, not heliocentrism, was what actually paid.
+   *
+   * Two-body ellipses only — no mutual perturbation, which is precisely the
+   * residual Newton went on to explain and the reference ephemeris carries.
+   */
+  kepler: {
+    id: 'kepler',
+    engines: ['keplerian'],
     defaultFrameOrigin: 'sun',
     defaultObservationPoint: 'earth',
   },

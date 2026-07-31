@@ -1,6 +1,6 @@
 {
-  "app.title": "Orrery — three models of the solar system",
-  "app.subtitle": "Ptolemy · Copernicus · Newton",
+  "app.title": "Orrery — four models of the solar system",
+  "app.subtitle": "Ptolemy · Copernicus · Kepler · Newton",
   "mode.ptolemy": "Ptolemy",
   "mode.copernicus": "Copernicus",
   "mode.newton": "Newton",
@@ -44,9 +44,9 @@
   "view.zodiac.label": "Zodiac",
   "view.figures": "Star figures",
   "view.construction": "Construction",
-  "view.constructionHint": "Select a body to see its machinery — circles for Ptolemy and Copernicus, force vectors for Newton.",
+  "view.constructionHint": "Select a body to see its machinery — circles for Ptolemy and Copernicus, an ellipse for Kepler, force vectors for Newton.",
   "view.constructionLegend": "The thin circle is the deferent, the heavier one the epicycle. The open ring marks the deferent's centre; the diamond marks the equant, the point about which the epicycle's centre moves uniformly. The dashed line is the apsidal axis.",
-  "view.constructionScaleWarning": "At compressed scale the circles appear distorted. Switch to true scale to see them as the circles they are.",
+  "view.constructionScaleWarning": "At compressed scale the curves appear distorted. Switch to true scale to see them in their true shape.",
   "body.sun": "Sun",
   "body.mercury": "Mercury",
   "body.venus": "Venus",
@@ -151,5 +151,8 @@
   "events.comparison.referenceNote": "Reference from the VSOP87 theory, times in UT. Within minutes of published values — under ten for both the 2020 Mars opposition and the great conjunction of Jupiter and Saturn.",
   "engine.vsop87": "Elliptical orbits — modern ephemeris",
   "engine.help.vsop87": "VSOP87, the analytical theory used here as the reference. Elliptical orbits with their mutual perturbations; the yardstick the three historical models are measured against.",
-  "footer.copyright": "© {{year}} Richard Lipka"
+  "footer.copyright": "© {{year}} Richard Lipka",
+  "mode.kepler": "Kepler",
+  "engine.help.keplerian": "Kepler's ellipses: the Sun at one focus, and a radius vector that sweeps equal areas in equal times. The same heliocentric arrangement Copernicus proposed, with the circles replaced — which is where the accuracy actually came from.",
+  "view.ellipseLegend": "The curve is the orbit itself — an ellipse, not a circle. Both open rings are foci: the Sun sits on one and nothing at all on the other. The small ring between them is the geometric centre, which now governs nothing. The bright arm is the radius vector; run the clock and watch it sweep faster near the Sun."
 }

@@ -1,6 +1,6 @@
-# Orrery — Ptolemy · Copernicus · Newton
+# Orrery — Ptolemy · Copernicus · Kepler · Newton
 
-An interactive 2D model of the solar system that runs the same sky through three
+An interactive 2D model of the solar system that runs the same sky through four
 world-systems, so you can watch where they agree and where they part company.
 
 Pick any body as the stationary point and every orbit redraws around it. Centre
@@ -26,30 +26,39 @@ Czech and English · four looks · [Architecture notes](CLAUDE.md) · MIT licens
 
 ## The point of it
 
-Three models, one clock, one set of controls:
+Four models, one clock, one set of controls:
 
-| | Ptolemy | Copernicus | Newton |
-|---|---|---|---|
-| Centre | Earth | Sun | anything you like |
-| Orbits | deferents and epicycles | perfect circles | none — they emerge |
-| Method | geometric construction | geometric construction | integrate the force law |
+| | Ptolemy | Copernicus | Kepler | Newton |
+|---|---|---|---|---|
+| Centre | Earth | Sun | Sun, at a focus | anything you like |
+| Orbits | deferents and epicycles | perfect circles | ellipses | none — they emerge |
+| Method | geometric construction | geometric construction | geometric construction | integrate the force law |
 
 The headline result is one most people find backwards. Measured against an
 accurate ephemeris across 1600–2400, here is the worst error in apparent
 longitude each model makes:
 
-| Body | Ptolemy | Copernicus | Newton |
-|---|---|---|---|
-| Mercury | 4.6° | 6.1° | <0.1° |
-| Venus | 1.9° | 0.6° | <0.1° |
-| Mars | **2.8°** | **13.4°** | <0.1° |
-| Jupiter | **0.7°** | **6.9°** | 0.2° |
-| Saturn | **2.5°** | **6.3°** | 0.5° |
+| Body | Ptolemy | Copernicus | Kepler | Newton |
+|---|---|---|---|---|
+| Mercury | 4.6° | 6.1° | 0.005° | 0.02° |
+| Venus | 1.9° | 0.6° | 0.007° | 0.02° |
+| Mars | **2.8°** | **13.5°** | **0.03°** | 0.04° |
+| Jupiter | **0.6°** | **6.9°** | 0.15° | 0.19° |
+| Saturn | **2.6°** | **6.1°** | 0.35° | 0.58° |
 
 **Ptolemy beats Copernicus on the superior planets.** *De revolutionibus* was
 not more accurate than the *Almagest*. Heliocentrism alone bought no precision,
-because circular orbits cost Copernicus more than geocentrism ever cost Ptolemy,
-and that deadlock only broke when Kepler replaced the circles with ellipses.
+because circular orbits cost Copernicus more than geocentrism ever cost Ptolemy.
+
+**Kepler beats Copernicus by a factor of four hundred at Mars** — on the same
+heliocentric arrangement, changing nothing but the shape of the orbit. That is
+the whole argument in one row: it was never the centre, it was the circles.
+
+Newton then arrives at much the same numbers from an entirely different
+direction, deriving from a force law what Kepler had to fit to Tycho's
+observations. (He trails Kepler slightly on the outer planets only because a
+four-century numerical integration accumulates its own drift, which is a
+property of the arithmetic rather than of the physics.)
 
 This is asserted in the test suite, not just claimed in a table, so it cannot
 quietly regress.
@@ -78,7 +87,7 @@ quietly regress.
   rather than a number.
 - **Watch the light.** On the map every body's lit hemisphere faces the Sun.
   Select one and the panel shows its phase *as seen from the observation point*,
-  with a proper elliptical terminator — and what each of the three models
+  with a proper elliptical terminator — and what each of the four models
   predicts for it. Select **Mercury**: Newton, Copernicus and Ptolemy disagree
   by around twenty percentage points, because its eccentricity of 0.21 defeats a
   circle and an epicycle alike. On Venus they agree within four.
@@ -97,7 +106,7 @@ quietly regress.
   their body's colour and fade with age; the harness is brass and uniform, so the
   record of where something went never reads as part of the machinery.
 - **Compare predicted dates.** For any conjunction, opposition or station, the
-  event panel shows the date each of the three models predicts and the spread
+  event panel shows the date each of the four models predicts and the spread
   between them.
 
 ## Four looks

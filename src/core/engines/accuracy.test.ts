@@ -57,6 +57,40 @@ describe('Ptolemy versus Copernicus', () => {
   });
 });
 
+describe('and what Kepler changed', () => {
+  /**
+   * The other half of the claim, and the reason the deadlock above broke.
+   *
+   * Kepler's arrangement is Copernicus's — heliocentric, same elements, same
+   * Sun — differing in nothing but the shape of the orbit. So the whole of this
+   * improvement is attributable to the ellipse, which is what makes it the
+   * app's sharpest single result.
+   *
+   * Measured on these sample dates: Mars 0.03° against Copernicus's 13.5°.
+   */
+  it('beats Copernicus on every planet, not merely the superior ones', () => {
+    for (const body of ['mercury', 'venus', 'mars', 'jupiter', 'saturn'] as const) {
+      expect(worstError(body, keplerianPositions), body).toBeLessThan(
+        worstError(body, circularPositions),
+      );
+    }
+  });
+
+  it('turns thirteen degrees of Martian error into a few hundredths', () => {
+    expect(worstError('mars', keplerianPositions)).toBeLessThan(0.1);
+    expect(worstError('mars', circularPositions) / worstError('mars', keplerianPositions))
+      .toBeGreaterThan(100);
+  });
+
+  it('beats Ptolemy too, which Copernicus never managed', () => {
+    for (const body of ['mars', 'jupiter', 'saturn'] as const) {
+      expect(worstError(body, keplerianPositions), body).toBeLessThan(
+        worstError(body, ptolemaicEpicyclicPositions),
+      );
+    }
+  });
+});
+
 describe('both models stay within their historical accuracy', () => {
   const bounds: Partial<Record<BodyId, { ptolemy: number; copernicus: number }>> = {
     sun: { ptolemy: 1, copernicus: 1 },

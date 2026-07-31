@@ -227,11 +227,28 @@
   opacity: 0.85;
 }
 
+/*
+ * Kepler's ellipse. Drawn brighter and heavier than a deferent because it is
+ * the whole model — there is no epicycle riding on it and nothing else to look
+ * at, where Ptolemy's deferent is only the first of four devices.
+ */
+.harness__segment[data-role='orbit'] {
+  background: var(--brass);
+  height: var(--line-fine);
+  opacity: 0.8;
+}
+
 .harness__segment[data-role='deferent-arm'],
-.harness__segment[data-role='epicycle-arm'] {
+.harness__segment[data-role='epicycle-arm'],
+.harness__segment[data-role='radius'] {
   height: var(--line-medium);
   background: var(--brass);
   opacity: 0.9;
+}
+
+/* The radius vector, drawn brightest: its sweep is the second law. */
+.harness__segment[data-role='radius'] {
+  background: var(--brass-bright);
 }
 
 .harness__segment[data-role='epicycle-arm'] {
@@ -261,6 +278,18 @@
 /* Centre of the deferent: an open ring, since nothing sits there. */
 .harness__marker[data-role='centre'] {
   border: var(--line-fine) solid var(--brass-dark);
+  border-radius: 50%;
+  background: transparent;
+}
+
+/*
+ * The foci of Kepler's ellipse. Both are marked identically and deliberately
+ * so: the Sun's own glyph is already drawn on one of them, and leaving the
+ * other bare is what makes the first law legible — two foci, a star on one,
+ * nothing at all on the other, and no centre anywhere near either.
+ */
+.harness__marker[data-role='focus'] {
+  border: var(--line-medium) solid var(--brass-bright);
   border-radius: 50%;
   background: transparent;
 }

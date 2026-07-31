@@ -339,14 +339,14 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
         : null;
 
     if (construction) {
-      for (const circle of construction.circles) {
-        for (let i = 1; i < circle.points.length; i++) {
-          const from = circle.points[i - 1]!;
-          const to = circle.points[i]!;
-          // A circle straddling the frame origin projects to a curve that
-          // sweeps right across the map; skip the wrap rather than draw a chord.
+      for (const curve of construction.curves) {
+        for (let i = 1; i < curve.points.length; i++) {
+          const from = curve.points[i - 1]!;
+          const to = curve.points[i]!;
+          // A curve straddling the frame origin projects to one that sweeps
+          // right across the map; skip the wrap rather than draw a chord.
           if (Math.hypot(to.x - from.x, to.y - from.y) > 0.6) continue;
-          setSegment(takeSegment(circle.role), from, to);
+          setSegment(takeSegment(curve.role), from, to);
         }
       }
 

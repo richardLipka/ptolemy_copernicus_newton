@@ -1,6 +1,6 @@
 {
-  "app.title": "Orrery — tři modely sluneční soustavy",
-  "app.subtitle": "Ptolemaios · Koperník · Newton",
+  "app.title": "Orrery — čtyři modely sluneční soustavy",
+  "app.subtitle": "Ptolemaios · Koperník · Kepler · Newton",
   "mode.ptolemy": "Ptolemaios",
   "mode.copernicus": "Koperník",
   "mode.newton": "Newton",
@@ -44,9 +44,9 @@
   "view.zodiac.label": "Zvěrokruh",
   "view.figures": "Obrazce souhvězdí",
   "view.construction": "Konstrukce",
-  "view.constructionHint": "Vyberte těleso a zobrazí se jeho konstrukce — u Ptolemaia a Koperníka kružnice, u Newtona vektory sil.",
+  "view.constructionHint": "Vyberte těleso a zobrazí se jeho konstrukce — u Ptolemaia a Koperníka kružnice, u Keplera elipsa, u Newtona vektory sil.",
   "view.constructionLegend": "Tenký kruh je deferent, silnější epicykl. Kroužek značí střed deferentu, kosočtverec ekvant — bod, kolem něhož se střed epicyklu pohybuje rovnoměrně. Přerušovaná čára je apsidální osa.",
-  "view.constructionScaleWarning": "Ve zhuštěném měřítku se kružnice jeví zdeformované. Přepněte na skutečné měřítko a uvidíte je jako skutečné kruhy.",
+  "view.constructionScaleWarning": "Ve zhuštěném měřítku se křivky jeví zkreslené. Přepněte na skutečné měřítko, abyste je viděli v pravém tvaru.",
   "body.sun": "Slunce",
   "body.mercury": "Merkur",
   "body.venus": "Venuše",
@@ -151,5 +151,8 @@
   "events.comparison.referenceNote": "Referenční hodnota z teorie VSOP87, časy v UT. Proti publikovaným časům sedí na jednotky minut — u opozice Marsu i u velké konjunkce Jupitera se Saturnem roku 2020 na necelých deset minut.",
   "engine.vsop87": "Eliptické dráhy — moderní efemeridy",
   "engine.help.vsop87": "VSOP87, analytická teorie použitá zde jako referenční hodnota. Eliptické dráhy včetně vzájemných poruch — měřítko, proti němuž se tři historické modely porovnávají.",
-  "footer.copyright": "© {{year}} Richard Lipka"
+  "footer.copyright": "© {{year}} Richard Lipka",
+  "mode.kepler": "Kepler",
+  "engine.help.keplerian": "Keplerovy elipsy: Slunce v jednom ohnisku a průvodič, který opisuje stejné plochy za stejné časy. Totéž heliocentrické uspořádání, jaké navrhl Koperník, jen s nahrazenými kružnicemi — a právě odtud pochází ona přesnost.",
+  "view.ellipseLegend": "Křivka je samotná dráha — elipsa, nikoli kružnice. Oba kroužky jsou ohniska: v jednom je Slunce, ve druhém není vůbec nic. Malý kroužek mezi nimi je geometrický střed, který už nic neřídí. Světlé rameno je průvodič; spusťte čas a sledujte, jak se blízko Slunce pohybuje rychleji."
 }

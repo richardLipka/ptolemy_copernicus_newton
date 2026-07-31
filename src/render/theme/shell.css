@@ -335,6 +335,36 @@
   }
 
   /*
+   * Two rows of two, for a segmented control with more choices than fit across
+   * a dock. Four models at a shared dock width leave about 65px each, at which
+   * the English labels were breaking mid-word — "Copern/icus", "Ptolem/y".
+   *
+   * The dividers move from a single inline border per button to a grid of
+   * borders, since `:last-child` no longer identifies the outer edge once the
+   * control wraps. Written for an even number of items, which is what the two
+   * columns imply.
+   */
+  .segmented--grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .segmented--grid button {
+    border-inline-end: var(--line-hairline) solid var(--accent-dark);
+    border-block-end: var(--line-hairline) solid var(--accent-dark);
+  }
+
+  /* Right-hand column: nothing to divide it from. */
+  .segmented--grid button:nth-child(2n) {
+    border-inline-end: 0;
+  }
+
+  /* Bottom row: likewise. */
+  .segmented--grid button:nth-last-child(-n + 2) {
+    border-block-end: 0;
+  }
+
+  /*
    * The top bar is not width-constrained, so its buttons size to their text
    * instead of sharing a fixed row. With `flex: 1` they were being squeezed
    * below their content width and clipping the theme names.

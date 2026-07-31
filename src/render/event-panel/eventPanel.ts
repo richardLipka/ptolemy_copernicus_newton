@@ -56,6 +56,7 @@ function comparisonEngines(): Map<EngineId, (jd: number) => PositionSet> {
   return new Map<EngineId, (jd: number) => PositionSet>([
     [REFERENCE_ENGINE, (jd) => ENGINES[REFERENCE_ENGINE].positionsAt(jd)],
     ['nbody', (jd) => ENGINES.nbody.positionsAt(jd)],
+    ['keplerian', (jd) => ENGINES.keplerian.positionsAt(jd)],
     ['circular', (jd) => ENGINES.circular.positionsAt(jd)],
     ['ptolemaic-epicyclic', (jd) => ENGINES['ptolemaic-epicyclic'].positionsAt(jd)],
   ]);
