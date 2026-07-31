@@ -26,6 +26,7 @@ import { renderTopBar } from './ui/topBar';
 import { dateFromJd } from './core/time';
 import { formatDateTime, setLocale, t } from './i18n/i18n';
 import { store } from './state/store';
+import { encodeUrlState, readUrlState, writeUrlState } from './state/urlState';
 
 const root = document.querySelector<HTMLDivElement>('#app');
 if (!root) throw new Error('Missing #app');
@@ -262,7 +263,56 @@ root.addEventListener('dblclick', (event: MouseEvent) => {
   store.resetZoom();
 });
 
+// --- shareable configuration --------------------------------------------
+
+/**
+ * Keep the address bar showing the current arrangement, and honour one that
+ * arrives in a link.
+ *
+ * The guard matters: writing the hash fires `hashchange`, which would read it
+ * straight back and re-hydrate the store on every click. Comparing against what
+ * was last written breaks that loop while still letting a genuine navigation —
+ * the back button, or a pasted link — through.
+ */
+let lastWrittenHash = '';
+
+function syncUrl(): void {
+  const state = store.get();
+  const encoded = encodeUrlState({
+    mode: state.mode,
+    engineId: state.engineId,
+    frameOrigin: state.frameOrigin,
+    observationPoint: state.observationPoint,
+    sphereCentre: state.sphereCentre,
+  });
+  if (encoded === lastWrittenHash) return;
+  lastWrittenHash = encoded;
+  writeUrlState({
+    mode: state.mode,
+    engineId: state.engineId,
+    frameOrigin: state.frameOrigin,
+    observationPoint: state.observationPoint,
+    sphereCentre: state.sphereCentre,
+  });
+}
+
+window.addEventListener('hashchange', () => {
+  if (window.location.hash === lastWrittenHash) return;
+  lastWrittenHash = window.location.hash;
+  store.hydrate(readUrlState());
+});
+
+// A link's configuration is applied before the first render, so the app never
+// flashes its defaults on the way to what was actually shared.
+const shared = readUrlState();
+if (Object.keys(shared).length > 0) store.hydrate(shared);
+
+store.subscribe(syncUrl);
 store.subscribe(render);
+
+// Write it once at startup too, so the address bar describes the arrangement
+// from the outset rather than only after the reader has touched something.
+syncUrl();
 
 /**
  * Longest real interval a single frame may represent, seconds.

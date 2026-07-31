@@ -48,6 +48,12 @@ export type ScaleMode = 'compressed' | 'true';
  */
 export type SphereCentre = 'frame' | 'observer';
 
+/** The part of the state a shared link carries. See `urlState.ts`. */
+export type HydratableState = Pick<
+  State,
+  'mode' | 'engineId' | 'frameOrigin' | 'observationPoint' | 'sphereCentre'
+>;
+
 /** Which model the app opens on. */
 const INITIAL_MODE: ModeId = 'newton';
 
@@ -184,6 +190,37 @@ export class Store {
     // attribute positions to an engine that never produced them.
     this.trails.reset();
     this.patch({ mode, engineId, ghostEngineId: ghost });
+  }
+
+  /**
+   * Apply a shared configuration.
+   *
+   * One patch rather than a run of setters, so a link produces a single render
+   * and cannot pass through incoherent half-states on the way — setMode would
+   * otherwise reset the engine that the very next call was about to set.
+   *
+   * The engine is reconciled with the mode here rather than trusted: the URL
+   * layer validates the pair, but this method is also the one a future
+   * deep-link or preset would go through, and a mode showing an engine it does
+   * not own would leave the controls contradicting the map.
+   */
+  hydrate(incoming: Partial<HydratableState>): void {
+    const mode = incoming.mode ?? this.state.mode;
+    const allowed = MODES[mode].engines;
+    const requested = incoming.engineId ?? this.state.engineId;
+    const engineId = allowed.includes(requested) ? requested : allowed[0]!;
+
+    const ghost = this.state.ghostEngineId === engineId ? null : this.state.ghostEngineId;
+
+    this.trails.reset();
+    this.patch({
+      mode,
+      engineId,
+      ghostEngineId: ghost,
+      frameOrigin: incoming.frameOrigin ?? this.state.frameOrigin,
+      observationPoint: incoming.observationPoint ?? this.state.observationPoint,
+      sphereCentre: incoming.sphereCentre ?? this.state.sphereCentre,
+    });
   }
 
   setEngine(engineId: EngineId): void {

@@ -120,6 +120,20 @@ Every look is a block of CSS custom properties and nothing else, so the body
 colours stay comparable between them and adding a fifth means adding one file.
 Text contrast was measured, not eyeballed: 10:1 or better in all four.
 
+## Sharing a setup
+
+The address bar tracks the arrangement, so a link reopens it:
+
+```
+#model=ptolemy&type=ptolemaic-almagest&centre=earth&observer=mars&sphere=observer
+```
+
+Model, sub-mode, stationary point, observation point and where the celestial
+sphere is centred. Paste one into a slide and it comes back exactly as you left
+it. The date, zoom, theme and language are deliberately left out — the first two
+would freeze a link to a moment rather than a configuration, and the last two
+belong to whoever opens it.
+
 ## Running it
 
 ```bash

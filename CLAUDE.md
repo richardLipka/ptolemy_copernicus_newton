@@ -595,6 +595,43 @@ play/pause. It is geometric — 0.25, 1, 5, 20, 100, 400 days a second — becau
 useful range spans a factor of 1600 and a linear control would be unusable. The
 buttons clamp at both ends rather than wrapping.
 
+### 13.0b Shareable configuration
+
+Five fields live in the URL, so a link in a slide deck reopens the same
+arrangement:
+
+```
+#model=ptolemy&type=ptolemaic-almagest&centre=earth&observer=mars&sphere=observer
+```
+
+Model, engine, stationary point, observation point, sphere centring. Kept in the
+**hash**, not the query string: the app is static files on a host with no
+backend, so a query the server has never heard of risks a 404 on reload, and a
+hash change never reaches the network. Keys are spelled out because a readable
+URL is itself a small piece of documentation.
+
+**Not included**, deliberately: the date, the zoom, the theme and the language.
+The first two would freeze a link to a moment and a magnification when what is
+being shared is an arrangement. The last two are the reader's preference rather
+than the author's, and a link that silently repainted someone's interface would
+be rude. Adding the date is a two-line change if it turns out to be wanted.
+
+Three things the implementation has to get right:
+
+- **Validation is per field.** A hand-edited or truncated link must degrade to a
+  working app, so a bad value is dropped and the rest kept. The engine is also
+  checked against its *mode*: `model=newton&type=circular` names two real things
+  that cannot be combined, and keeping it would leave the mode buttons
+  disagreeing with the map.
+- **`store.hydrate()` applies a link as one patch**, not a run of setters —
+  `setMode` would reset the engine that the next call was about to set, and
+  subscribers would briefly see a state nobody asked for.
+- **`replaceState`, and a write guard.** These controls get swept through while
+  comparing models, so one history entry per click would bury the page the
+  reader came from. And since writing the hash fires `hashchange`, the last
+  written value is remembered — otherwise the app would read its own write back
+  and re-hydrate on every click.
+
 ### 13.1 Ghost overlay
 
 The user picks a comparison model; its bodies render faintly beside the active
