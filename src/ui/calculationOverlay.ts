@@ -80,6 +80,15 @@ function renderCalculationColumn(calculation: ModelCalculation): HTMLElement {
     ]),
   );
   column.appendChild(el('p', 'working__cost', t(calculation.costKey, costValues)));
+
+  // The tables are the other half, and the larger one: nobody computed a planet
+  // from scratch when they wanted one, they opened a book.
+  const tables = el('div', 'working__tables');
+  tables.append(
+    el('div', 'working__tables-label', t('calc.tables')),
+    el('p', undefined, t(calculation.tablesKey)),
+  );
+  column.appendChild(tables);
   return column;
 }
 

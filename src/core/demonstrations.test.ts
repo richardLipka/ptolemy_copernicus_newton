@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 
 import { relativePosition, solarElongation } from './coordinates';
 import { DEMONSTRATIONS, type Demonstration } from './demonstrations';
+import { circularPositions } from './engines/circular';
 import { keplerianPositions } from './engines/keplerian';
 import { ptolemaicEpicyclicPositions } from './engines/ptolemaic';
 import { vsop87Positions } from './engines/vsop87';
@@ -101,6 +102,37 @@ describe('the Mercury transit of 1631', () => {
     ).latitude;
     // The Sun's apparent radius is about 0.27°; measured here, 0.002°.
     expect(Math.abs(latitude)).toBeLessThan(0.27);
+  });
+
+  /**
+   * The claim the Kepler tables note makes: the older constructions put this
+   * transit on 4 November, three days early, when nobody would have been
+   * watching. Measured — Copernicus 2.5 days out, Ptolemy 2.7.
+   *
+   * Both still *predict* a transit, which is the honest and more interesting
+   * version of the story: the geometry was not so wrong that Mercury missed the
+   * disc, it was wrong about the day.
+   */
+  it('is placed three days early by the pre-Keplerian constructions', () => {
+    const nearest = (positionsAt: typeof vsop87Positions): number =>
+      findConjunctions(positionsAt, 'mercury', 'sun', {
+        observer: 'earth',
+        startJd: demonstration.jd - 25,
+        endJd: demonstration.jd + 25,
+        stepDays: 0.25,
+      }).sort(
+        (a, b) =>
+          Math.abs(a.jd - demonstration.jd) - Math.abs(b.jd - demonstration.jd),
+      )[0]!.jd;
+
+    // Kepler's method lands on the day; the older two are days early.
+    expect(Math.abs(nearest(keplerianPositions) - demonstration.jd)).toBeLessThan(0.1);
+
+    for (const positionsAt of [circularPositions, ptolemaicEpicyclicPositions]) {
+      const error = nearest(positionsAt) - demonstration.jd;
+      expect(error).toBeLessThan(-2);
+      expect(error).toBeGreaterThan(-4);
+    }
   });
 
   it('is not a transit at the neighbouring conjunctions, so the date matters', () => {

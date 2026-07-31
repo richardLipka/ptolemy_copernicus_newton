@@ -82,9 +82,19 @@ export interface ModelCalculation {
    */
   titleKey: string;
   lines: CalculationLine[];
-  /** i18n key summarising the labour, and its raw substitutions. */
+  /** i18n key summarising the labour of one position, and its substitutions. */
   costKey: string;
   costValues?: Record<string, number>;
+  /**
+   * i18n key for the *tables* — which ones existed for this model, and what it
+   * took to build them.
+   *
+   * The cost line above is the price of one position. It is the smaller half of
+   * the story: nobody computed a planet from first principles when they wanted
+   * one, they opened a book. Making that book is where the real labour, and the
+   * characteristic difficulty of each model, actually lived.
+   */
+  tablesKey: string;
 }
 
 /** Reduce a correction to (−180, 180], where its sign means something. */
@@ -157,6 +167,7 @@ function ptolemaicCalculation(jd: number, body: BodyId, observer: BodyId): Model
   return {
     engineId: 'ptolemaic-epicyclic',
     titleKey: 'engine.ptolemaic-epicyclic',
+    tablesKey: 'calc.tables.ptolemy',
     lines,
     costKey: geometry?.equant ? 'calc.cost.ptolemy' : 'calc.cost.ptolemySun',
   };
@@ -203,6 +214,7 @@ function circularCalculation(jd: number, body: BodyId, observer: BodyId): ModelC
   return {
     engineId: 'circular',
     titleKey: 'engine.circular',
+    tablesKey: 'calc.tables.copernicus',
     lines,
     costKey: 'calc.cost.copernicus',
   };
@@ -279,6 +291,7 @@ function keplerianCalculation(jd: number, body: BodyId, observer: BodyId): Model
   return {
     engineId: 'keplerian',
     titleKey: 'engine.keplerian',
+    tablesKey: 'calc.tables.kepler',
     lines,
     costKey: 'calc.cost.kepler',
     costValues: { iterations },
@@ -356,6 +369,7 @@ function newtonCalculation(jd: number, body: BodyId, observer: BodyId): ModelCal
   return {
     engineId: 'nbody',
     titleKey: 'calc.newton.title',
+    tablesKey: 'calc.tables.newton',
     lines,
     costKey: 'calc.cost.newton',
     costValues: { evaluations: steps * NBODY_EVALUATIONS_PER_STEP },

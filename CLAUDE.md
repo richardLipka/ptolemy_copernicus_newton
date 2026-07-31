@@ -858,6 +858,26 @@ formats them. Czech writes 141,500 where English writes 141.500, and this is the
 one panel in the app that is nothing but numbers. A first version formatted in
 core and hard-coded a decimal point into every line.
 
+Each column carries **two** notes, answering different questions. `costKey`
+prices *one position*. `tablesKey` prices *the book of them*, which is the larger
+half: nobody computed a planet from scratch when they wanted one, they opened a
+table, and making that table is where each model's characteristic difficulty
+actually lived.
+
+| model | the tables | what made them hard |
+|---|---|---|
+| Ptolemy | *Almagest* c. AD 150; *Handy Tables*; later the Alfonsine Tables | Mean motions leaned on Babylonian eclipse records centuries older, for the baseline. The equation of argument varies with the epicycle's distance, so it needs two tables and an interpolation between them. |
+| Copernicus | Reinhold's *Prutenic Tables*, 1551 | Years of recomputation for barely any gain — the circles set the floor. Rejecting the equant on principle bought extra small circles, so nothing got simpler to tabulate. |
+| Kepler | *Rudolphine Tables*, 1627 | Twenty-six years, through a war, a lawsuit over Tycho's observations and his mother's witchcraft trial. Every entry needed Kepler's equation solved by iteration, which is why he seized on Napier's logarithms partway through and bound a log table into the result. |
+| Newton | none | The *Principia* contains no ephemeris. Closing the gap to a usable table took another century of perturbation work — Clairaut's lunar apsidal motion came out at half the observed rate before he carried the approximation further. |
+
+The Kepler note claims the older constructions place the 1631 Mercury transit on
+4 November. That is asserted in `demonstrations.test.ts` rather than merely
+written: measured, Copernicus is 2.5 days early and Ptolemy 2.7. Both still
+*predict* a transit, which is the more interesting version — the geometry was not
+so wrong that Mercury missed the disc, it was wrong about the day, and an
+observer following it would have watched on the wrong one.
+
 **Demonstrations** (`core/demonstrations.ts`) are the handful of moments when the
 models disagreed about something the sky could settle: Venus gibbous in 1610,
 the Mercury transit of 1631, the great conjunctions of 1603 and 2020, the Mars

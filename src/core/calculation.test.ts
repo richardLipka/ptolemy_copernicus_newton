@@ -58,6 +58,21 @@ describe('the panel covers every model, oldest first', () => {
       expect(calculation.costKey, calculation.engineId).toMatch(/^calc\.cost\./);
     }
   });
+
+  /**
+   * The cost line prices one position; the tables note prices the book of them,
+   * which is where the real labour and each model's characteristic difficulty
+   * actually lived. Both are needed or the panel tells half the story.
+   */
+  it('says what the tables were and what building them took', () => {
+    const keys = calculationsFor(JD, 'mars', 'earth').map((c) => c.tablesKey);
+    expect(keys).toEqual([
+      'calc.tables.ptolemy',
+      'calc.tables.copernicus',
+      'calc.tables.kepler',
+      'calc.tables.newton',
+    ]);
+  });
 });
 
 describe("the models' costs are the point", () => {

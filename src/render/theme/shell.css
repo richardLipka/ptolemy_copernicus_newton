@@ -721,6 +721,33 @@
     color: var(--text-muted);
   }
 
+  /*
+   * The tables note. Set apart from the cost line above it because the two
+   * answer different questions — what one position cost, and what the book of
+   * positions cost — and running them together read as one long aside.
+   */
+  .working__tables {
+    margin-top: 0.55rem;
+    padding-top: 0.45rem;
+    border-top: var(--line-hairline) solid var(--accent-dark);
+  }
+
+  .working__tables-label {
+    font-family: var(--face-display);
+    font-size: 0.62rem;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+  }
+
+  .working__tables p {
+    margin: 0;
+    font-size: 0.68rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+  }
+
   /* --- readouts ---------------------------------------------------------- */
 
   .readout {
