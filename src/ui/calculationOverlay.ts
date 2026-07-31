@@ -54,7 +54,7 @@ function formatValue(line: CalculationLine): string {
 
 function renderCalculationColumn(calculation: ModelCalculation): HTMLElement {
   const column = el('div', 'working');
-  column.appendChild(el('h3', 'working__title', t(`engine.${calculation.engineId}`)));
+  column.appendChild(el('h3', 'working__title', t(calculation.titleKey)));
 
   const table = el('div', 'working__lines');
   for (const line of calculation.lines) {

@@ -84,13 +84,67 @@ describe("the models' costs are the point", () => {
     expect(passes('venus')).toBeLessThanOrEqual(passes('mars'));
   });
 
-  it('counts Newton’s integration steps, which dwarf everything else', () => {
+  it('counts the integration this app runs, which is not Newton’s method', () => {
     const newton = calculationsFor(JD, 'mars', 'earth').find(
       (c) => c.engineId === 'nbody',
     )!;
-    const evaluations = Number(String(newton.costValues!.evaluations).replace(/\D/g, ''));
     // ~400 years back from J2000 at a quarter-day step, three forces per step.
-    expect(evaluations).toBeGreaterThan(1_000_000);
+    expect(Number(newton.costValues!.evaluations)).toBeGreaterThan(1_000_000);
+  });
+});
+
+describe('Newton solved the two-body problem, he did not integrate it', () => {
+  /**
+   * The correction that prompted this column's rewrite. Numerical integration
+   * is a twentieth-century technique; the *Principia* proves that an
+   * inverse-square force yields a conic section, so for one planet Newton's
+   * answer *is* Kepler's ellipse — derived instead of fitted.
+   */
+  it('reports a two-body longitude identical to Kepler’s', () => {
+    const newton = calculationsFor(JD, 'mars', 'earth').find(
+      (c) => c.engineId === 'nbody',
+    )!;
+    const twoBody = newton.lines.find((line) => line.labelKey === 'calc.newton.twoBody')!;
+
+    expect(twoBody.value).toBeCloseTo(resultOf('keplerian'), 9);
+  });
+
+  /**
+   * The genuinely new calculating power: Kepler's third law had no constant, so
+   * a period could be measured but not computed. Newton's version supplies it,
+   * and run backwards it weighs the Sun.
+   */
+  it('derives each period from the masses, to within a day', () => {
+    const expected: Record<string, number> = {
+      mercury: 87.969,
+      venus: 224.701,
+      mars: 686.98,
+      jupiter: 4332.59,
+      saturn: 10_759.22,
+    };
+
+    for (const [body, period] of Object.entries(expected)) {
+      const line = calculationsFor(JD, body as 'mars', 'earth')
+        .find((c) => c.engineId === 'nbody')!
+        .lines.find((l) => l.labelKey === 'calc.newton.period')!;
+
+      // Saturn's is the loosest: its elements drift most over the range.
+      expect(Math.abs(line.value! - period), body).toBeLessThan(6);
+    }
+  });
+
+  it('separates its own answer from the integration the map draws', () => {
+    const newton = calculationsFor(JD, 'mars', 'earth').find(
+      (c) => c.engineId === 'nbody',
+    )!;
+    const labels = newton.lines.map((line) => line.labelKey);
+
+    expect(labels).toContain('calc.newton.twoBody');
+    expect(labels).toContain('calc.newton.integrated');
+    // The result line is what the map shows, so the panel cannot contradict it.
+    expect(newton.lines.find((line) => line.isResult)!.labelKey).toBe(
+      'calc.newton.integrated',
+    );
   });
 });
 

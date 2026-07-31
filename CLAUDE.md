@@ -769,21 +769,44 @@ picture. Each was a procedure for turning a date into a number, and the numbers
 were the product — the *Almagest* is a book of tables, the Alfonsine Tables ran
 European astronomy for three centuries, and Kepler spent the better part of
 thirty years on the *Rudolphine Tables*. `core/calculation.ts` reproduces each
-model'''s working for one body on one date, in the order an astronomer would have
+model's working for one body on one date, in the order an astronomer would have
 carried it out.
 
-The point it makes is that **the models improve and grow more expensive in the
-same order**:
+What it shows is that accuracy was not bought at a steadily rising price:
 
 | model | what it cost |
 |---|---|
 | Ptolemy | two table look-ups and two additions |
 | Copernicus | one look-up, no correction at all |
 | Kepler | a transcendental equation, solved by iteration, per body per date |
-| Newton | ~1.7 million force evaluations to reach 1602 |
+| Newton | nothing new — his two-body solution *is* Kepler's ellipse |
 
-Worth reading beside the accuracy table in §12.1, which runs the other way. The
-panel is an *overlay* rather than a dock because four columns of working are
+The labour climbs steeply from Ptolemy to Kepler and then **stops**, which is
+worth reading beside the accuracy table in §12.1.
+
+**Newton is the column easiest to get wrong, and a first version got it wrong.**
+It showed step-by-step integration and a count of force evaluations, which is
+twentieth-century numerical celestial mechanics and not what Newton did. The
+*Principia* solves the two-body problem in closed form — Book I proves an
+inverse-square force toward a focus yields a conic — so for one planet Newton
+needed no new arithmetic at all, and the panel now says so by printing a
+two-body longitude identical to Kepler's.
+
+What Newton actually added, and what the column shows instead:
+
+- The ellipse stopped being a curve fitted to Tycho's observations and became a
+  consequence of a force. Same curve, different standing entirely.
+- Kepler's third law gained its missing constant. `P² = 4π²a³ / G(M + m)` lets a
+  period be *computed from the masses* rather than measured, and run backwards it
+  weighs the Sun. The panel derives it and lands within a fraction of a day —
+  Mercury 87.97 d, Mars 686.99 d, Saturn 29.47 yr.
+
+Beyond two bodies there is no closed form, which Newton knew — the lunar theory
+is where he said the problem made his head ache, and he attacked it by
+perturbation. The app's integration is still shown, as a clearly separate line
+labelled as this app's doing rather than his.
+
+The panel is an *overlay* rather than a dock because four columns of working are
 wider than any dock, and it is rebuilt only while open, on a wall-clock budget —
 it evaluates four engines.
 
@@ -799,7 +822,7 @@ opposition of 1602. Each sets date, model, centre, vantage and selection at
 once — deliberately unlike `setMode`, which changes one thing at a time, because
 a demonstration is a whole scene rather than a controlled comparison.
 
-**Every date was found with the app'''s own solver, and `demonstrations.test.ts`
+**Every date was found with the app's own solver, and `demonstrations.test.ts`
 re-derives them.** A teaching tool that cites a wrong date is worse than one
 that cites none. The 1631 transit is checked twice over: that Mercury is in
 conjunction with the Sun, *and* that its geocentric latitude is inside the solar

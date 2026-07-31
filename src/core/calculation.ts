@@ -9,17 +9,20 @@
  * how he got there, not what he was selling.
  *
  * This module reproduces each model's actual working for one body on one date,
- * step by step, in the order an astronomer would have carried it out. The point
- * it makes is uncomfortable and true: **the models get better and more expensive
- * in the same order**. Ptolemy needs two table look-ups and two additions.
- * Kepler needs a transcendental equation solved by iteration, per body, per
- * date, by hand. Newton needs an integration that cannot be done by hand at all.
+ * step by step, in the order an astronomer would have carried it out.
+ *
+ * The labour rises steeply from Ptolemy to Kepler — two table look-ups and two
+ * additions against a transcendental equation solved by iteration, per body and
+ * per date, by hand — and then stops rising. Newton's two-body solution is
+ * Kepler's ellipse, so it needs no new arithmetic at all; what it adds is a
+ * *reason*, and a period computable from the masses. See `newtonCalculation`,
+ * which is the column most easily got wrong.
  *
  * Every figure here is pulled from the engines themselves rather than recomputed
  * for display, so the panel cannot drift away from what the map is drawing.
  */
 
-import { BODIES, type BodyId } from './bodies';
+import { BODIES, GM_SUN, type BodyId } from './bodies';
 import { apparentLongitude } from './coordinates';
 import { circularHeliocentricAt, circularPositions } from './engines/circular';
 import {
@@ -70,7 +73,14 @@ export interface CalculationLine {
 }
 
 export interface ModelCalculation {
+  /** Which engine's number the result line reports. */
   engineId: EngineId;
+  /**
+   * Column heading. Separate from the engine label because Newton's column is
+   * about a *method* rather than about this app's integrator — see
+   * `newtonCalculation`.
+   */
+  titleKey: string;
   lines: CalculationLine[];
   /** i18n key summarising the labour, and its raw substitutions. */
   costKey: string;
@@ -146,6 +156,7 @@ function ptolemaicCalculation(jd: number, body: BodyId, observer: BodyId): Model
 
   return {
     engineId: 'ptolemaic-epicyclic',
+    titleKey: 'engine.ptolemaic-epicyclic',
     lines,
     costKey: geometry?.equant ? 'calc.cost.ptolemy' : 'calc.cost.ptolemySun',
   };
@@ -189,7 +200,12 @@ function circularCalculation(jd: number, body: BodyId, observer: BodyId): ModelC
     isResult: true,
   });
 
-  return { engineId: 'circular', lines, costKey: 'calc.cost.copernicus' };
+  return {
+    engineId: 'circular',
+    titleKey: 'engine.circular',
+    lines,
+    costKey: 'calc.cost.copernicus',
+  };
 }
 
 /**
@@ -262,6 +278,7 @@ function keplerianCalculation(jd: number, body: BodyId, observer: BodyId): Model
 
   return {
     engineId: 'keplerian',
+    titleKey: 'engine.keplerian',
     lines,
     costKey: 'calc.cost.kepler',
     costValues: { iterations },
@@ -274,40 +291,72 @@ const NBODY_STEP_DAYS = 0.25;
 const NBODY_EVALUATIONS_PER_STEP = 3;
 
 /**
- * Newton: no working to show, because there is none.
+ * Newton — and the thing it is easiest to get wrong about him.
  *
- * There is no expression for where Mars will be. There is only the force law and
- * a great many small steps, which is why this model had to wait for machines
- * that could take them. The figures below are the labour the browser is doing on
- * the reader's behalf, and they are worth seeing next to Ptolemy's two additions.
+ * He did **not** integrate step by step. That is a twentieth-century technique
+ * and needs a machine. The *Principia* solves the two-body problem in closed
+ * form: Book I proves that an inverse-square force toward a focus produces a
+ * conic section, and conversely. So for a single planet Newton's method yields
+ * *Kepler's own ellipse*, and the working above his column is his working too.
+ * He needed no new arithmetic to place Mars.
+ *
+ * What he added instead was twofold, and neither part is a shortcut:
+ *
+ *   - The ellipse stopped being a shape fitted to Tycho's observations and
+ *     became a consequence of a force. Same curve, entirely different standing.
+ *   - Kepler's third law gained its missing constant. `P² = 4π²a³ / G(M + m)`
+ *     lets the period be *computed from the masses* rather than measured — which
+ *     run backwards is how the Sun came to be weighed. The period on this column
+ *     is derived that way and lands within a fraction of a day.
+ *
+ * Beyond two bodies there is no closed form, and Newton knew it; the lunar
+ * theory is where he said the problem made his head ache. He attacked it by
+ * perturbation. The step-by-step integration this app's map runs is a modern
+ * stand-in for that, which is why its answer appears here as a separate line
+ * rather than as Newton's.
  */
-function nbodyCalculation(jd: number, body: BodyId, observer: BodyId): ModelCalculation {
+function newtonCalculation(jd: number, body: BodyId, observer: BodyId): ModelCalculation {
+  const lines: CalculationLine[] = [
+    { labelKey: 'calc.newton.law', formula: 'F = G m₁ m₂ / r²', value: null, unit: 'none' },
+  ];
+
+  const orbit = BODIES[body].orbit;
+  if (orbit) {
+    // The two-body gravitational parameter: the *sum* of the masses governs
+    // relative motion, which is the correction Kepler's third law was missing.
+    const mu = GM_SUN + BODIES[body].gm;
+    const semiMajor = elementsAt(jd, orbit).a;
+    lines.push({
+      labelKey: 'calc.newton.period',
+      formula: 'P = 2π√(a³/μ)',
+      value: 2 * Math.PI * Math.sqrt(semiMajor ** 3 / mu),
+      unit: 'days',
+    });
+  }
+
+  // Newton's own answer for one planet, which is Kepler's ellipse derived
+  // rather than fitted — so it is the Keplerian engine that produces it.
+  lines.push({
+    labelKey: 'calc.newton.twoBody',
+    formula: 'λ',
+    value: normalizeDeg(apparentLongitude(keplerianPositions(jd), observer, body)),
+    unit: 'degrees',
+  });
+
+  lines.push({
+    labelKey: 'calc.newton.integrated',
+    formula: 'λ',
+    value: normalizeDeg(apparentLongitude(nbodyEngine.positionsAt(jd), observer, body)),
+    unit: 'degrees',
+    isResult: true,
+  });
+
   const steps = Math.round(Math.abs(jd - J2000) / NBODY_STEP_DAYS);
 
   return {
     engineId: 'nbody',
-    lines: [
-      { labelKey: 'calc.newton.law', formula: 'F = G m₁ m₂ / r²', value: null, unit: 'none' },
-      {
-        labelKey: 'calc.newton.step',
-        formula: 'Δt',
-        value: NBODY_STEP_DAYS,
-        unit: 'days',
-      },
-      {
-        labelKey: 'calc.newton.steps',
-        formula: '|t − t₀| / Δt',
-        value: steps,
-        unit: 'count',
-      },
-      {
-        labelKey: 'calc.apparentLongitude',
-        formula: 'λ',
-        value: normalizeDeg(apparentLongitude(nbodyEngine.positionsAt(jd), observer, body)),
-        unit: 'degrees',
-        isResult: true,
-      },
-    ],
+    titleKey: 'calc.newton.title',
+    lines,
     costKey: 'calc.cost.newton',
     costValues: { evaluations: steps * NBODY_EVALUATIONS_PER_STEP },
   };
@@ -328,6 +377,6 @@ export function calculationsFor(
     ptolemaicCalculation(jd, body, observer),
     circularCalculation(jd, body, observer),
     keplerianCalculation(jd, body, observer),
-    nbodyCalculation(jd, body, observer),
+    newtonCalculation(jd, body, observer),
   ];
 }
