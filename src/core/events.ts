@@ -192,9 +192,29 @@ export interface ModelComparison {
   event: AstronomicalEvent;
   /** Date each engine predicts, keyed by engine id. */
   predictions: Map<EngineId, number>;
-  /** Largest disagreement between any two engines, days. */
+  /**
+   * The best modern value, from the reference ephemeris — what the sky actually
+   * did, as nearly as this app can say. Null if the reference finds no matching
+   * event in the window.
+   */
+  referenceJd: number | null;
+  /**
+   * Largest disagreement between the *historical* models, days.
+   *
+   * The reference is excluded on purpose. This number answers "how far apart are
+   * the models", which is a different question from "how wrong is each of them",
+   * and mixing the two would make it neither.
+   */
   spreadDays: number;
 }
+
+/**
+ * The engine treated as ground truth.
+ *
+ * See CLAUDE.md §12.7 on what its accuracy actually is, and why that governs
+ * whether a *time* of day can honestly be shown next to a date.
+ */
+export const REFERENCE_ENGINE: EngineId = 'keplerian';
 
 /**
  * Locate the same event under several engines and report the spread.
@@ -244,10 +264,16 @@ export function compareAcrossModels(
     if (nearest) predictions.set(engineId, nearest.jd);
   }
 
-  const dates = [...predictions.values()];
-  const spreadDays = dates.length > 1 ? Math.max(...dates) - Math.min(...dates) : 0;
+  const referenceJd = predictions.get(REFERENCE_ENGINE) ?? null;
 
-  return { event: reference, predictions, spreadDays };
+  // Spread across the historical models only — see the note on the field.
+  const modelDates = [...predictions]
+    .filter(([engineId]) => engineId !== REFERENCE_ENGINE)
+    .map(([, jd]) => jd);
+  const spreadDays =
+    modelDates.length > 1 ? Math.max(...modelDates) - Math.min(...modelDates) : 0;
+
+  return { event: reference, predictions, referenceJd, spreadDays };
 }
 
 /** Every event of interest in a window, ordered by date. */

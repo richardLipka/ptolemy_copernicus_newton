@@ -522,6 +522,58 @@ partly undo each other.
 `engines/almagest.test.ts` pins the figures down, including that divergence is
 below 0.05° near 137 AD and that the nested spheres are undisturbed.
 
+### 12.7 The reference ephemeris, and what its times are worth
+
+The event comparison shows four rows: the modern reference first, then each
+model with its miss beneath it. `REFERENCE_ENGINE` names the engine treated as
+ground truth — currently `keplerian`, JPL's *approximate* Keplerian elements
+valid 3000 BC–3000 AD.
+
+The solver bisects to under a second, so **the precision on show is entirely the
+ephemeris's**. That precision is not uniform, and the reason is worth knowing:
+an event is found where an angle crosses zero, so a fixed angular error becomes
+a time error *divided by the rate at which the angle closes*.
+
+Measured against published times:
+
+| event | closing rate | reference error |
+|---|---|---|
+| Mars opposition, Oct 2020 | brisk | **1.5 hours** |
+| Great conjunction, Dec 2020 | a few hundredths of a degree a day | **11 hours** |
+
+The n-body engine is worse on the slow one — a day and a half — and the two
+modern engines sit two days apart on an event they agree about to a fraction of a
+degree. `core/referenceAccuracy.test.ts` holds these figures.
+
+So a **date** is sound throughout and an **hour** is not always. The panel prints
+the time regardless, because for most events it is meaningful, and carries a note
+saying where it is not. That is the difference between a teaching tool and a
+false authority.
+
+#### If the times need to be trustworthy
+
+The upgrade path, in order of what I would actually do:
+
+1. **VSOP87D, truncated.** The standard choice for software that cannot ship a
+   JPL binary ephemeris: a semi-analytic series, public domain, accurate to about
+   an arcsecond over 1900–2100 and a few arcseconds across this app's whole
+   1600–2400 range — a hundredfold improvement, which would put the great
+   conjunction inside a few minutes. Meeus chapter 32 gives a truncated form; the
+   full tables are free from IMCCE/VizieR. No dependency, same architecture, and
+   the existing `Engine` interface would not change.
+2. **`astronomy-engine`** (MIT, TypeScript). VSOP87-derived, roughly an
+   arcminute, and it ships conjunction and opposition search functions. Fastest
+   route, at the cost of a dependency in an otherwise dependency-free core and of
+   giving up code that currently earns its keep as teaching material.
+3. **JPL DE440** is the gold standard and impractical here — the kernels are
+   hundreds of megabytes, against a 73 kB bundle.
+4. **JPL Horizons** is the right source for *validating* rather than computing:
+   pull exact times for a handful of events offline and assert against them, as
+   `referenceAccuracy.test.ts` already does for two.
+
+The Moon would want ELP2000-82B alongside, though the truncated Meeus lunar
+theory already in `keplerian.ts` is close to that.
+
 ## 13. UI Layer Notes
 
 ### 13.0 The shell and the themes

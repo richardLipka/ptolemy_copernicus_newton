@@ -575,3 +575,24 @@
     }
   }
 }
+
+@layer components {
+  /* The reference row leads the comparison; the models are read against it. */
+  .comparison__row--reference {
+    font-weight: 600;
+    color: var(--text-strong);
+    padding-bottom: 0.2rem;
+    margin-bottom: 0.2rem;
+    border-bottom: var(--line-hairline) solid var(--accent-dark);
+  }
+
+  /* A model's miss, hung under its own row. */
+  .comparison__offset {
+    text-align: end;
+    font-family: var(--face-numeric);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin: -0.1rem 0 0.25rem;
+  }
+}

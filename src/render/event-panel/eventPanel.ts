@@ -14,12 +14,13 @@
 import { BODY_IDS, type BodyId } from '../../core/bodies';
 import type { EngineId, PositionSet } from '../../core/engines/types';
 import {
+  REFERENCE_ENGINE,
   compareAcrossModels,
   scanEvents,
   type AstronomicalEvent,
 } from '../../core/events';
 import { dateFromJd } from '../../core/time';
-import { bodyName, formatDate, formatNumber, t } from '../../i18n/i18n';
+import { bodyName, formatDate, formatDateTime, formatNumber, t } from '../../i18n/i18n';
 import { ENGINES, type Store } from '../../state/store';
 import { el, panel } from '../../ui/dom';
 
@@ -43,13 +44,31 @@ function describe(event: AstronomicalEvent): string {
   }
 }
 
-/** Engines to put side by side: one per historical model, plus Newton. */
+/**
+ * Engines to put side by side: the modern reference first, then one per
+ * historical model.
+ *
+ * The reference leads because everything below it is read as a departure from
+ * it. It is the same ephemeris the accuracy tests measure against — see
+ * CLAUDE.md §12.7 for what it is and is not good for.
+ */
 function comparisonEngines(): Map<EngineId, (jd: number) => PositionSet> {
   return new Map<EngineId, (jd: number) => PositionSet>([
+    [REFERENCE_ENGINE, (jd) => ENGINES[REFERENCE_ENGINE].positionsAt(jd)],
     ['nbody', (jd) => ENGINES.nbody.positionsAt(jd)],
     ['circular', (jd) => ENGINES.circular.positionsAt(jd)],
     ['ptolemaic-epicyclic', (jd) => ENGINES['ptolemaic-epicyclic'].positionsAt(jd)],
   ]);
+}
+
+/** A model's offset from the reference, as a signed count of days. */
+function formatOffset(days: number): string {
+  if (Math.abs(days) < 1 / 48) return t('events.comparison.onTime');
+  const sign = days > 0 ? '+' : '−';
+  const size = Math.abs(days);
+  return size < 1
+    ? `${sign}${formatNumber(size * 24, 1)} ${t('events.comparison.hours')}`
+    : `${sign}${formatNumber(size, 1)} ${t('events.comparison.days')}`;
 }
 
 export function renderEventPanel(container: HTMLElement, store: Store): void {
@@ -112,10 +131,29 @@ export function renderEventPanel(container: HTMLElement, store: Store): void {
       table.appendChild(el('div', 'field__label', t('events.comparison.title')));
 
       for (const [engineId, jd] of comparison.predictions) {
+        const isReference = engineId === REFERENCE_ENGINE;
         const line = el('div', 'comparison__row');
-        line.appendChild(el('span', undefined, t(`engine.${engineId}`)));
-        line.appendChild(el('span', 'readout__value', formatDate(dateFromJd(jd))));
+        if (isReference) line.classList.add('comparison__row--reference');
+
+        line.appendChild(
+          el('span', undefined, isReference ? t('events.comparison.actual') : t(`engine.${engineId}`)),
+        );
+
+        // Date and time for everything, since the models are compared to the
+        // hour. The reading is UT; see the note under the table.
+        const when = el('span', 'readout__value', formatDateTime(dateFromJd(jd)));
+        line.appendChild(when);
         table.appendChild(line);
+
+        // How far this model missed by, which is the number worth reading.
+        if (!isReference && comparison.referenceJd !== null) {
+          const offset = el(
+            'div',
+            'comparison__offset',
+            formatOffset(jd - comparison.referenceJd),
+          );
+          table.appendChild(offset);
+        }
       }
 
       table.appendChild(
@@ -125,6 +163,10 @@ export function renderEventPanel(container: HTMLElement, store: Store): void {
           `${t('events.comparison.spread')}: ${formatNumber(comparison.spreadDays, 1)} ${t('events.comparison.days')}`,
         ),
       );
+
+      // The reference is an approximation too, and saying so is the difference
+      // between a teaching tool and a false authority.
+      table.appendChild(el('p', 'note', t('events.comparison.referenceNote')));
 
       row.appendChild(table);
       expanded = table;

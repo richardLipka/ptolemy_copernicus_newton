@@ -144,5 +144,9 @@
   "view.zoomHint": "The mouse wheel zooms the map, always about the stationary point. Double-click the map to return to the fitted view.",
   "info.modelDistanceRatio": "Distance ratio",
   "engine.ptolemaic-almagest": "Almagest — Ptolemy's own tables",
-  "engine.help.ptolemaic-almagest": "The same construction driven by Ptolemy's own mean motions and his precession — what a second-century astronomer would actually have computed. His rates are excellent, but the error is paid once per revolution: over nineteen centuries the outer planets drift about a degree, Venus and Mercury by tens."
+  "engine.help.ptolemaic-almagest": "The same construction driven by Ptolemy's own mean motions and his precession — what a second-century astronomer would actually have computed. His rates are excellent, but the error is paid once per revolution: over nineteen centuries the outer planets drift about a degree, Venus and Mercury by tens.",
+  "events.comparison.actual": "Actual (modern ephemeris)",
+  "events.comparison.hours": "h",
+  "events.comparison.onTime": "on time",
+  "events.comparison.referenceNote": "Reference from JPL approximate elements, times in UT. Good to about an hour for an opposition; for a slowly closing pair like Jupiter and Saturn a small angular error becomes a large one in time, and it can be ten hours or more out."
 }

@@ -170,6 +170,8 @@ let lastSelected: string | null = null;
 let lastInfoAt = 0;
 let lastEventAt = 0;
 let lastEventScanJd = Number.NaN;
+/** Whether the event panel has been drawn at least once. */
+let eventsRendered = false;
 
 function render(): void {
   const state = store.get();
@@ -218,10 +220,17 @@ function render(): void {
 
   // Event scanning evaluates the engine several hundred times, so it is driven
   // by how far the date has actually moved rather than by every change to it.
+  //
+  // The first pass ignores the budget. The budget is measured from process
+  // start, so an app that boots in under EVENT_BUDGET_MS would skip its only
+  // render and — with the clock paused and nothing else changing — never show
+  // the panel at all.
   const drifted =
     Number.isNaN(lastEventScanJd) ||
     Math.abs(state.julianDate - lastEventScanJd) > EVENT_RESCAN_DAYS;
-  if ((contextChanged || drifted) && now - lastEventAt > EVENT_BUDGET_MS) {
+  const withinBudget = eventsRendered && now - lastEventAt <= EVENT_BUDGET_MS;
+  if ((contextChanged || drifted) && !withinBudget) {
+    eventsRendered = true;
     lastEventAt = now;
     lastEventScanJd = state.julianDate;
     renderEventPanel(eventsHost, store);
