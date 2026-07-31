@@ -848,6 +848,43 @@ are then sampled into the same array of projected polylines — after the
 nonlinear compressed-scale projection neither survives as the shape it started
 as, so nothing downstream needs to tell them apart.
 
+#### The Moon's ellipse is osculating, and that is the interesting part
+
+Every other body in this mode is placed *by* an ellipse: the engine solves
+Kepler's equation and the drawn curve **is** the calculation. The Moon is not. It
+comes from the truncated Meeus lunar theory — a sum of periodic terms — because
+no fixed ellipse describes it well enough to be worth having. A circle at the
+mean distance is out by up to **27 700 km**.
+
+So `moonOsculatingConstruction()` derives the ellipse from the answer instead of
+producing it: the unique two-body orbit tangent to the Moon's motion at that
+instant, reconstructed from position and velocity via the eccentricity vector
+and vis-viva. It passes through the Moon by construction, so the radius vector
+and the marker cannot disagree.
+
+The reason to draw it is that **it will not hold still**. Measured over
+2026–2030:
+
+| osculating element | range |
+|---|---|
+| semi-major axis | 379 508 – 387 712 km (2.2%) |
+| eccentricity | **0.0263 – 0.0767**, very nearly ×3 |
+
+A planet's osculating ellipse is fixed to a millionth over the same span;
+`kepler.test.ts` asserts the ratio. That wandering is the Sun pulling on the
+Earth–Moon pair — the thing Ptolemy bolted a crank onto his lunar model to chase
+(§12.4) and that Newton was the first to explain. Showing a tidy fixed curve
+there would hide the single best demonstration in the app of where Kepler's laws
+stop. The harness therefore gets its own legend for the Moon, since "the Sun
+sits at a focus" and "this is what the motion implies right now" are different
+claims.
+
+One projection detail makes this work: `moonDrawnRadius()` is *linear* in true
+distance, so the Moon's exaggerated orbit scales the ellipse by a constant
+(~11.7×) and preserves its shape. Only the cap that keeps the Moon inside
+Mercury distorts it, and only in the crowded views where it is already
+distorting the Moon's own marker.
+
 #### Newton's machinery is vectors, not circles
 
 Newton places a body by *force*, so his counterpart to the deferent and epicycle

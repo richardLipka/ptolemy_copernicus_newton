@@ -242,12 +242,16 @@ export function renderControls(container: HTMLElement, store: Store): void {
 
   if (hasMachinery && state.showConstruction) {
     // Each model's machinery needs its own key: the Ptolemaic legend names a
-    // deferent, an epicycle and an equant, none of which Kepler has.
+    // deferent, an epicycle and an equant, none of which Kepler has. The Moon
+    // needs one of its own again — its ellipse is reconstructed from the motion
+    // rather than being what produced it, and it visibly wanders.
     const legend = store.engine.dynamics
       ? 'view.forcesLegend'
-      : state.engineId === 'keplerian'
-        ? 'view.ellipseLegend'
-        : 'view.constructionLegend';
+      : state.engineId !== 'keplerian'
+        ? 'view.constructionLegend'
+        : state.selectedBody === 'moon'
+          ? 'view.osculatingLegend'
+          : 'view.ellipseLegend';
 
     harnessPanel.appendChild(
       el('p', 'note', !state.selectedBody ? t('view.constructionHint') : t(legend)),

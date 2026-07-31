@@ -154,5 +154,6 @@
   "footer.copyright": "© {{year}} Richard Lipka",
   "mode.kepler": "Kepler",
   "engine.help.keplerian": "Kepler's ellipses: the Sun at one focus, and a radius vector that sweeps equal areas in equal times. The same heliocentric arrangement Copernicus proposed, with the circles replaced — which is where the accuracy actually came from.",
-  "view.ellipseLegend": "The curve is the orbit itself — an ellipse, not a circle. Both open rings are foci: the Sun sits on one and nothing at all on the other. The small ring between them is the geometric centre, which now governs nothing. The bright arm is the radius vector; run the clock and watch it sweep faster near the Sun."
+  "view.ellipseLegend": "The curve is the orbit itself — an ellipse, not a circle. Both open rings are foci: the Sun sits on one and nothing at all on the other. The small ring between them is the geometric centre, which now governs nothing. The bright arm is the radius vector; run the clock and watch it sweep faster near the Sun.",
+  "view.osculatingLegend": "The Moon is not placed by an ellipse — no fixed one fits it — so this is the two-body orbit its present position and speed imply, Earth at the focus. Run the clock and watch it breathe: the Sun's pull on the pair swings the eccentricity by a factor of three within months. That wandering is what Ptolemy chased with a crank and Newton finally explained."
 }

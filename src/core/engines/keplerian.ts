@@ -17,7 +17,18 @@ import {
 } from '../bodies';
 import type { Construction } from '../construction';
 import { centuriesSinceJ2000 } from '../time';
-import { DEG, add, scale, sub, vec3, type Vec3 } from '../vec';
+import {
+  DEG,
+  add,
+  cross,
+  dot,
+  length,
+  normalize,
+  scale,
+  sub,
+  vec3,
+  type Vec3,
+} from '../vec';
 import type { Engine, PositionSet, StateVector } from './types';
 
 /** Resolve mean elements to a given date by applying secular rates. */
@@ -255,6 +266,20 @@ export function moonGeocentricVelocityAt(jd: number, stepDays = 0.05): Vec3 {
 
 // --- Engine -------------------------------------------------------------
 
+/**
+ * Earth itself, not the Earth–Moon barycentre the published elements track.
+ *
+ * Extracted because the construction needs exactly the position the engine
+ * reports, or the Moon's harness would hang a few thousand kilometres off the
+ * Earth it is supposed to be centred on.
+ */
+export function earthPositionAt(jd: number): Vec3 {
+  return sub(
+    heliocentricAt(jd, 'earth'),
+    scale(moonGeocentricAt(jd), MOON_TO_EMB_MASS_FRACTION),
+  );
+}
+
 export function keplerianPositions(jd: number): Map<BodyId, Vec3> {
   const positions = new Map<BodyId, Vec3>();
   positions.set('sun', vec3(0, 0, 0));
@@ -264,9 +289,8 @@ export function keplerianPositions(jd: number): Map<BodyId, Vec3> {
   }
 
   // Published elements track the Earth–Moon barycentre; shift to Earth itself.
-  const barycentre = positions.get('earth')!;
   const moonOffset = moonGeocentricAt(jd);
-  const earth = sub(barycentre, scale(moonOffset, MOON_TO_EMB_MASS_FRACTION));
+  const earth = sub(positions.get('earth')!, scale(moonOffset, MOON_TO_EMB_MASS_FRACTION));
 
   positions.set('earth', earth);
   positions.set('moon', add(earth, moonOffset));
@@ -334,10 +358,9 @@ export function keplerianStates(jd: number): Map<BodyId, StateVector> {
  */
 export function keplerianConstruction(jd: number, id: BodyId): Construction | null {
   // The Sun is the focus everything else is drawn about, so it has no orbit of
-  // its own here. The Moon's position comes from the Meeus lunar theory — a sum
-  // of periodic terms, not an ellipse — so there is no ellipse to draw for it
-  // and inventing one would misrepresent what the engine actually computes.
-  if (id === 'sun' || id === 'moon') return null;
+  // its own here.
+  if (id === 'sun') return null;
+  if (id === 'moon') return moonOsculatingConstruction(jd);
 
   const model = BODIES[id].orbit;
   if (!model) return null;
@@ -380,6 +403,94 @@ export function keplerianConstruction(jd: number, id: BodyId): Construction | nu
       { at: occupiedFocus, role: 'focus' },
       { at: emptyFocus, role: 'focus' },
       { at: centre, role: 'centre' },
+    ],
+  };
+}
+
+/**
+ * The Moon's *osculating* ellipse — and why it is the most interesting figure
+ * in the app.
+ *
+ * The other bodies here are placed **by** an ellipse: the engine solves Kepler's
+ * equation and the drawn curve is the calculation itself. The Moon is not. Its
+ * position comes from a truncated Meeus lunar theory, a sum of periodic terms,
+ * because no fixed ellipse describes the Moon well enough to be worth having —
+ * a circle of the mean distance is out by up to 27 700 km.
+ *
+ * So this ellipse is derived from the answer rather than being the answer: the
+ * unique two-body orbit tangent to the Moon's true motion at this instant,
+ * reconstructed from its position and velocity. It passes through the Moon by
+ * construction, and it is exactly what Kepler's laws assert about the Moon
+ * *right now*.
+ *
+ * The point is that it will not hold still. Run the clock and watch it breathe —
+ * measured over 2026–2030 the osculating eccentricity swings between 0.026 and
+ * 0.077, very nearly a factor of three, and the semi-major axis wanders over
+ * 8200 km. That is the Sun pulling on the Earth–Moon pair, and it is the reason
+ * the Moon defeated everyone: Ptolemy bolted a crank onto his lunar model to
+ * chase it, and it took Newton to say what it *was*. A planet's ellipse sits
+ * still because nothing much disturbs it; the Moon's does not, and the harness
+ * should show that rather than hide it behind a tidy fixed curve.
+ */
+export function moonOsculatingConstruction(jd: number): Construction | null {
+  const earth = earthPositionAt(jd);
+  const r = moonGeocentricAt(jd);
+  const v = moonGeocentricVelocityAt(jd);
+
+  // Relative motion of a two-body pair is governed by the *sum* of the two GMs.
+  const mu = BODIES.earth.gm + BODIES.moon.gm;
+
+  const radius = length(r);
+  const speedSquared = dot(v, v);
+
+  // Eccentricity vector: magnitude e, pointing from the focus to perigee.
+  const eccentricity = scale(
+    sub(scale(r, speedSquared - mu / radius), scale(v, dot(r, v))),
+    1 / mu,
+  );
+  const e = length(eccentricity);
+
+  // Vis-viva rearranged. A hyperbolic orbit would give a <= 0; the Moon's never
+  // is, but a bound orbit is what the rest of this assumes.
+  const a = 1 / (2 / radius - speedSquared / mu);
+  if (!(a > 0) || e >= 1) return null;
+
+  const semiMinor = a * Math.sqrt(1 - e * e);
+
+  // In-plane axes: toward perigee, and perpendicular to it in the direction of
+  // travel. Taken from the angular momentum so the ellipse carries the orbit's
+  // real tilt rather than being flattened into the ecliptic.
+  const toPerigee = e > 0 ? scale(eccentricity, 1 / e) : normalize(r);
+  const normal = normalize(cross(r, v));
+  const alongMotion = cross(normal, toPerigee);
+
+  const centre = scale(toPerigee, -a * e);
+  const emptyFocus = scale(toPerigee, -2 * a * e);
+  const perigee = scale(toPerigee, a * (1 - e));
+  const apogee = scale(toPerigee, -a * (1 + e));
+
+  // Every point is expressed about Earth and then carried into the engine's
+  // heliocentric frame, which is where the view expects construction geometry.
+  const about = (point: Vec3): Vec3 => add(earth, point);
+
+  return {
+    circles: [],
+    ellipses: [
+      {
+        centre: about(centre),
+        majorAxis: scale(toPerigee, a),
+        minorAxis: scale(alongMotion, semiMinor),
+        role: 'orbit',
+      },
+    ],
+    arms: [
+      { from: about(perigee), to: about(apogee), role: 'apsidal' },
+      { from: earth, to: about(r), role: 'radius' },
+    ],
+    markers: [
+      { at: earth, role: 'focus' },
+      { at: about(emptyFocus), role: 'focus' },
+      { at: about(centre), role: 'centre' },
     ],
   };
 }

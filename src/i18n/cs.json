@@ -154,5 +154,6 @@
   "footer.copyright": "© {{year}} Richard Lipka",
   "mode.kepler": "Kepler",
   "engine.help.keplerian": "Keplerovy elipsy: Slunce v jednom ohnisku a průvodič, který opisuje stejné plochy za stejné časy. Totéž heliocentrické uspořádání, jaké navrhl Koperník, jen s nahrazenými kružnicemi — a právě odtud pochází ona přesnost.",
-  "view.ellipseLegend": "Křivka je samotná dráha — elipsa, nikoli kružnice. Oba kroužky jsou ohniska: v jednom je Slunce, ve druhém není vůbec nic. Malý kroužek mezi nimi je geometrický střed, který už nic neřídí. Světlé rameno je průvodič; spusťte čas a sledujte, jak se blízko Slunce pohybuje rychleji."
+  "view.ellipseLegend": "Křivka je samotná dráha — elipsa, nikoli kružnice. Oba kroužky jsou ohniska: v jednom je Slunce, ve druhém není vůbec nic. Malý kroužek mezi nimi je geometrický střed, který už nic neřídí. Světlé rameno je průvodič; spusťte čas a sledujte, jak se blízko Slunce pohybuje rychleji.",
+  "view.osculatingLegend": "Měsíc není umístěn elipsou — žádná pevná mu nesedí — takže toto je dvoutělesová dráha, kterou dává jeho okamžitá poloha a rychlost, se Zemí v ohnisku. Spusťte čas a sledujte, jak dýchá: přitažlivost Slunce mění výstřednost během měsíců až trojnásobně. Právě toto kolísání honil Ptolemaios klikou a vysvětlil je až Newton."
 }

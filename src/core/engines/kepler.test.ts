@@ -134,12 +134,88 @@ describe('the drawn ellipse is the actual orbit', () => {
     expect(flattening('venus')).toBeGreaterThan(0.999);
   });
 
-  it('draws nothing for the Sun, or for a Moon that has no Keplerian ellipse here', () => {
+  it('draws nothing for the Sun, which everything else is drawn about', () => {
+    expect(keplerianConstruction(jdFromCalendar(2026, 3, 15), 'sun')).toBeNull();
+  });
+});
+
+describe("the Moon's osculating ellipse", () => {
+  /**
+   * The Moon is placed by a periodic series rather than by an ellipse, so its
+   * harness is reconstructed from position and velocity: the two-body orbit
+   * tangent to the true motion at that instant. Being tangent, it must still
+   * pass exactly through the Moon.
+   */
+  it('passes through the Moon, like any other focus-sum ellipse', () => {
+    for (const year of [1650, 2026, 2380]) {
+      for (const day of [0, 97, 201]) {
+        const jd = jdFromCalendar(year, 1, 1) + day;
+        const construction = keplerianConstruction(jd, 'moon')!;
+        const positions = keplerianPositions(jd);
+        const moon = positions.get('moon')!;
+
+        const semiMajor = length(construction.ellipses![0]!.majorAxis);
+        const foci = construction.markers
+          .filter((marker) => marker.role === 'focus')
+          .map((marker) => marker.at);
+
+        const sum = distance(moon, foci[0]!) + distance(moon, foci[1]!);
+        expect(sum, `${year}+${day}`).toBeCloseTo(2 * semiMajor, 9);
+      }
+    }
+  });
+
+  it('is centred on Earth, not on the Sun', () => {
     const jd = jdFromCalendar(2026, 3, 15);
-    // The Moon comes from a truncated Meeus lunar theory — a sum of periodic
-    // terms. Drawing an ellipse would claim machinery the engine does not use.
-    expect(keplerianConstruction(jd, 'moon')).toBeNull();
-    expect(keplerianConstruction(jd, 'sun')).toBeNull();
+    const construction = keplerianConstruction(jd, 'moon')!;
+    const earth = keplerianPositions(jd).get('earth')!;
+
+    // The occupied focus is Earth itself, to the last bit.
+    const occupied = construction.markers.find((m) => m.role === 'focus')!.at;
+    expect(distance(occupied, earth)).toBeCloseTo(0, 12);
+  });
+
+  it('is about the size of the lunar orbit', () => {
+    const jd = jdFromCalendar(2026, 3, 15);
+    const semiMajor = length(keplerianConstruction(jd, 'moon')!.ellipses![0]!.majorAxis);
+    // 384 400 km in AU, give or take the osculating wander.
+    expect(semiMajor).toBeGreaterThan(0.0024);
+    expect(semiMajor).toBeLessThan(0.0027);
+  });
+
+  /**
+   * The reason this is worth drawing at all.
+   *
+   * A planet's osculating ellipse is very nearly fixed. The Moon's is not: the
+   * Sun's pull on the Earth–Moon pair swings the eccentricity between about
+   * 0.026 and 0.077 — a factor of three — within a few months. That wandering
+   * is precisely what no fixed ellipse can capture, what Ptolemy chased with a
+   * crank, and what Newton finally explained.
+   */
+  it('visibly breathes, where a planet’s barely moves', () => {
+    const eccentricityOf = (jd: number, body: BodyId): number => {
+      const ellipse = keplerianConstruction(jd, body)!.ellipses![0]!;
+      const a = length(ellipse.majorAxis);
+      const b = length(ellipse.minorAxis);
+      return Math.sqrt(1 - (b * b) / (a * a));
+    };
+
+    const spread = (body: BodyId): number => {
+      let low = Infinity;
+      let high = -Infinity;
+      for (let day = 0; day < 400; day += 4) {
+        const e = eccentricityOf(jdFromCalendar(2026, 1, 1) + day, body);
+        low = Math.min(low, e);
+        high = Math.max(high, e);
+      }
+      return high - low;
+    };
+
+    // Measured: the Moon's eccentricity ranges over roughly 0.05, Mars's over
+    // less than a millionth across the same span.
+    expect(spread('moon')).toBeGreaterThan(0.03);
+    expect(spread('mars')).toBeLessThan(1e-4);
+    expect(spread('moon') / spread('mars')).toBeGreaterThan(100);
   });
 });
 
