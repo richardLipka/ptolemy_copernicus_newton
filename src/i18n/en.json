@@ -199,5 +199,16 @@
   "calc.newton.title": "Newton — the two-body solution",
   "calc.newton.period": "Period, computed from the masses",
   "calc.newton.twoBody": "Two-body solution — Kepler's ellipse, derived",
-  "calc.newton.integrated": "All nine bodies, integrated (this app)"
+  "calc.newton.integrated": "All nine bodies, integrated (this app)",
+  "notes.toggle": "Show explanations",
+  "bodies.label": "Bodies",
+  "ghost.all": "All models at once",
+  "welcome.title": "Four ways of predicting a planet",
+  "welcome.lede": "The same sky, computed by Ptolemy, Copernicus, Kepler and Newton. Where they disagree is the interesting part.",
+  "welcome.point.models": "Switch model in the top-left panel. Nothing else moves, so any change you see is the model's doing.",
+  "welcome.point.centre": "Hold any body still — Earth for Ptolemy, the Sun for the rest — and watch every orbit redraw around it.",
+  "welcome.point.demos": "Calculation & demonstrations opens the moments that settled the argument, and shows what each model cost to work by hand.",
+  "welcome.keys": "Space plays and pauses, ← and → step a day, Esc closes a panel. The ⓘ button in the top-right turns the explanatory text on and off.",
+  "welcome.start": "Show me a demonstration",
+  "welcome.dismiss": "Explore on my own"
 }

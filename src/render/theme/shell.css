@@ -217,6 +217,21 @@
     color: var(--text);
   }
 
+  /*
+   * Explanatory prose, collapsed by default.
+   *
+   * The controls carry a lot of good standing text, and left permanently on it
+   * turns the left dock into a long scroll between a user and the control they
+   * wanted. It is one button away in the top bar, and the welcome says so.
+   *
+   * `.note--live` is exempt: the trail readout is a live status line rather than
+   * an explanation, and hiding it would remove information rather than prose.
+   */
+  :root[data-notes='off'] .note:not(.note--live),
+  :root[data-notes='off'] .field__hint {
+    display: none;
+  }
+
   .field__hint {
     font-size: 0.68rem;
     color: var(--text-muted);
@@ -431,6 +446,45 @@
     width: 100%;
   }
 
+  /* --- body chips -------------------------------------------------------- */
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.15rem 0.4rem;
+    font-family: var(--face-text);
+    font-size: var(--size-label);
+    letter-spacing: 0;
+  }
+
+  /* A key rather than a control: same shape, nothing to press. */
+  .chips--legend {
+    margin-top: 0.4rem;
+  }
+
+  .chip--static {
+    border: var(--line-fine) solid transparent;
+    color: var(--text-muted);
+    cursor: default;
+  }
+
+  .chip__swatch {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--tint);
+    /* The Sun's yellow all but vanishes on parchment without an outline. */
+    box-shadow: 0 0 0 var(--line-hairline) var(--accent-dark);
+    flex: 0 0 auto;
+  }
+
   /* A button that opens something, rather than one of a set of choices. */
   .wide-button {
     width: 100%;
@@ -456,6 +510,48 @@
 
   .overlay[hidden] {
     display: none;
+  }
+
+  /* The welcome sits above the calculation overlay, never beneath it. */
+  .overlay--welcome {
+    z-index: 11;
+  }
+
+  .overlay__sheet--narrow {
+    width: min(32rem, 100%);
+  }
+
+  .welcome__lede {
+    font-size: var(--size-heading);
+    line-height: 1.5;
+    margin: 0.5rem 0 0.8rem;
+  }
+
+  .welcome__points {
+    margin: 0 0 0.9rem;
+    padding-inline-start: 1.1rem;
+    display: grid;
+    gap: 0.35rem;
+    line-height: 1.45;
+  }
+
+  .welcome__keys {
+    font-size: 0.72rem;
+    font-style: italic;
+    color: var(--text-muted);
+    margin: 0 0 0.9rem;
+    line-height: 1.5;
+  }
+
+  .welcome__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .welcome__actions button {
+    flex: 1 1 10rem;
+    padding-block: 0.35rem;
   }
 
   .overlay__sheet {

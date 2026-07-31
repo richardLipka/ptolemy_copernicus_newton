@@ -709,6 +709,49 @@ play/pause. It is geometric — 0.25, 1, 5, 20, 100, 400 days a second — becau
 useful range spans a factor of 1600 and a linear control would be unusable. The
 buttons clamp at both ends rather than wrapping.
 
+### 13.0a Getting out of the way
+
+Four panels of controls, each carrying a paragraph of standing italic prose, is a
+long scroll between a user and the control they wanted. Four changes, roughly in
+order of how much they helped:
+
+**Explanations collapse.** All `.note` and `.field__hint` text hides behind a ⓘ
+in the top bar, driven by `:root[data-notes='off']` so nothing rebuilds when it
+is toggled. **Off by default** — the prose is good but it is reference material,
+and anyone past their first few minutes wants density. The exception is
+`.note--live`: the trail readout is a *status* line, not an explanation, and
+hiding it would remove information rather than prose.
+
+**A welcome, once per browser.** Previously a newcomer met every affordance and
+no entry point. Three sentences on what the app is, three on what to do, the two
+keys a presenter needs, and a primary button that opens the demonstrations rather
+than merely dismissing. Stored in localStorage, deliberately *not* in the URL —
+a shared link should not re-run a welcome its recipient has already seen.
+
+**Body chips** name and colour every body, and select it when clicked. A legend
+that is also a control, so the panel earns its space; it also gives the keyboard
+a route to a body, which previously existed only by tabbing the map markers.
+
+**Compare-all.** The ghost overlay drew one rival model, which was reasonable
+with three models and thin with four. `ghostEngineId` now accepts `'all'`, and
+`buildView` returns an array of `GhostLayer` rather than a single map. Ghosts are
+pooled per body and grown on demand, so a session that never opens the overlay
+allocates nothing extra.
+
+With three ghosts on the map they are tinted **by model** rather than by body
+(`--model-ptolemy` and friends). Which planet a ghost belongs to is already
+answered by the link line running back to it; which model put it there is not,
+and with three on screen that is the only question worth asking. A key appears
+under the picker whenever compare-all is on. The reference engine is deliberately
+excluded — it is not one of the models being compared, and including it would
+turn a comparison into a marking scheme, which is the events panel's job.
+
+**Keyboard**: space plays and pauses, arrows step a day, Escape closes the
+topmost overlay. Ignored while an input or select has focus, or space would
+toggle whatever button was last clicked and the arrows would walk a select
+through its options. This is a lecture tool; hunting for a small button on a
+projected screen is its own small disaster.
+
 ### 13.0b Shareable configuration
 
 Six fields live in the URL, so a link in a slide deck reopens the same

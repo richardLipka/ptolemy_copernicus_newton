@@ -99,6 +99,19 @@
     --ghost-opacity: 0.42;
     --sightline-opacity: 0.55;
 
+    /*
+     * One colour per model, for compare-all.
+     *
+     * Chosen to stay apart from the body palette above, which is all warm
+     * metals — these read as annotation over the instrument rather than as more
+     * planets. Themes may override them; none needs to, since all four are
+     * legible on parchment and on black alike.
+     */
+    --model-ptolemy: #9a4f3f;
+    --model-copernicus: #7a6ba8;
+    --model-kepler: #3f7f6f;
+    --model-newton: #3f6f8f;
+
     /* --- aliases -----------------------------------------------------------
      * The instrument CSS was written against these names. Themes never set
      * them; they follow from the semantic tokens above.

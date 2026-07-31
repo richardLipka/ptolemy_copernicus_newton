@@ -199,5 +199,16 @@
   "calc.newton.title": "Newton — řešení problému dvou těles",
   "calc.newton.period": "Perioda, spočtená z hmotností",
   "calc.newton.twoBody": "Řešení pro dvě tělesa — odvozená Keplerova elipsa",
-  "calc.newton.integrated": "Všech devět těles, integrovaně (tato aplikace)"
+  "calc.newton.integrated": "Všech devět těles, integrovaně (tato aplikace)",
+  "notes.toggle": "Zobrazit vysvětlivky",
+  "bodies.label": "Tělesa",
+  "ghost.all": "Všechny modely naráz",
+  "welcome.title": "Čtyři způsoby, jak předpovědět planetu",
+  "welcome.lede": "Tatáž obloha, spočtená Ptolemaiem, Koperníkem, Keplerem a Newtonem. Zajímavé je to, v čem se rozcházejí.",
+  "welcome.point.models": "Model přepnete v panelu vlevo nahoře. Nic jiného se nezmění, takže každý rozdíl, který uvidíte, působí model.",
+  "welcome.point.centre": "Kterékoli těleso lze zastavit — Zemi u Ptolemaia, Slunce u ostatních — a sledovat, jak se všechny dráhy překreslí kolem něj.",
+  "welcome.point.demos": "Výpočet a ukázky otevírá okamžiky, které spor rozhodly, a ukazuje, co každý model stál ruční práce.",
+  "welcome.keys": "Mezerník spouští a zastavuje, ← a → posunou o den, Esc zavře panel. Tlačítko ⓘ vpravo nahoře zapíná a vypíná vysvětlivky.",
+  "welcome.start": "Ukaž mi ukázku",
+  "welcome.dismiss": "Prozkoumám to sám"
 }

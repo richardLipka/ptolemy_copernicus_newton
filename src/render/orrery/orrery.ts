@@ -147,8 +147,8 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     /** Body onward to the zodiac ring. */
     sightlineOuter: HTMLDivElement;
     pip: HTMLDivElement;
-    ghost: HTMLDivElement;
-    ghostLink: HTMLDivElement;
+    ghosts: { body: HTMLDivElement; link: HTMLDivElement }[];
+    takeGhost: (index: number) => { body: HTMLDivElement; link: HTMLDivElement };
     /** Live segment joining the logged trail to the body's current position. */
     trailLeader: HTMLDivElement;
   }
@@ -181,12 +181,26 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     const pip = div('sightline__pip');
     pip.style.setProperty('--stroke', tint);
 
-    const ghost = div('body body--ghost');
-    ghost.style.setProperty('--size', String(BODY_SIZE[id]));
-    ghost.style.setProperty('--tint', tint);
-
-    const ghostLink = div('ghost-link');
-    ghostLink.style.setProperty('--tint', tint);
+    /**
+     * Ghosts are pooled per body: one for a single comparison model, up to three
+     * for compare-all. Grown on demand rather than pre-allocated, since most
+     * sessions never turn the overlay on at all.
+     */
+    const ghosts: { body: HTMLDivElement; link: HTMLDivElement }[] = [];
+    const takeGhost = (index: number) => {
+      let pair = ghosts[index];
+      if (!pair) {
+        const ghostBody = div('body body--ghost');
+        ghostBody.style.setProperty('--size', String(BODY_SIZE[id]));
+        ghostBody.style.setProperty('--tint', tint);
+        const link = div('ghost-link');
+        link.style.setProperty('--tint', tint);
+        bodyLayer.append(link, ghostBody);
+        pair = { body: ghostBody, link };
+        ghosts.push(pair);
+      }
+      return pair;
+    };
 
     const trailLeader = div('trail__segment');
     trailLeader.style.setProperty('--stroke', tint);
@@ -195,7 +209,7 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     pathLayer.appendChild(trailLeader);
 
     sightLayer.append(sightline, sightlineOuter, pip);
-    bodyLayer.append(ghostLink, ghost, marker, label);
+    bodyLayer.append(marker, label);
 
     const select = (): void => store.selectBody(id);
     marker.addEventListener('click', select);
@@ -213,8 +227,8 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
       sightline,
       sightlineOuter,
       pip,
-      ghost,
-      ghostLink,
+      ghosts,
+      takeGhost,
       trailLeader,
     });
   }
@@ -629,15 +643,27 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
         leader.style.display = 'none';
       }
 
-    const ghostPoint = view.ghosts.get(body.id);
-      if (ghostPoint) {
-        parts.ghost.style.display = '';
-        parts.ghostLink.style.display = '';
-        setPoint(parts.ghost, ghostPoint);
-        setSegment(parts.ghostLink, body.point, ghostPoint);
-      } else {
-        parts.ghost.style.display = 'none';
-        parts.ghostLink.style.display = 'none';
+      // One ghost per comparison model. Each is tinted by *model* rather than by
+      // body, because with three on the map at once the question stops being
+      // "which planet is that" — the link line already answers it — and becomes
+      // "which model put it there".
+      let used = 0;
+      for (const layer of view.ghosts) {
+        const point = layer.points.get(body.id);
+        if (!point) continue;
+
+        const pair = parts.takeGhost(used++);
+        pair.body.style.display = '';
+        pair.link.style.display = '';
+        pair.body.dataset.engine = layer.engineId;
+        pair.link.dataset.engine = layer.engineId;
+        setPoint(pair.body, point);
+        setSegment(pair.link, body.point, point);
+      }
+
+      for (let i = used; i < parts.ghosts.length; i++) {
+        parts.ghosts[i]!.body.style.display = 'none';
+        parts.ghosts[i]!.link.style.display = 'none';
       }
     }
   }

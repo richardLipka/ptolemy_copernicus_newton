@@ -38,6 +38,13 @@ export function renderTopBar(container: HTMLElement, store: Store): void {
     themes.appendChild(button);
   }
   bar.appendChild(themes);
+  bar.appendChild(el('div', 'topbar__divider'));
+
+  // Explanatory prose is a reading preference, so it sits with the other two.
+  const notes = toggleButton('ⓘ', state.showNotes, () => store.toggleNotes());
+  notes.title = t('notes.toggle');
+  notes.setAttribute('aria-label', t('notes.toggle'));
+  bar.appendChild(notes);
 
   container.appendChild(bar);
 }

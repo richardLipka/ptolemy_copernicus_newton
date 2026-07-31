@@ -447,6 +447,35 @@
   pointer-events: none;
 }
 
+/*
+ * Compare-all draws up to three ghosts per body, so they are tinted by *model*
+ * instead of by body. Which planet a ghost belongs to is already answered by the
+ * link line running back to it; which model put it there is not, and with three
+ * on the map that is the only question worth asking.
+ *
+ * These override the body tint set inline, so they need the extra specificity
+ * that the attribute selector supplies.
+ */
+.body--ghost[data-engine='ptolemaic-epicyclic'],
+.ghost-link[data-engine='ptolemaic-epicyclic'] {
+  --tint: var(--model-ptolemy);
+}
+
+.body--ghost[data-engine='circular'],
+.ghost-link[data-engine='circular'] {
+  --tint: var(--model-copernicus);
+}
+
+.body--ghost[data-engine='keplerian'],
+.ghost-link[data-engine='keplerian'] {
+  --tint: var(--model-kepler);
+}
+
+.body--ghost[data-engine='nbody'],
+.ghost-link[data-engine='nbody'] {
+  --tint: var(--model-newton);
+}
+
 /* --- force and velocity vectors (Newton's harness) ---------------------- */
 
 /*

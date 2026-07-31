@@ -254,7 +254,9 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
    * labelled as such — it is precisely what no pre-telescopic observation could
    * test, and therefore what let the two systems coexist for so long.
    */
-  if (state.ghostEngineId && !body.isObserver) {
+  // Only for a single named ghost: 'all' has no one counterpart to measure
+  // against, and the map is already showing the whole spread.
+  if (state.ghostEngineId && state.ghostEngineId !== 'all' && !body.isObserver) {
     const ghostPositions = ENGINES[state.ghostEngineId].positionsAt(state.julianDate);
 
     const separation = Math.abs(

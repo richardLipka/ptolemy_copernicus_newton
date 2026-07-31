@@ -10,7 +10,7 @@
 import { BODY_IDS, type BodyId } from '../core/bodies';
 import type { ConstructionRole } from '../core/construction';
 import { apparentLongitude, relativePosition } from '../core/coordinates';
-import type { PositionSet } from '../core/engines/types';
+import type { EngineId, PositionSet } from '../core/engines/types';
 import { recenter } from '../core/frame';
 import { illuminationOf, type Illumination } from '../core/illumination';
 import { DEG, length, sub, vec3, type Vec3 } from '../core/vec';
@@ -162,13 +162,37 @@ export interface BodyView {
   isObserver: boolean;
 }
 
+/** One comparison model's projected positions. */
+export interface GhostLayer {
+  engineId: EngineId;
+  points: Map<BodyId, Point>;
+}
+
 export interface OrreryView {
   bodies: BodyView[];
-  /** Faint comparison model, if one is selected. */
-  ghosts: Map<BodyId, Point>;
+  /**
+   * Faint comparison models. One layer for a single chosen engine, or one per
+   * rival model in compare-all — where the *spread* is the message, and reading
+   * it needs every model on the map at once rather than two at a time.
+   */
+  ghosts: GhostLayer[];
   observerPoint: Point;
   positions: PositionSet;
 }
+
+/**
+ * Engines drawn by compare-all: one per model, in historical order.
+ *
+ * The reference is left out on purpose. It is not one of the models being
+ * compared, and including it would quietly turn a comparison into a marking
+ * scheme — a different question, answered by the events panel.
+ */
+export const COMPARISON_ENGINES: readonly EngineId[] = [
+  'ptolemaic-epicyclic',
+  'circular',
+  'keplerian',
+  'nbody',
+];
 
 export function buildView(state: State): OrreryView {
   const positions = ENGINES[state.engineId].positionsAt(state.julianDate);
@@ -198,17 +222,21 @@ export function buildView(state: State): OrreryView {
     });
   }
 
-  const ghosts = new Map<BodyId, Point>();
-  if (state.ghostEngineId) {
-    const ghostPositions = ENGINES[state.ghostEngineId].positionsAt(state.julianDate);
-    for (const [id, point] of projectPositions(
-      ghostPositions,
+  const ghostEngines =
+    state.ghostEngineId === 'all'
+      ? COMPARISON_ENGINES.filter((id) => id !== state.engineId)
+      : state.ghostEngineId
+        ? [state.ghostEngineId]
+        : [];
+
+  const ghosts: GhostLayer[] = ghostEngines.map((engineId) => ({
+    engineId,
+    points: projectPositions(
+      ENGINES[engineId].positionsAt(state.julianDate),
       state.frameOrigin,
       state.scaleMode,
-    )) {
-      ghosts.set(id, point);
-    }
-  }
+    ),
+  }));
 
   return {
     bodies,

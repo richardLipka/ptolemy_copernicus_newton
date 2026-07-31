@@ -11,11 +11,20 @@ import { BODY_IDS, type BodyId } from '../core/bodies';
 import { MODES, type EngineId, type ModeId } from '../core/engines/types';
 import type { ZodiacScheme } from '../core/zodiac';
 import { formatNumber, t } from '../i18n/i18n';
-import type { ScaleMode, SphereCentre, Store } from '../state/store';
+import type { GhostSelection, ScaleMode, SphereCentre, Store } from '../state/store';
+import { COMPARISON_ENGINES } from '../state/selectors';
 import { el, field, panel, select, toggleButton } from './dom';
 
 const bodyOptions = (): { value: BodyId; label: string }[] =>
   BODY_IDS.map((id) => ({ value: id, label: t(`body.${id}`) }));
+
+/** Engine id to the colour token compare-all tints it with. */
+const MODEL_TOKEN: Partial<Record<EngineId, string>> = {
+  'ptolemaic-epicyclic': 'ptolemy',
+  circular: 'copernicus',
+  keplerian: 'kepler',
+  nbody: 'newton',
+};
 
 /** The left dock: which model, seen from where, and what to draw over it. */
 export function renderControls(container: HTMLElement, store: Store): void {
@@ -66,15 +75,31 @@ export function renderControls(container: HTMLElement, store: Store): void {
     }
   }
 
+  // Four models now, so "one other" is a narrower question than it used to be.
+  ghostChoices.splice(1, 0, { value: 'all', label: t('ghost.all') });
+
   modelPanel.appendChild(
     field(
       t('ghost.label'),
       select(ghostChoices, state.ghostEngineId ?? '', (value) =>
-        store.setGhostEngine(value === '' ? null : (value as EngineId)),
+        store.setGhostEngine(value === '' ? null : (value as GhostSelection)),
       ),
       t('ghost.hint'),
     ),
   );
+
+  // With three ghosts on the map, tinted per model, the map needs a key.
+  if (state.ghostEngineId === 'all') {
+    const legend = el('div', 'chips chips--legend');
+    for (const engineId of COMPARISON_ENGINES) {
+      if (engineId === state.engineId) continue;
+      const item = el('span', 'chip chip--static');
+      item.style.setProperty('--tint', `var(--model-${MODEL_TOKEN[engineId]})`);
+      item.append(el('span', 'chip__swatch'), el('span', undefined, t(`engine.${engineId}`)));
+      legend.appendChild(item);
+    }
+    modelPanel.appendChild(legend);
+  }
 
   // The one control that opens something rather than changing something, so it
   // sits apart from the pickers above it.
@@ -105,6 +130,29 @@ export function renderControls(container: HTMLElement, store: Store): void {
     ),
   );
   container.appendChild(vantagePanel);
+
+  // --- bodies -----------------------------------------------------------
+  //
+  // A legend that is also a control. The map colours every body and nothing
+  // named them, so a newcomer had to hover to find out which dot was Saturn;
+  // making the swatches selectable means the panel earns its space rather than
+  // being decoration, and gives the keyboard a way to reach a body too.
+
+  const bodyPanel = panel(t('bodies.label'));
+  const chips = el('div', 'chips');
+  for (const id of BODY_IDS) {
+    const chip = el('button', 'chip');
+    chip.type = 'button';
+    chip.setAttribute('aria-pressed', String(state.selectedBody === id));
+    chip.style.setProperty('--tint', `var(--body-${id})`);
+    chip.append(el('span', 'chip__swatch'), el('span', undefined, t(`body.${id}`)));
+    chip.addEventListener('click', () =>
+      store.selectBody(state.selectedBody === id ? null : id),
+    );
+    chips.appendChild(chip);
+  }
+  bodyPanel.appendChild(chips);
+  container.appendChild(bodyPanel);
 
   // --- view -------------------------------------------------------------
 
@@ -214,9 +262,11 @@ export function renderControls(container: HTMLElement, store: Store): void {
   harnessPanel.appendChild(toggles);
 
   if (state.showOrbits) {
+    // Status rather than explanation — how much history exists right now — so it
+    // stays visible when the prose is collapsed.
     const trailNote = el(
       'p',
-      'note',
+      'note note--live',
       store.trails.size < 2
         ? t('harness.trailsEmpty')
         : t('harness.trailsRecorded', {

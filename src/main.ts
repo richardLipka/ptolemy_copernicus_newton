@@ -24,10 +24,12 @@ import { renderControls } from './ui/controls';
 import { renderTimeDock } from './ui/timeDock';
 import { renderTopBar } from './ui/topBar';
 import { renderCalculationOverlay } from './ui/calculationOverlay';
+import { renderWelcome } from './ui/welcome';
 import { el } from './ui/dom';
 import { dateFromJd } from './core/time';
 import { formatDateTime, setLocale, t } from './i18n/i18n';
 import { store } from './state/store';
+import { applyNotes } from './state/preferences';
 import { encodeUrlState, readUrlState, writeUrlState } from './state/urlState';
 
 const root = document.querySelector<HTMLDivElement>('#app');
@@ -35,6 +37,7 @@ if (!root) throw new Error('Missing #app');
 
 setLocale(store.get().locale);
 applyTheme(store.get().theme);
+applyNotes(store.get().showNotes);
 document.title = t('app.title');
 
 // --- structure -----------------------------------------------------------
@@ -118,6 +121,12 @@ overlayHost.className = 'overlay';
 overlayHost.hidden = true;
 root.appendChild(overlayHost);
 
+/** The welcome sits above everything, including the calculation overlay. */
+const welcomeHost = document.createElement('div');
+welcomeHost.className = 'overlay overlay--welcome';
+welcomeHost.hidden = true;
+root.appendChild(welcomeHost);
+
 const orrery = createOrrery(field, store);
 
 /** Handed back by the time dock so the clock can update without a rebuild. */
@@ -177,6 +186,9 @@ function controlsSignature(): string {
     state.selectedBody,
     state.locale,
     state.theme,
+    // The prose itself hides via CSS, but the top bar's toggle has to redraw
+    // to show which way it is set.
+    state.showNotes,
     state.playing,
     state.rateDaysPerSecond,
   ].join('|');
@@ -194,6 +206,7 @@ function overlaySignature(): string {
   const state = store.get();
   return [
     state.showCalculation,
+    state.showWelcome,
     state.selectedBody,
     state.observationPoint,
     state.locale,
@@ -277,6 +290,7 @@ function render(): void {
     lastOverlay = overlay;
     lastOverlayAt = now;
     renderCalculationOverlay(overlayHost, store);
+    renderWelcome(welcomeHost, store);
   }
 
   if (contextChanged || state.selectedBody !== lastSelected || now - lastInfoAt > INFO_BUDGET_MS) {
@@ -352,9 +366,15 @@ root.addEventListener('dblclick', (event: MouseEvent) => {
  * cursor and the arrows would walk a select through its options.
  */
 window.addEventListener('keydown', (event: KeyboardEvent) => {
-  if (event.key === 'Escape' && store.get().showCalculation) {
-    store.setCalculationOpen(false);
-    return;
+  if (event.key === 'Escape') {
+    if (store.get().showWelcome) {
+      store.dismissWelcome();
+      return;
+    }
+    if (store.get().showCalculation) {
+      store.setCalculationOpen(false);
+      return;
+    }
   }
 
   const active = document.activeElement;

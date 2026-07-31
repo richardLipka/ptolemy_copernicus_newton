@@ -26,6 +26,7 @@ import { MAX_JD, MIN_JD, SimulationClock, clampJd, jdFromDate } from '../core/ti
 import type { ZodiacScheme } from '../core/zodiac';
 import { getLocale, setLocale, type Locale } from '../i18n/i18n';
 import { applyTheme, readStoredTheme, type ThemeId } from '../render/theme/themes';
+import { applyNotes, hasBeenWelcomed, readStoredNotes, rememberWelcome } from './preferences';
 import { TrailLog } from './trails';
 
 export const ENGINES: Record<EngineId, Engine> = {
@@ -50,6 +51,9 @@ export type ScaleMode = 'compressed' | 'true';
  * instrument.
  */
 export type SphereCentre = 'frame' | 'observer';
+
+/** What the ghost overlay draws: nothing, one named model, or all of them. */
+export type GhostSelection = EngineId | 'all' | null;
 
 /** The part of the state a shared link carries. See `urlState.ts`. */
 export type HydratableState = Pick<
@@ -95,8 +99,11 @@ function nearestRung(rate: number): number {
 export interface State {
   mode: ModeId;
   engineId: EngineId;
-  /** Second model drawn faintly for comparison, or null. */
-  ghostEngineId: EngineId | null;
+  /**
+   * Second model drawn faintly for comparison, `'all'` for every rival model at
+   * once, or null. See `COMPARISON_ENGINES`.
+   */
+  ghostEngineId: GhostSelection;
   frameOrigin: BodyId;
   observationPoint: BodyId;
   selectedBody: BodyId | null;
@@ -114,6 +121,10 @@ export interface State {
   theme: ThemeId;
   /** The calculation and demonstrations overlay, opened on demand. */
   showCalculation: boolean;
+  /** The first-run welcome, shown until dismissed once. */
+  showWelcome: boolean;
+  /** Whether the controls' explanatory prose is shown. */
+  showNotes: boolean;
   /** Mirrors the clock so subscribers see time changes like any other change. */
   julianDate: number;
   playing: boolean;
@@ -155,6 +166,8 @@ export class Store {
       locale: getLocale(),
       theme: readStoredTheme(),
       showCalculation: false,
+      showWelcome: !hasBeenWelcomed(),
+      showNotes: readStoredNotes(),
       julianDate: this.clock.julianDate,
       playing: false,
       rateDaysPerSecond: 1,
@@ -253,7 +266,7 @@ export class Store {
     this.emit();
   }
 
-  setGhostEngine(engineId: EngineId | null): void {
+  setGhostEngine(engineId: GhostSelection): void {
     this.patch({ ghostEngineId: engineId === this.state.engineId ? null : engineId });
   }
 
@@ -320,6 +333,18 @@ export class Store {
   setCalculationOpen(showCalculation: boolean): void {
     if (showCalculation === this.state.showCalculation) return;
     this.patch({ showCalculation });
+  }
+
+  /** Dismissing the welcome is permanent; this browser has now seen it. */
+  dismissWelcome(): void {
+    rememberWelcome();
+    this.patch({ showWelcome: false });
+  }
+
+  toggleNotes(): void {
+    const showNotes = !this.state.showNotes;
+    applyNotes(showNotes);
+    this.patch({ showNotes });
   }
 
   /**
@@ -473,7 +498,8 @@ export class Store {
   }
 
   get ghostEngine(): Engine | null {
-    return this.state.ghostEngineId ? ENGINES[this.state.ghostEngineId] : null;
+    const { ghostEngineId } = this.state;
+    return ghostEngineId && ghostEngineId !== 'all' ? ENGINES[ghostEngineId] : null;
   }
 }
 
