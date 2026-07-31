@@ -1,7 +1,7 @@
 /**
  * What survives a model switch.
  *
- * This is the app's central promise: the three models are comparable only if
+ * This is the app's central promise: the models are comparable only if
  * switching between them changes the model and nothing else. It has been got
  * wrong in both directions during development — once by snapping the frame
  * origin to each mode's canonical centre, which moved two things at once — so
@@ -10,7 +10,7 @@
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { jdFromCalendar } from '../core/time';
+import { MAX_JD, MIN_JD, jdFromCalendar } from '../core/time';
 import { Store } from './store';
 
 let store: Store;
@@ -121,5 +121,47 @@ describe('the frame picker is free in every model', () => {
       store.setFrameOrigin('earth');
       expect(store.get().frameOrigin, mode).toBe('earth');
     }
+  });
+});
+
+describe('running off the end of the supported range', () => {
+  /**
+   * The clock clamps at 1600 and 2400 regardless, so without an explicit pause
+   * the app sat apparently frozen — nothing moving, no trail growing — while
+   * the transport still read "Pause" and invited the user to stop something
+   * that had already stopped.
+   */
+  it('stops playing rather than pinning silently at the end', () => {
+    const store = new Store();
+    store.setJulianDate(MAX_JD - 1);
+    store.setRate(400);
+    store.play();
+
+    store.tick(1);
+
+    expect(store.get().playing).toBe(false);
+    expect(store.get().julianDate).toBe(MAX_JD);
+  });
+
+  it('does the same at the near end', () => {
+    const store = new Store();
+    store.setJulianDate(MIN_JD + 1);
+    store.setRate(400);
+    store.play();
+
+    store.tick(-1);
+
+    expect(store.get().playing).toBe(false);
+  });
+
+  it('keeps running well inside the range', () => {
+    const store = new Store();
+    store.setJulianDate(jdFromCalendar(2000, 1, 1));
+    store.setRate(1);
+    store.play();
+
+    store.tick(1);
+
+    expect(store.get().playing).toBe(true);
   });
 });

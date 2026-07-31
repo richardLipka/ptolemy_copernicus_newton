@@ -19,7 +19,7 @@
 import { BODY_IDS, type BodyId } from '../bodies';
 import { J2000 } from '../time';
 import { add, vec3, type Vec3 } from '../vec';
-import { keplerianPositions } from './keplerian';
+import { moonGeocentricAt } from './keplerian';
 import type { Engine, PositionSet } from './types';
 import { VSOP87, type Vsop87Series } from './vsop87Data';
 
@@ -85,15 +85,14 @@ export function vsop87Positions(jd: number): Map<BodyId, Vec3> {
   // The Moon comes from the lunar theory, offset from VSOP87's Earth rather
   // than the Keplerian one it was computed against — a difference of a few
   // hundred kilometres, far below that theory's own accuracy.
+  //
+  // Taken straight from the geocentric series rather than by subtracting two
+  // heliocentric positions: the difference is what that series returns anyway,
+  // and going the long way round meant evaluating an entire Keplerian ephemeris
+  // — all eight orbits, Newton iteration and all — on every call to the
+  // reference engine, for one vector.
   const earth = positions.get('earth');
-  if (earth) {
-    const fallback = keplerianPositions(jd);
-    const geocentricMoon = add(
-      fallback.get('moon')!,
-      vec3(-fallback.get('earth')!.x, -fallback.get('earth')!.y, -fallback.get('earth')!.z),
-    );
-    positions.set('moon', add(earth, geocentricMoon));
-  }
+  if (earth) positions.set('moon', add(earth, moonGeocentricAt(jd)));
 
   return positions;
 }

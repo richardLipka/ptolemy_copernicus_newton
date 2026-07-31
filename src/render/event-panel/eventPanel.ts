@@ -2,9 +2,9 @@
  * Upcoming events, and what each model says about them.
  *
  * The comparison table is the app's argument in its most direct form: one
- * event, three dates, and the spread between them. A Mars opposition that
- * Newton and Ptolemy place a fortnight apart says more about the two systems
- * than any amount of prose.
+ * event, a date from each model, and the spread between them. A Mars
+ * opposition that Newton and Ptolemy place a fortnight apart says more about
+ * the two systems than any amount of prose.
  *
  * Scanning is deliberately kept off the animation path — it runs when the
  * date or model changes, not per frame, because each scan evaluates the engine
@@ -111,7 +111,7 @@ export function renderEventPanel(container: HTMLElement, store: Store): void {
     }
 
     // Expand on click rather than computing every comparison up front: each
-    // one re-scans three engines around the date.
+    // one re-scans every engine around the date.
     let expanded: HTMLElement | null = null;
     row.addEventListener('click', () => {
       store.setJulianDate(event.jd);

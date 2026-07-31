@@ -29,9 +29,10 @@ export interface Engine {
    * The machinery this engine uses to place a body, where it has any.
    *
    * Present only for engines that construct a position geometrically — the
-   * Ptolemaic epicycles and the Copernican circles. The n-body integrator has
-   * no construction to show, and the Earth-centred reframe borrows accurate
-   * positions rather than deriving them, so both leave this undefined.
+   * Ptolemaic epicycles, the Copernican circles and Kepler's ellipse. The n-body
+   * integrator has no construction to show, and the Earth-centred reframe
+   * borrows accurate positions rather than deriving them, so both leave this
+   * undefined.
    */
   construction?: ConstructionSource;
   /**

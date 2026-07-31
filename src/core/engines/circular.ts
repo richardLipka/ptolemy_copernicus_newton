@@ -5,8 +5,10 @@
  * The circularity is deliberate and is the point of this engine. Copernicus
  * got the arrangement right and the shape wrong, and keeping his error intact
  * is what lets the app show that heliocentrism alone did not buy better
- * predictions — that took Kepler's ellipses. Divergence from `keplerian`
- * grows with orbital eccentricity, so Mars and Mercury drift most.
+ * predictions — that took Kepler's ellipses. Divergence from the reference
+ * grows with orbital eccentricity, so Mars and Mercury drift most; setting this
+ * engine against `keplerian`, which shares its arrangement and differs only in
+ * the shape of the orbit, isolates exactly what the circles cost.
  */
 
 import {

@@ -245,9 +245,9 @@ MIT — see [LICENSE](LICENSE).
 
 ---
 
-# Orrery — Ptolemaios · Koperník · Newton
+# Orrery — Ptolemaios · Koperník · Kepler · Newton
 
-Interaktivní 2D model sluneční soustavy, který stejnou oblohu ukazuje ve třech
+Interaktivní 2D model sluneční soustavy, který stejnou oblohu ukazuje ve čtyřech
 soustavách světa, takže je vidět, kde se shodují a kde se rozcházejí.
 
 Jako nehybný bod lze zvolit kterékoli těleso a všechny dráhy se překreslí kolem
@@ -262,24 +262,39 @@ statických souborů.
 
 Nejzajímavější výsledek většina lidí nečeká. Proti přesné efemeridě v letech
 1600–2400 dělá **Ptolemaios menší chybu než Koperník** u vnějších planet —
-u Marsu 2,8° proti 13,4°. *De revolutionibus* nebylo přesnější než *Almagest*.
+u Marsu 2,8° proti 13,5°. *De revolutionibus* nebylo přesnější než *Almagest*.
 Samotný heliocentrismus přesnost nepřinesl, protože kruhové dráhy stály
-Koperníka víc než Ptolemaia geocentrismus. Rozhodlo až Keplerovo nahrazení
-kružnic elipsami.
+Koperníka víc než Ptolemaia geocentrismus.
+
+Rozhodlo až Keplerovo nahrazení kružnic elipsami, a je to v tabulce vidět:
+**u Marsu dělá Kepler chybu 0,03°, tedy čtyřistakrát menší než Koperník** —
+při stejném heliocentrickém uspořádání a stejných prvcích dráhy. Nerozhodl
+střed, ale tvar dráhy.
+
+| Těleso | Ptolemaios | Koperník | Kepler | Newton |
+|---|---|---|---|---|
+| Merkur | 4,6° | 6,1° | 0,005° | 0,02° |
+| Venuše | 1,9° | 0,6° | 0,007° | 0,02° |
+| Mars | **2,8°** | **13,5°** | **0,03°** | 0,04° |
+| Jupiter | **0,6°** | **6,9°** | 0,15° | 0,19° |
+| Saturn | **2,6°** | **6,1°** | 0,35° | 0,58° |
 
 ### Co aplikace umí
 
 - **Přesunout střed** — nehybným bodem může být kterékoli těleso v kterémkoli
   modelu.
-- **Ukázat konstrukci** — v ptolemaiovském a koperníkovském režimu se po výběru
-  tělesa zobrazí deferent, epicykl a **ekvant**, bod, kolem něhož se střed
-  epicyklu pohybuje rovnoměrně.
+- **Ukázat konstrukci** — po výběru tělesa se zobrazí jeho mechanismus:
+  u Ptolemaia deferent, epicykl a **ekvant**, bod, kolem něhož se střed epicyklu
+  pohybuje rovnoměrně; u Koperníka kružnice a rameno; u Keplera elipsa s **oběma
+  ohnisky** — v jednom je Slunce, ve druhém není nic — a průvodič; u Newtona
+  vektory sil a rychlosti.
 - **Porovnat dva modely naráz** — druhý model se vykreslí slabě vedle aktivního.
 - **Číst oblohu** — záměrné přímky z místa pozorování míří na pás zvěrokruhu
   a ukazují, kde těleso *vypadá*, na rozdíl od toho, kde *je*. Pás lze přepnout
   mezi dvanácti znameními a skutečnými souhvězdími IAU.
 - **Srovnat předpovědi** — u každé konjunkce, opozice a zastávky je vidět datum,
-  které předpovídá každý ze tří modelů, i rozdíl mezi nimi.
+  které předpovídá každý ze čtyř modelů, rozdíl mezi nimi i skutečný čas podle
+  moderní efemeridy VSOP87.
 
 ### Spuštění
 

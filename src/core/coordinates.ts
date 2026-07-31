@@ -52,19 +52,6 @@ export const apparentLongitude = (
   target: BodyId,
 ): number => relativePosition(positions, observer, target).longitude;
 
-/** Apparent longitudes of every body as seen from the observation point. The
- *  observer itself is omitted — it has no position in its own sky. */
-export function apparentLongitudes(
-  positions: PositionSet,
-  observer: BodyId,
-): Map<BodyId, number> {
-  const result = new Map<BodyId, number>();
-  for (const id of positions.keys()) {
-    if (id === observer) continue;
-    result.set(id, apparentLongitude(positions, observer, id));
-  }
-  return result;
-}
 
 /**
  * Angular distance from the Sun along the ecliptic, signed: positive when the

@@ -94,8 +94,3 @@ export interface Construction {
 /** Engines that draw a body by construction rather than by formula. */
 export type ConstructionSource = (jd: number, bodyId: BodyId) => Construction | null;
 
-export const emptyConstruction = (): Construction => ({
-  circles: [],
-  arms: [],
-  markers: [],
-});

@@ -1,13 +1,23 @@
 /**
- * Accurate two-body ephemeris. This is the app's ground truth: the Copernican
- * and Ptolemaic engines are measured against it, the n-body integrator is
- * seeded from it, and the "how wrong was this model?" readouts are differences
- * from it.
+ * Two-body Keplerian ephemeris, wearing two hats.
+ *
+ * As a **model** it is Kepler's, the fourth selectable mode: elliptical orbits
+ * with the Sun at a focus, and a construction to match. Its residual error
+ * against the reference is the mutual perturbation it omits, which is precisely
+ * what Newton went on to explain.
+ *
+ * As **infrastructure** it supplies osculating elements, which a positional
+ * series like VSOP87 does not give: it seeds the n-body integration, drives the
+ * Almagest engine's modern mean longitudes, and provides the lunar theory that
+ * every engine here shares.
+ *
+ * It is *not* the app's ground truth — `vsop87.ts` took that over, because
+ * two-body elements put the 2020 great conjunction eleven hours out. See
+ * CLAUDE.md §12.7.
  */
 
 import {
   BODIES,
-  BODY_IDS,
   MOON_TO_EMB_MASS_FRACTION,
   ORBITING_BODY_IDS,
   AU_IN_KM,
@@ -501,4 +511,3 @@ export const keplerianEngine: Engine = {
   construction: keplerianConstruction,
 };
 
-export const ALL_BODY_IDS = BODY_IDS;

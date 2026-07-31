@@ -95,7 +95,7 @@ describe('stations', () => {
 });
 
 describe('cross-model comparison', () => {
-  it('reports how far the three models disagree about one opposition', () => {
+  it('reports how far the models disagree about one opposition', () => {
     const sim = new NBodySimulation();
     const engines = new Map<EngineId, (jd: number) => PositionSet>([
       ['nbody', (jd) => sim.positionsAt(jd)],

@@ -318,7 +318,6 @@ export const BODIES: Record<BodyId, Body> = {
   },
 };
 
-export const getBody = (id: BodyId): Body => BODIES[id];
 
 /** Bodies with heliocentric Keplerian elements — everything but Sun and Moon. */
 export const ORBITING_BODY_IDS = BODY_IDS.filter(

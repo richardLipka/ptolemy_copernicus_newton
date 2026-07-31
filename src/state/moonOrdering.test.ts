@@ -1,7 +1,7 @@
 /**
  * The Moon must be drawn nearer than Mercury.
  *
- * It is the innermost body in every one of the three models, and in Ptolemy's
+ * It is the innermost body in every one of the models, and in Ptolemy's
  * nested spheres that ordering is not incidental — Moon, Mercury, Venus, Sun,
  * Mars, Jupiter, Saturn is the cosmology. Drawing the Moon outside Mercury
  * inverts the one arrangement the system is most remembered for.

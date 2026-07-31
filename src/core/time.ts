@@ -2,7 +2,6 @@
 export const J2000 = 2451545.0;
 
 export const DAYS_PER_JULIAN_CENTURY = 36525;
-export const DAYS_PER_JULIAN_YEAR = 365.25;
 
 export interface CalendarDate {
   year: number;

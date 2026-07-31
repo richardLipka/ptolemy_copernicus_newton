@@ -21,7 +21,7 @@ import {
   ptolemaicReframeEngine,
 } from '../core/engines/ptolemaic';
 import { MODES, type Engine, type EngineId, type ModeId } from '../core/engines/types';
-import { SimulationClock, clampJd, jdFromDate } from '../core/time';
+import { MAX_JD, MIN_JD, SimulationClock, clampJd, jdFromDate } from '../core/time';
 import type { ZodiacScheme } from '../core/zodiac';
 import { getLocale, setLocale, type Locale } from '../i18n/i18n';
 import { applyTheme, readStoredTheme, type ThemeId } from '../render/theme/themes';
@@ -386,12 +386,29 @@ export class Store {
     else this.play();
   }
 
-  /** Advance the clock by elapsed real time. Called from the animation loop. */
+  /**
+   * Advance the clock by elapsed real time. Called from the animation loop.
+   *
+   * Pauses on reaching either end of the supported range. The clock clamps
+   * there anyway, so without this the app sat apparently frozen — nothing
+   * moving, no trail growing — while the transport still read "Pause" and
+   * invited the user to stop something that had already stopped.
+   */
   tick(realSeconds: number): void {
     if (!this.state.playing) return;
     this.clock.advance(realSeconds);
     this.recordTrail();
-    this.patch({ julianDate: this.clock.julianDate });
+
+    // Stop *and* publish the clamped date in one patch. Returning early instead
+    // would leave the mirrored `julianDate` a step behind the clock, which is
+    // the same desync `hydrate` goes out of its way to avoid.
+    const atEnd = this.clock.julianDate <= MIN_JD || this.clock.julianDate >= MAX_JD;
+    if (atEnd) this.clock.pause();
+
+    this.patch({
+      julianDate: this.clock.julianDate,
+      ...(atEnd ? { playing: false } : {}),
+    });
   }
 
   /**

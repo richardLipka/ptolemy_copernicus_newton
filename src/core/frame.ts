@@ -24,30 +24,13 @@ export function recenter(positions: PositionSet, originId: BodyId): Map<BodyId, 
   return result;
 }
 
-/**
- * Trace the path a body draws when the map is held fixed on `originId`.
+/*
+ * There is deliberately no `orbitPath()` here.
  *
- * Around the Sun these are the familiar ellipses. Around Earth they are the
- * looping, petalled curves that cost Ptolemy his epicycles — and the loops are
- * real, in the sense that they are what the motion genuinely looks like from
- * here. The curve is not a trajectory through space; it is a trajectory
- * through a rotating point of view.
+ * One existed — sample an engine across a date range and return the curve — and
+ * it went unused from the moment trails were switched to position logs, because
+ * a pre-computed path can show a shape the simulation never actually produced.
+ * That is the one thing the orbit display is meant to make impossible (see
+ * CLAUDE.md §13.2), so the function was removed rather than left lying about
+ * for someone to find and reach for.
  */
-export function orbitPath(
-  positionsAt: (jd: number) => PositionSet,
-  bodyId: BodyId,
-  originId: BodyId,
-  startJd: number,
-  endJd: number,
-  samples: number,
-): Vec3[] {
-  const path: Vec3[] = [];
-  const step = (endJd - startJd) / Math.max(1, samples - 1);
-
-  for (let i = 0; i < samples; i++) {
-    const positions = positionsAt(startJd + step * i);
-    path.push(sub(positions.get(bodyId)!, positions.get(originId)!));
-  }
-
-  return path;
-}
