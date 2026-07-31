@@ -362,7 +362,80 @@
   pointer-events: none;
 }
 
+/*
+ * Selection emphasis.
+ *
+ * With nine sight-lines converging on the observer and nine pips around the
+ * ring, the one the reader actually asked about was no more visible than the
+ * rest. Selecting a body now drops everything else back and brings its own line,
+ * its pip and its sign forward — so "where does Mars appear" has one answer on
+ * the map and not nine.
+ *
+ * Keyed off a flag on the instrument so the unselected lines need no per-frame
+ * bookkeeping of their own; they simply fade whenever anything is selected.
+ */
+.instrument[data-hasselection='on'] .sightline:not(.sightline--selected),
+.instrument[data-hasselection='on'] .sightline__pip:not(.sightline__pip--selected) {
+  opacity: calc(var(--sightline-opacity) * 0.35);
+}
+
+.sightline--selected {
+  height: var(--line-fine);
+  opacity: 1;
+}
+
+.sightline__pip--selected {
+  width: 11px;
+  height: 11px;
+  margin: -5.5px;
+  border-width: var(--line-medium);
+  background: var(--stroke);
+  box-shadow: 0 0 6px var(--stroke);
+}
+
+/*
+ * The exact reading, at the pip. Placed just inside the ring and set upright
+ * rather than along it: unlike the sign names this is a number, and a rotated
+ * number is meaningfully harder to read.
+ */
+.sightline__reading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(calc(var(--x) * var(--unit)), calc(var(--y) * var(--unit)))
+    translate(calc(var(--nx, 0) * 1.7rem), calc(var(--ny, 0) * 1.7rem))
+    translate(-50%, -50%);
+  padding: 0.05rem 0.3rem;
+  border-radius: 999px;
+  background: var(--panel-surface);
+  border: var(--line-hairline) solid var(--accent-dark);
+  color: var(--text-strong);
+  font-family: var(--face-numeric);
+  font-size: 0.62rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/*
+ * The sign the selected body falls in — the reading an astronomer recorded.
+ *
+ * Emphasis by *contrast and weight*, not by hue. The first attempt coloured it
+ * `--brass-bright`, which works on the dark themes and is a disaster on the
+ * light ones: measured against parchment it came to 1.50:1 where an ordinary
+ * label manages 6.26:1, so the highlighted sign was four times harder to read
+ * than its neighbours. A light accent cannot emphasise on a light ground. The
+ * brass now goes into a rule underneath, where it reads as marking rather than
+ * as text.
+ */
+.ring__label[data-active='on'] {
+  color: var(--text-strong);
+  font-weight: 600;
+  border-bottom: var(--line-fine) solid var(--accent);
+  padding-bottom: 1px;
+}
+
 .instrument[data-sightlines='off'] .sightline,
+.instrument[data-sightlines='off'] .sightline__reading,
 .instrument[data-sightlines='off'] .sightline__pip {
   display: none;
 }

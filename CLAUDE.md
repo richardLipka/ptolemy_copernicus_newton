@@ -1176,6 +1176,36 @@ that offset varies — 1.90 observing from Earth, 2.45 from Saturn. The concentr
 case keeps the stylesheet's own value untouched, so the default view is
 unaffected by the feature existing.
 
+### 13.4b Selecting a body emphasises where it appears
+
+Nine sight-lines converge on the observer and nine pips sit around the ring, so
+the one the reader actually asked about was no more visible than the rest.
+Selecting a body now brings three things forward and drops everything else back:
+
+- **its sight-line**, thickened and brought to full opacity while the others fade
+  to about a third — driven by a `data-hasselection` flag on the instrument, so
+  the unselected lines need no per-frame bookkeeping of their own;
+- **its pip**, enlarged and filled rather than hollow, with the exact reading
+  ("14.4 deg Beran") in a small badge beside it;
+- **its sign**, lit on the ring — which is the reading a pre-telescopic
+  astronomer would actually have written down.
+
+The badge is nudged *inward*, along the vector from the pip to the centre of the
+sphere. A fixed upward offset put it outside the ring, and possibly off the
+element, whenever the body appeared near the top of the sky.
+
+**The sign is emphasised by contrast and weight, not by hue**, and the first
+attempt got this wrong in a way worth recording. Colouring the active label
+`--brass-bright` works on the dark themes and is a disaster on the light ones:
+measured against parchment it came to 1.50:1 where an ordinary label manages
+6.26:1, so the *highlighted* sign was four times harder to read than its
+neighbours. A light accent cannot emphasise on a light ground. Using
+`--text-strong` with a brass rule underneath gives 11.3:1 on Parchment, 14.7 on
+Atelier and 15.2 on Nocturne against 6.3, 8.1 and 10.0 for a plain label. LCARS
+is the exception: its `--text-strong` is a deeper orange than its `--text`, so
+contrast there goes down rather than up, but at 10:1 it is far past legible and
+the weight and rule carry the emphasis instead.
+
 ### 13.5 Two illumination displays, answering different questions
 
 **The map** is a plan view, so a body's lit side is simply the half facing the

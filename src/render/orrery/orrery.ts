@@ -11,7 +11,7 @@
 import { BODY_IDS, type BodyId } from '../../core/bodies';
 import { DEG, normalizeDeg } from '../../core/vec';
 import { divisionsFor, precessionSinceJ2000 } from '../../core/zodiac';
-import { t } from '../../i18n/i18n';
+import { formatNumber, t } from '../../i18n/i18n';
 import type { Store } from '../../state/store';
 import {
   buildConstruction,
@@ -147,6 +147,7 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     /** Body onward to the zodiac ring. */
     sightlineOuter: HTMLDivElement;
     pip: HTMLDivElement;
+    reading: HTMLDivElement;
     ghosts: { body: HTMLDivElement; link: HTMLDivElement }[];
     takeGhost: (index: number) => { body: HTMLDivElement; link: HTMLDivElement };
     /** Live segment joining the logged trail to the body's current position. */
@@ -181,6 +182,11 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     const pip = div('sightline__pip');
     pip.style.setProperty('--stroke', tint);
 
+    // The exact zodiac reading, drawn at the pip for the selected body only.
+    // One label is informative; nine would be a wall of text around the ring.
+    const reading = div('sightline__reading');
+    reading.style.display = 'none';
+
     /**
      * Ghosts are pooled per body: one for a single comparison model, up to three
      * for compare-all. Grown on demand rather than pre-allocated, since most
@@ -208,7 +214,7 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     trailLeader.style.display = 'none';
     pathLayer.appendChild(trailLeader);
 
-    sightLayer.append(sightline, sightlineOuter, pip);
+    sightLayer.append(sightline, sightlineOuter, pip, reading);
     bodyLayer.append(marker, label);
 
     const select = (): void => store.selectBody(id);
@@ -227,6 +233,7 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
       sightline,
       sightlineOuter,
       pip,
+      reading,
       ghosts,
       takeGhost,
       trailLeader,
@@ -440,9 +447,13 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
   const divisionLayer = div('ring');
   ringLayer.appendChild(divisionLayer);
 
+  /** Sign labels, kept so one can be lit per frame without a DOM query. */
+  const divisionLabels: HTMLDivElement[] = [];
+
   function rebuildRing(): void {
     const state = store.get();
     divisionLayer.replaceChildren();
+    divisionLabels.length = 0;
 
     const divisions = divisionsFor(state.zodiacScheme);
     // Signs are measured from the equinox of date, so the whole band rotates
@@ -469,6 +480,8 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
       label.style.setProperty('--counter', String(flipped ? 180 : 0));
       if (flipped) label.style.transformOrigin = '100% 50%';
       label.textContent = t(`zodiac.${division.id}`);
+      label.dataset.division = division.id;
+      divisionLabels.push(label);
       divisionLayer.appendChild(label);
     }
 
@@ -536,6 +549,27 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     // in this function combined.
     setFlag(instrument, 'orbits', state.showOrbits);
     setFlag(instrument, 'sightlines', state.showSightLines);
+    // Lets the CSS drop every *other* sight-line back without touching them.
+    setFlag(instrument, 'hasselection', Boolean(state.selectedBody));
+
+    /*
+     * Light the sign the selected body appears in.
+     *
+     * The pip marks the exact longitude; this says which of the twelve it falls
+     * in, which is the reading a pre-telescopic astronomer would actually have
+     * recorded. Cheap enough for the animation path: thirteen labels at most,
+     * and only the two that change are written to.
+     */
+    const activeDivision = state.selectedBody
+      ? view.bodies.find((candidate) => candidate.id === state.selectedBody)?.zodiac
+          .division.id
+      : undefined;
+    for (const label of divisionLabels) {
+      const active = label.dataset.division === activeDivision;
+      if ((label.dataset.active === 'on') !== active) {
+        label.dataset.active = active ? 'on' : 'off';
+      }
+    }
     setFlag(instrument, 'figures', state.showStarFigures);
     setFlag(instrument, 'construction', state.showConstruction);
 
@@ -600,10 +634,24 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
       // coincide, which is exactly why the lines are dead straight there. The
       // kink elsewhere is the size of the distortion, and shrinks to almost
       // nothing at true scale.
+      /*
+       * Emphasis for the selected body.
+       *
+       * With nine sight-lines and nine pips on the ring, the one you actually
+       * asked about was no more visible than the rest. The classes below raise
+       * it and the CSS drops everything else back, so "where does Mars appear"
+       * has a single unambiguous answer on the map.
+       */
+      const isSelected = state.selectedBody === body.id;
+      parts.sightline.classList.toggle('sightline--selected', isSelected);
+      parts.sightlineOuter.classList.toggle('sightline--selected', isSelected);
+      parts.pip.classList.toggle('sightline__pip--selected', isSelected);
+
       if (body.isObserver) {
         parts.sightline.style.display = 'none';
         parts.sightlineOuter.style.display = 'none';
         parts.pip.style.display = 'none';
+        parts.reading.style.display = 'none';
       } else {
         // The ring intercept is measured from whatever the sphere is centred on.
         const ray = ringIntercept(body.apparentLongitude, RING_INNER);
@@ -624,6 +672,26 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
           parts.sightlineOuter.style.display = '';
           setSegment(parts.sightline, view.observerPoint, body.point);
           setSegment(parts.sightlineOuter, body.point, target);
+        }
+
+        if (isSelected) {
+          parts.reading.style.display = '';
+          setPoint(parts.reading, target);
+
+          // Nudge the badge *inward*, toward the middle of the instrument. A
+          // fixed upward offset put it outside the ring — and possibly off the
+          // element — whenever the body appeared near the top of the sky.
+          const inwardX = sphere.x - target.x;
+          const inwardY = sphere.y - target.y;
+          const reach = Math.hypot(inwardX, inwardY) || 1;
+          parts.reading.style.setProperty('--nx', (inwardX / reach).toFixed(4));
+          parts.reading.style.setProperty('--ny', (inwardY / reach).toFixed(4));
+          setText(
+            parts.reading,
+            `${formatNumber(body.zodiac.degreesInto, 1)}° ${t(`zodiac.${body.zodiac.division.id}`)}`,
+          );
+        } else {
+          parts.reading.style.display = 'none';
         }
       }
 
