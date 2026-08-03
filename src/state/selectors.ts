@@ -89,8 +89,23 @@ const MOON_MEAN_DISTANCE_AU = 0.00257;
  */
 const MOON_MAX_SHARE_OF_MERCURY = 0.45;
 
-/** Drawn radius of the Moon's orbit about Earth, in map-radius units. */
-function moonDrawnRadius(trueDistanceAu: number, mercuryGap: number | null): number {
+/**
+ * Drawn radius of the Moon's orbit about Earth, in map-radius units.
+ *
+ * **The exaggeration applies only to the compressed scale.** True scale is the
+ * honest view — it is the reason the toggle exists — and an honest view that
+ * still drew the Moon two hundred times too far from Earth would be worth
+ * nothing. At true scale the Moon sits 0.00257 AU from Earth against a system
+ * radius of 17.5, which is 0.000147 of the map: a fraction of a pixel, hard
+ * against Earth, exactly where it belongs.
+ */
+function moonDrawnRadius(
+  trueDistanceAu: number,
+  mercuryGap: number | null,
+  scaleMode: ScaleMode,
+): number {
+  if (scaleMode === 'true') return projectRadius(trueDistanceAu, 'true');
+
   const exaggerated = MOON_ORBIT_RADIUS * (trueDistanceAu / MOON_MEAN_DISTANCE_AU);
   if (mercuryGap === null) return exaggerated;
   return Math.min(exaggerated, mercuryGap * MOON_MAX_SHARE_OF_MERCURY);
@@ -138,7 +153,7 @@ export function projectPositions(
   if (moon && earth) {
     const offset = sub(moon, centred.get('earth')!);
     const distance = Math.hypot(offset.x, offset.y);
-    const radius = moonDrawnRadius(distance, mercuryGapFrom(earth, projected));
+    const radius = moonDrawnRadius(distance, mercuryGapFrom(earth, projected), scaleMode);
     projected.set('moon', {
       x: earth.x + (offset.x / distance) * radius,
       y: earth.y + (offset.y / distance) * radius,
@@ -288,6 +303,7 @@ export function projectTrail(
               return Math.hypot(m.x - earthPoint.x, m.y - earthPoint.y);
             })()
           : null,
+        scaleMode,
       );
       points.push({
         x: earthPoint.x + (offset.x / distance) * radius,
@@ -353,6 +369,7 @@ function constructionProjector(
             return Math.hypot(m.x - earthPoint.x, m.y - earthPoint.y);
           })()
         : null,
+      state.scaleMode,
     );
     return {
       x: earthPoint.x + (offset.x / distance) * radius,

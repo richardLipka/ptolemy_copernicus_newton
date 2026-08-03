@@ -678,18 +678,25 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
         parts.pip.style.display = '';
         setPoint(parts.pip, target);
 
-        if (observerCentred) {
-          // One straight ray from the observer to the sphere, at the body's true
-          // apparent longitude. Under the compressed scale it need not pass
-          // exactly through the marker, since compression distorts directions
-          // measured from anywhere but the frame origin; at true scale it does.
-          parts.sightlineOuter.style.display = 'none';
-          setSegment(parts.sightline, view.observerPoint, target);
-        } else {
-          parts.sightlineOuter.style.display = '';
-          setSegment(parts.sightline, view.observerPoint, body.point);
-          setSegment(parts.sightlineOuter, body.point, target);
-        }
+        /*
+         * Always two segments: observer → body → sphere.
+         *
+         * The observer-centred sphere used to be drawn instead as a single
+         * straight ray from the observer to the ring, on the grounds that it is
+         * geometrically the true direction. It is — but under the compressed
+         * scale that ray does not pass through the body's marker, so the picture
+         * asserted that a planet appears *there* while drawing the planet
+         * somewhere else. A line that misses the thing it is pointing at is
+         * worse than a bent one.
+         *
+         * So the kink stays wherever the projection puts one. It is not an
+         * artefact to be hidden: its size *is* the distortion the compressed
+         * scale introduces, and it shrinks to nothing at true scale and in
+         * Ptolemy's view, where observer and centre coincide.
+         */
+        parts.sightlineOuter.style.display = '';
+        setSegment(parts.sightline, view.observerPoint, body.point);
+        setSegment(parts.sightlineOuter, body.point, target);
 
         if (isSelected) {
           parts.reading.style.display = '';

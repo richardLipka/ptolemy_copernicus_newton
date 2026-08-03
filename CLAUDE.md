@@ -1170,6 +1170,26 @@ twice the centre's offset, arms joining the right points — because the harness
 is a second derivation of the same geometry and could otherwise drift into a
 diagram of nothing.
 
+### 13.3b The Moon is only exaggerated at compressed scale
+
+`moonDrawnRadius()` takes the scale mode, and at **true scale it returns the
+honest projected distance**. It did not always: the exaggeration was applied
+unconditionally, so the "realistic" view drew the Moon roughly **two hundred
+times** further from Earth than it is — 0.03 of the map radius against a real
+0.000147.
+
+That defeated the point of the toggle. True scale exists to be honest, and an
+honest view carrying the app's most conspicuous lie is worth nothing. Measured
+after the fix, at a 300px map radius: **0.033 px** from Earth in every model,
+which is 384 000 km against a 17.5 AU system and is exactly where it belongs.
+
+The compressed scale still exaggerates, by about 204× — without it the Moon is
+invisible at any magnification that also shows Saturn. Under Ptolemy the factor
+falls to 35× because the Mercury cap engages: his nested spheres bring Mercury in
+to 0.058 AU, and the backstop stops the Moon overtaking it. `scaleGeometry.test.ts`
+holds both halves for all six engines, and checks the Moon never passes Mercury
+across two years of dates.
+
 ### 13.4 Sight-lines are two segments, and why they bend
 
 A sight-line runs **observer → body → zodiac ring**, as two segments rather than
@@ -1280,6 +1300,25 @@ Atelier and 15.2 on Nocturne against 6.3, 8.1 and 10.0 for a plain label. LCARS
 is the exception: its `--text-strong` is a deeper orange than its `--text`, so
 contrast there goes down rather than up, but at 10:1 it is far past legible and
 the weight and rule carry the emphasis instead.
+
+#### The line always passes through the body
+
+Both segments are now drawn in **both** sphere modes. With the sphere centred on
+the observer the app used to draw a single straight ray from the observer to the
+ring instead, on the grounds that it is geometrically the true direction — which
+it is. But under the compressed scale that ray does not pass through the body's
+marker, so the picture asserted a planet appears *there* while drawing the planet
+somewhere else. **A line that misses the thing it points at is worse than a bent
+one**, so the kink stays wherever the projection puts one.
+
+The kink is not an artefact to hide: its size *is* the distortion the compressed
+scale introduces. It shrinks to nothing at true scale, and to nothing in
+Ptolemy's view where observer and centre coincide.
+
+Verified across every combination — four models, both sphere modes, both scales:
+the inner segment starts exactly at the observer, the two segments meet at the
+body marker, and the outer ends exactly at the ring pip, all to floating-point
+exactness (worst residual 3e-16 map units).
 
 ### 13.5 Two illumination displays, answering different questions
 

@@ -288,9 +288,10 @@ export function renderControls(container: HTMLElement, store: Store): void {
   // the observer is not the frame origin, and the compressed scale makes that
   // bend large; at true scale it nearly vanishes. Worth saying, since a 27° bend
   // otherwise looks like a defect rather than a consequence of the scale.
+  // Not restricted to the concentric sphere any more: sight-lines are now drawn
+  // through the body in both sphere modes, so the kink can appear in either.
   if (
     state.showSightLines &&
-    state.sphereCentre === 'frame' &&
     state.observationPoint !== state.frameOrigin &&
     state.scaleMode === 'compressed'
   ) {
