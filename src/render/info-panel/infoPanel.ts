@@ -8,10 +8,11 @@
  * to his nested spheres, so Venus is penned inside the Sun's shell and never
  * exceeds 44% lit: the model says crescent where the sky says full.
  *
- * That is the sharper form of the historical point. Ptolemy's longitudes beat
- * Copernicus's — see `core/engines/accuracy.test.ts` — so the argument could not
- * be settled on where the planets appear. It was settled on how they are lit,
- * which is the one thing the angular machinery had never been able to speak to.
+ * That is the sharper form of the historical point. On *longitude* the two
+ * systems were in the same bracket — see `core/engines/accuracy.test.ts` — so
+ * the argument could never be settled on where the planets appear. It was
+ * settled on how they are *lit*, which is the one thing the angular machinery
+ * had never been able to speak to.
  */
 
 import { BODIES, type BodyId } from '../../core/bodies';

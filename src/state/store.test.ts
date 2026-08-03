@@ -71,14 +71,15 @@ describe('switching model', () => {
     store.setMode('ptolemy');
     expect(store.get().engineId).toBe('ptolemaic-epicyclic');
     store.setMode('copernicus');
-    expect(store.get().engineId).toBe('circular');
+    expect(store.get().engineId).toBe('copernican');
     store.setMode('newton');
     expect(store.get().engineId).toBe('nbody');
   });
 
   it('drops a ghost that would duplicate the newly active engine', () => {
-    store.setGhostEngine('circular');
-    expect(store.get().ghostEngineId).toBe('circular');
+    // The engine the Copernican mode opens on — its faithful eccentric one.
+    store.setGhostEngine('copernican');
+    expect(store.get().ghostEngineId).toBe('copernican');
 
     // Comparing a model against itself shows nothing.
     store.setMode('copernicus');

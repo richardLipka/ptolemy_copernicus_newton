@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
 
 import { calculationsFor } from './calculation';
 import { apparentLongitude } from './coordinates';
-import { circularPositions } from './engines/circular';
+import { copernicanPositions } from './engines/copernican';
 import { keplerianPositions, solveKeplerTraced } from './engines/keplerian';
 import { nbodyEngine } from './engines/nbody';
 import { ptolemaicEpicyclicPositions } from './engines/ptolemaic';
@@ -29,7 +29,7 @@ const resultOf = (engineId: EngineId, body: 'mars' | 'venus' = 'mars'): number =
 describe('the working ends where the engine does', () => {
   const engines: [EngineId, (jd: number) => ReturnType<typeof keplerianPositions>][] = [
     ['ptolemaic-epicyclic', ptolemaicEpicyclicPositions],
-    ['circular', circularPositions],
+    ['copernican', copernicanPositions],
     ['keplerian', keplerianPositions],
     ['nbody', (jd) => nbodyEngine.positionsAt(jd) as ReturnType<typeof keplerianPositions>],
   ];
@@ -46,7 +46,7 @@ describe('the panel covers every model, oldest first', () => {
   it('runs Ptolemy, Copernicus, Kepler, Newton in that order', () => {
     expect(calculationsFor(JD, 'mars', 'earth').map((c) => c.engineId)).toEqual([
       'ptolemaic-epicyclic',
-      'circular',
+      'copernican',
       'keplerian',
       'nbody',
     ]);

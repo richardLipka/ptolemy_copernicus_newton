@@ -23,9 +23,10 @@ jobs:
         run: npm run typecheck
 
       # The suite is mostly orbital mathematics checked against published
-      # values, including the claim that Ptolemy's model predicts the superior
-      # planets better than Copernicus's. If that ever stops holding, the
-      # demonstration this project exists for has broken.
+      # values, including the claim that heliocentrism on its own bought almost
+      # no accuracy — Copernicus's construction sits in the same bracket as
+      # Ptolemy's, and it took Kepler's ellipse to break the deadlock. If that
+      # ever stops holding, the demonstration this project exists for has broken.
       - name: Test
         run: npm test
 

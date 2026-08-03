@@ -13,6 +13,7 @@
 import type { BodyId } from '../core/bodies';
 import type { Demonstration } from '../core/demonstrations';
 import { circularEngine } from '../core/engines/circular';
+import { copernicanEngine } from '../core/engines/copernican';
 import { keplerianEngine } from '../core/engines/keplerian';
 import { nbodyEngine } from '../core/engines/nbody';
 import { vsop87Engine } from '../core/engines/vsop87';
@@ -33,6 +34,7 @@ export const ENGINES: Record<EngineId, Engine> = {
   keplerian: keplerianEngine,
   vsop87: vsop87Engine,
   circular: circularEngine,
+  copernican: copernicanEngine,
   'ptolemaic-reframe': ptolemaicReframeEngine,
   'ptolemaic-epicyclic': ptolemaicEpicyclicEngine,
   'ptolemaic-almagest': ptolemaicAlmagestEngine,

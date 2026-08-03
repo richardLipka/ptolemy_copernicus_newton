@@ -113,8 +113,14 @@ export function solveKeplerTraced(meanAnomalyDeg: number, e: number): KeplerSolu
   return { eccentricAnomaly: ecc, iterations, finalCorrection: deltaE };
 }
 
-/** Rotate in-plane orbital coordinates into the ecliptic frame. */
-function orbitalPlaneToEcliptic(
+/**
+ * Rotate in-plane orbital coordinates into the ecliptic frame.
+ *
+ * Exported because the Copernican engine builds its deferent and epicyclet in
+ * the same plane and needs the same rotation — and because being a pure
+ * rotation it maps free vectors as readily as points.
+ */
+export function orbitalPlaneToEcliptic(
   xPlane: number,
   yPlane: number,
   el: KeplerianElements,

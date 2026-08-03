@@ -51,6 +51,7 @@ export type EngineId =
   | 'keplerian'
   | 'vsop87'
   | 'circular'
+  | 'copernican'
   | 'ptolemaic-reframe'
   | 'ptolemaic-epicyclic'
   | 'ptolemaic-almagest'
@@ -79,7 +80,15 @@ export const MODES: Record<ModeId, Mode> = {
   },
   copernicus: {
     id: 'copernicus',
-    engines: ['circular'],
+    /*
+     * The faithful construction leads. De revolutionibus is eccentrics and
+     * epicyclets, not concentric circles, and defaulting to the simplification
+     * made the app assert something false about him for a long time. The bare
+     * circle stays as the second sub-mode, where it answers a real question —
+     * what the eccentric was actually buying — rather than standing in for
+     * Copernicus himself.
+     */
+    engines: ['copernican', 'circular'],
     defaultFrameOrigin: 'sun',
     defaultObservationPoint: 'earth',
   },

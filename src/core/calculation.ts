@@ -24,7 +24,7 @@
 
 import { BODIES, GM_SUN, type BodyId } from './bodies';
 import { apparentLongitude } from './coordinates';
-import { circularHeliocentricAt, circularPositions } from './engines/circular';
+import { copernicanHeliocentricAt, copernicanPositions } from './engines/copernican';
 import {
   elementsAt,
   keplerianPositions,
@@ -174,18 +174,24 @@ function ptolemaicCalculation(jd: number, body: BodyId, observer: BodyId): Model
 }
 
 /**
- * Copernicus: a mean longitude, and no correction whatever.
+ * Copernicus: a mean longitude and one correction, read from a table.
  *
- * The cheapest of the four to work by hand, and the least accurate — which is
- * the whole difficulty of 1543. Anyone comparing the labour rather than the
- * philosophy had little reason to switch.
+ * The same shape of working as Ptolemy's, and at about the same price — which is
+ * the awkward fact of 1543. His eccentric-plus-epicyclet produces an equation of
+ * centre exactly as the equant does, so a computer using the *Prutenic Tables*
+ * did no less arithmetic than one using the Alfonsine, and got no better answer.
+ * The case for the new system had to rest on something other than labour or
+ * accuracy.
  */
-function circularCalculation(jd: number, body: BodyId, observer: BodyId): ModelCalculation {
+function copernicanCalculation(jd: number, body: BodyId, observer: BodyId): ModelCalculation {
   const lines: CalculationLine[] = [];
   const orbit = BODIES[body].orbit;
 
   if (orbit) {
     const el = elementsAt(jd, orbit);
+    const meanAnomaly = meanAnomalyAt(jd, orbit);
+    const heliocentric = longitudeOf(copernicanHeliocentricAt(jd, orbit));
+
     lines.push(
       {
         labelKey: 'calc.meanLongitude',
@@ -195,9 +201,24 @@ function circularCalculation(jd: number, body: BodyId, observer: BodyId): ModelC
       },
       { labelKey: 'calc.copernicus.radius', formula: 'a', value: el.a, unit: 'au' },
       {
+        labelKey: 'calc.meanAnomaly',
+        formula: 'M = L − ϖ',
+        value: normalizeDeg(meanAnomaly),
+        unit: 'degrees',
+      },
+      {
+        // What the eccentric and its epicyclet are between them worth: the
+        // difference between where uniform motion would put the planet and
+        // where the construction actually does.
+        labelKey: 'calc.copernicus.equationOfCentre',
+        formula: 'λ☉ − L',
+        value: asCorrection(heliocentric - el.L),
+        unit: 'signedDegrees',
+      },
+      {
         labelKey: 'calc.copernicus.heliocentric',
         formula: 'λ☉',
-        value: longitudeOf(circularHeliocentricAt(jd, orbit)),
+        value: heliocentric,
         unit: 'degrees',
       },
     );
@@ -206,14 +227,14 @@ function circularCalculation(jd: number, body: BodyId, observer: BodyId): ModelC
   lines.push({
     labelKey: 'calc.apparentLongitude',
     formula: 'λ',
-    value: normalizeDeg(apparentLongitude(circularPositions(jd), observer, body)),
+    value: normalizeDeg(apparentLongitude(copernicanPositions(jd), observer, body)),
     unit: 'degrees',
     isResult: true,
   });
 
   return {
-    engineId: 'circular',
-    titleKey: 'engine.circular',
+    engineId: 'copernican',
+    titleKey: 'engine.copernican',
     tablesKey: 'calc.tables.copernicus',
     lines,
     costKey: 'calc.cost.copernicus',
@@ -389,7 +410,7 @@ export function calculationsFor(
 ): ModelCalculation[] {
   return [
     ptolemaicCalculation(jd, body, observer),
-    circularCalculation(jd, body, observer),
+    copernicanCalculation(jd, body, observer),
     keplerianCalculation(jd, body, observer),
     newtonCalculation(jd, body, observer),
   ];

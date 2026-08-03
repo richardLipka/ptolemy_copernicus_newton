@@ -31,34 +31,47 @@ Four models, one clock, one set of controls:
 | | Ptolemy | Copernicus | Kepler | Newton |
 |---|---|---|---|---|
 | Centre | Earth | Sun | Sun, at a focus | anything you like |
-| Orbits | deferents and epicycles | perfect circles | ellipses | none — they emerge |
+| Orbits | deferent, eccentric, equant, epicycle | eccentric circle plus a small epicyclet | ellipses | none — they emerge |
 | Method | geometric construction | geometric construction | geometric construction | integrate the force law |
 
-The headline result is one most people find backwards. Measured against an
-accurate ephemeris across 1600–2400, here is the worst error in apparent
-longitude each model makes:
+Measured against an accurate ephemeris across 1600–2400, here is the worst error
+in apparent longitude each model makes:
 
 | Body | Ptolemy | Copernicus | Kepler | Newton |
 |---|---|---|---|---|
-| Mercury | 4.6° | 6.1° | 0.005° | 0.02° |
-| Venus | 1.9° | 0.6° | 0.007° | 0.02° |
-| Mars | **2.8°** | **13.5°** | **0.03°** | 0.04° |
-| Jupiter | **0.6°** | **6.9°** | 0.15° | 0.19° |
-| Saturn | **2.6°** | **6.1°** | 0.35° | 0.58° |
+| Mercury | 4.6° | 0.80° | 0.005° | 0.02° |
+| Venus | 1.9° | 0.01° | 0.007° | 0.02° |
+| Mars | **2.8°** | **0.33°** | **0.03°** | 0.04° |
+| Jupiter | 0.6° | 0.13° | 0.15° | 0.19° |
+| Saturn | 2.6° | 0.29° | 0.35° | 0.58° |
 
-**Ptolemy beats Copernicus on the superior planets.** *De revolutionibus* was
-not more accurate than the *Almagest*. Heliocentrism alone bought no precision,
-because circular orbits cost Copernicus more than geocentrism ever cost Ptolemy.
+**Heliocentrism on its own bought almost nothing.** Copernicus and Ptolemy are
+in the same bracket, and for the same reason: both place a planet with an
+eccentric circle and a second circle to correct it, and both cost the same two
+table look-ups to work by hand. *De revolutionibus* won its argument on
+simplicity and coherence — one epicyclet where Ptolemy needs a large epicycle
+and an equant — not on precision.
 
-**Kepler beats Copernicus by a factor of four hundred at Mars** — on the same
-heliocentric arrangement, changing nothing but the shape of the orbit. That is
-the whole argument in one row: it was never the centre, it was the circles.
+One caveat the app is careful about: this comparison is **not symmetric**. The
+Ptolemaic engine runs on Almagest parameters and so carries Ptolemy's own
+measurement errors, while the Copernican engine runs on modern ones and shows
+his construction at its best. Copernicus's own figures were no better than
+Ptolemy's, so the real *Prutenic Tables* were not the improvement this table
+suggests. Read it as "the same order", never as "Copernicus won".
 
+**It took Kepler's ellipse to break the deadlock** — 0.33° to 0.03° at Mars, on
+the same heliocentric arrangement, changing nothing but the shape of the orbit.
 Newton then arrives at much the same numbers from an entirely different
 direction, deriving from a force law what Kepler had to fit to Tycho's
-observations. (He trails Kepler slightly on the outer planets only because a
-four-century numerical integration accumulates its own drift, which is a
-property of the arithmetic rather than of the physics.)
+observations.
+
+> An earlier version of this project modelled Copernicus with **concentric**
+> circles and no eccentricity, which put Mars 13.5° out and made it look as
+> though Ptolemy beat him soundly. That was an artefact: *De revolutionibus* is
+> eccentrics and epicyclets from end to end. The bare circle is still available
+> as a second sub-mode, where it answers a real question — how much of an
+> orbit's shape the eccentricity alone accounts for — rather than standing in
+> for Copernicus.
 
 This is asserted in the test suite, not just claimed in a table, so it cannot
 quietly regress.
@@ -260,24 +273,27 @@ statických souborů.
 
 ### Oč jde
 
-Nejzajímavější výsledek většina lidí nečeká. Proti přesné efemeridě v letech
-1600–2400 dělá **Ptolemaios menší chybu než Koperník** u vnějších planet —
-u Marsu 2,8° proti 13,5°. *De revolutionibus* nebylo přesnější než *Almagest*.
-Samotný heliocentrismus přesnost nepřinesl, protože kruhové dráhy stály
-Koperníka víc než Ptolemaia geocentrismus.
+**Samotný heliocentrismus přesnost téměř nepřinesl.** Koperník i Ptolemaios jsou
+ve stejném pásmu, a ze stejného důvodu: oba umísťují planetu excentrickou
+kružnicí a druhou kružnicí, která ji opravuje, a oba stojí stejná dvě nahlédnutí
+do tabulek. *De revolutionibus* si svůj spor vyhrálo jednoduchostí — jeden malý
+epicykl tam, kde Ptolemaios potřebuje velký epicykl a ekvant — nikoli přesností.
 
-Rozhodlo až Keplerovo nahrazení kružnic elipsami, a je to v tabulce vidět:
-**u Marsu dělá Kepler chybu 0,03°, tedy čtyřistakrát menší než Koperník** —
-při stejném heliocentrickém uspořádání a stejných prvcích dráhy. Nerozhodl
-střed, ale tvar dráhy.
+Srovnání ovšem **není symetrické**: ptolemaiovský stroj běží na parametrech
+z Almagestu, a nese tedy Ptolemaiovy chyby měření, zatímco koperníkovský běží na
+moderních a ukazuje jeho konstrukci v nejlepším světle. Koperníkovy vlastní
+hodnoty nebyly lepší než Ptolemaiovy.
+
+Rozhodlo až Keplerovo nahrazení kružnic elipsami: u Marsu z 0,33° na 0,03°,
+při stejném heliocentrickém uspořádání. Nerozhodl střed, ale tvar dráhy.
 
 | Těleso | Ptolemaios | Koperník | Kepler | Newton |
 |---|---|---|---|---|
-| Merkur | 4,6° | 6,1° | 0,005° | 0,02° |
-| Venuše | 1,9° | 0,6° | 0,007° | 0,02° |
-| Mars | **2,8°** | **13,5°** | **0,03°** | 0,04° |
-| Jupiter | **0,6°** | **6,9°** | 0,15° | 0,19° |
-| Saturn | **2,6°** | **6,1°** | 0,35° | 0,58° |
+| Merkur | 4,6° | 0,80° | 0,005° | 0,02° |
+| Venuše | 1,9° | 0,01° | 0,007° | 0,02° |
+| Mars | **2,8°** | **0,33°** | **0,03°** | 0,04° |
+| Jupiter | 0,6° | 0,13° | 0,15° | 0,19° |
+| Saturn | 2,6° | 0,29° | 0,35° | 0,58° |
 
 ### Co aplikace umí
 
@@ -285,9 +301,9 @@ střed, ale tvar dráhy.
   modelu.
 - **Ukázat konstrukci** — po výběru tělesa se zobrazí jeho mechanismus:
   u Ptolemaia deferent, epicykl a **ekvant**, bod, kolem něhož se střed epicyklu
-  pohybuje rovnoměrně; u Koperníka kružnice a rameno; u Keplera elipsa s **oběma
-  ohnisky** — v jednom je Slunce, ve druhém není nic — a průvodič; u Newtona
-  vektory sil a rychlosti.
+  pohybuje rovnoměrně; u Koperníka **excentr s posunutým středem a malý epicykl**,
+  jímž nahradil ekvant; u Keplera elipsa s **oběma ohnisky** — v jednom je Slunce,
+  ve druhém není nic — a průvodič; u Newtona vektory sil a rychlosti.
 - **Porovnat dva modely naráz** — druhý model se vykreslí slabě vedle aktivního.
 - **Číst oblohu** — záměrné přímky z místa pozorování míří na pás zvěrokruhu
   a ukazují, kde těleso *vypadá*, na rozdíl od toho, kde *je*. Pás lze přepnout

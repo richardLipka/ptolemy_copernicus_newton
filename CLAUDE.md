@@ -8,16 +8,17 @@ differences and similarities between four historical/physical world-models
 tangible:
 
 - **Ptolemaic** — geocentric, deferents and epicycles
-- **Copernican** — heliocentric, circular orbits
+- **Copernican** — heliocentric, eccentric circles plus a small epicyclet
 - **Keplerian** — heliocentric, elliptical orbits, Sun at a focus
 - **Newtonian** — gravitational n-body simulation, emergent elliptical orbits
 
 The four are ordered chronologically in the UI, and the order carries the
-argument. Copernicus moved the centre and kept the circles, and gained nothing
-in accuracy for it; Kepler kept the centre and dropped the circles, and the
-error fell by a factor of ten to five hundred. Setting those two side by side is
-what shows that **the ellipse, not heliocentrism, was what actually paid** —
-and Newton then explains the residual Kepler could not.
+argument. Copernicus moved the centre and kept circles, and gained almost
+nothing in accuracy for it — his construction lands in the same bracket as
+Ptolemy's. Kepler kept the centre and dropped the circles, and the error fell by
+a factor of ten to a hundred and fifty. Setting those two side by side is what
+shows that **the ellipse, not heliocentrism, was what actually paid** — and
+Newton then explains the residual Kepler could not.
 
 The same sky, shown four ways. The user can pick an arbitrary body as the
 stationary center and watch every orbit redraw around it, follow sight-lines out
@@ -56,7 +57,7 @@ separate code path.
 |---|---|
 | Ptolemaic engine | **Both, toggleable**: Earth-fixed reframe of accurate positions *and* authentic Almagest epicycle reconstruction, as two sub-modes |
 | Frame origin picker | **Free in all modes** — any body can be centered in any mode |
-| Copernicus orbits | **Pure circles** — reproduces the historical error deliberately |
+| Copernicus orbits | **Eccentric circle plus epicyclet**, as *De revolutionibus* describes; a concentric-circle simplification is the second sub-mode |
 | Kepler orbits | **Two-body ellipses**, no mutual perturbation — the residual is Newton's to explain |
 | Stack | **TypeScript + Vite, vanilla DOM**, no UI framework |
 | Zodiac division | **Both, toggleable**: 12 equal 30° signs (default) and real IAU boundaries |
@@ -117,12 +118,19 @@ Implementations:
   0.221°, Saturn 0.330°. Largest for Jupiter and Saturn, the heaviest pair,
   which is exactly the signature of mutual attraction and exactly what Newton
   went on to account for. `engines/kepler.test.ts` asserts that ordering.
-- **`circularEngine`** (Copernicus) — mean orbital radius and period per planet,
-  perfect circles, Sun at center. Deliberately reproduces Copernicus's real
-  error: heliocentrism right, circular orbits wrong. Divergence from
-  the reference grows visibly with time and is *content*, not a bug — the UI
-  surfaces it as an error readout. The circles are Copernicus's own; the ellipse
-  is Kepler's, sixty-six years later.
+- **`copernicanEngine`** (Copernicus, default) — the system as
+  *De revolutionibus* describes it: an **eccentric** deferent with its centre
+  displaced 3/2·ae from the Sun, carrying a small **epicyclet** of 1/2·ae that
+  turns at twice the mean anomaly. That bisection is not arbitrary — with those
+  shares the construction reproduces an ellipse *exactly to first order in e, in
+  both coordinates*, and hits both apsidal distances exactly. Worst error
+  1600–2400: Mercury 0.80°, Venus 0.01°, Mars 0.33°, Jupiter 0.13°,
+  Saturn 0.29°. See §12.3.
+- **`circularEngine`** — every orbit a plain circle about the Sun, traversed
+  uniformly. **This is not Copernicus**; it is the simplification he is often
+  mistaken for, kept as a second sub-mode because it answers a real question —
+  how much of an orbit's shape the eccentricity alone accounts for. Mars 13.5°
+  against the eccentric's 0.33°.
 - **`nbodyEngine`** (Newton) — numerical integration of Newtonian gravity over
   Sun + 7 bodies + Moon. Orbits are emergent; ellipses, varying speed, and
   apsidal precession fall out of the force law rather than being prescribed.
@@ -236,7 +244,8 @@ src/
       vsop87.ts          # reference ephemeris; basis for Ptolemy reframe
       vsop87Data.ts      # GENERATED — see scripts/generate-vsop87.mjs
       keplerian.ts       # osculating elements; n-body seed, Almagest motions
-      circular.ts        # Copernicus: pure circles
+      copernican.ts      # Copernicus: eccentric + epicyclet (his own)
+      circular.ts        # concentric circles — the simplification, not him
       nbody.ts           # Newton: numerical gravity integrator
       ptolemaic.ts       # reframe + epicyclic sub-modes
     frame.ts             # recenter(positions, originId)
@@ -432,23 +441,57 @@ holds every planet within **0.5°** and the Moon within **8°**.
 
 Worst apparent-longitude error across 1600–2400:
 
-| Body | Ptolemy | Copernicus | Newton |
-|---|---|---|---|
-| Sun | 0.5° | 0.3° | — |
-| Mercury | 4.6° | 6.1° | <0.1° |
-| Venus | 1.9° | 0.6° | <0.1° |
-| Mars | 2.8° | 13.4° | <0.1° |
-| Jupiter | 0.7° | 6.9° | 0.2° |
-| Saturn | 2.5° | 6.3° | 0.5° |
+| Body | Ptolemy | Copernicus | Kepler | Newton |
+|---|---|---|---|---|
+| Mercury | 4.6° | 0.80° | 0.005° | 0.02° |
+| Venus | 1.9° | 0.01° | 0.007° | 0.02° |
+| Mars | 2.8° | 0.33° | 0.03° | 0.04° |
+| Jupiter | 0.6° | 0.13° | 0.15° | 0.19° |
+| Saturn | 2.6° | 0.29° | 0.35° | 0.58° |
 
-Two things follow. First, Newton mode's own error is an order of magnitude
-below the historical models', so cross-model comparisons measure the models
-rather than the integrator. Second — and this is the app's most valuable single
-result — **Ptolemy beats Copernicus** on the superior planets. *De
-revolutionibus* was not more accurate than the *Almagest*; circular orbits cost
-Copernicus more than geocentrism cost Ptolemy, and only Kepler's ellipses broke
-the deadlock. `engines/accuracy.test.ts` asserts this so it cannot silently
-regress.
+Two things follow. First, Newton mode's own error stays below the historical
+models', so cross-model comparisons measure the models rather than the
+integrator. Second — and this is the app's most valuable single result —
+**heliocentrism on its own bought almost nothing**: Copernicus and Ptolemy sit
+in the same bracket, built from the same number of circles to within one, and
+cost the same to work by hand. Only Kepler's change of *shape* broke the
+deadlock. `engines/accuracy.test.ts` asserts this so it cannot silently
+regress, and the note below records how the app got it wrong for a long time.
+
+#### The Copernican correction
+
+This app asserted, prominently and in its test suite, that **Ptolemy predicted
+the superior planets better than Copernicus**. The measurement was real; the
+claim was not. `circularEngine` put every planet on a *concentric* circle moving
+uniformly, and the 13.5° error that followed at Mars was being read as the cost
+of using circles instead of ellipses.
+
+Copernicus did use circles rather than ellipses, which is true and matters. He
+did **not** use concentric circles: the bulk of *De revolutionibus* is the
+machinery that avoids exactly that — an eccentric deferent plus a small epicyclet
+replacing Ptolemy's equant, with the eccentricity split 3/2 and 1/2 between them.
+With that in place Mars falls from 13.5° to 0.33°.
+
+The corrected claim is the one historians actually make, and it is sharper than
+the old one: **heliocentrism on its own bought almost nothing**. Copernicus and
+Ptolemy sit in the same bracket, use the same number of circles to within one,
+and cost the same two table look-ups. What broke the deadlock was Kepler's
+change of *shape*.
+
+Two honesty notes that the tests carry as comments:
+
+- The comparison is **asymmetric**. The Ptolemaic engine runs on Almagest
+  parameters, carrying Ptolemy's measurement errors; the Copernican runs on
+  modern ones, showing his construction at its best. His own figures were no
+  better than Ptolemy's, so the real *Prutenic Tables* were not the improvement
+  the table suggests. "Same order", never "Copernicus won".
+- On **Jupiter and Saturn the Copernican construction beats this app's Kepler
+  engine** (0.13° against 0.15°, 0.29° against 0.35°). That is not a defeat for
+  the ellipse but a fact about a *two-body* ellipse: it omits the mutual
+  attraction of the heaviest pair in the system, and that omission is larger
+  there than the second-order error the circles leave behind. The ellipse's real
+  advantage on those planets appears only once perturbation is added, which is
+  Newton's territory.
 
 ### 12.4 Deliberate simplifications
 

@@ -203,7 +203,7 @@ describe('applying a link to the store', () => {
   });
 
   it('drops a ghost that the incoming engine would duplicate', () => {
-    store.setGhostEngine('circular');
+    store.setGhostEngine('copernican');
     store.hydrate({ mode: 'copernicus' });
     expect(store.get().ghostEngineId).toBeNull();
   });
