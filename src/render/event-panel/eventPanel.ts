@@ -11,7 +11,7 @@
  * a few hundred times.
  */
 
-import { BODY_IDS, type BodyId } from '../../core/bodies';
+import { BODIES, BODY_IDS, type BodyId } from '../../core/bodies';
 import type { EngineId, PositionSet } from '../../core/engines/types';
 import {
   REFERENCE_ENGINE,
@@ -27,8 +27,17 @@ import { el, panel } from '../../ui/dom';
 /** Window scanned around the current date, days. */
 const WINDOW_DAYS = 400;
 
-/** Bodies worth reporting events for — the classical wanderers. */
-const EVENT_BODIES: readonly BodyId[] = BODY_IDS.filter((id) => id !== 'earth');
+/**
+ * Bodies worth reporting events for — the classical wanderers.
+ *
+ * Satellites are excluded, and not only to save the scan the extra pairs. Io and
+ * Europa conjoin every couple of days, so including them would bury every
+ * genuine planetary event under a drift of moon-on-moon conjunctions that
+ * nobody, in any century, thought worth tabulating.
+ */
+const EVENT_BODIES: readonly BodyId[] = BODY_IDS.filter(
+  (id) => id !== 'earth' && BODIES[id].satellite === undefined,
+);
 
 function describe(event: AstronomicalEvent): string {
   switch (event.kind) {

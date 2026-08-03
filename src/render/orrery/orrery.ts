@@ -41,6 +41,12 @@ const BODY_SIZE: Record<BodyId, number> = {
   mars: 7,
   jupiter: 14,
   saturn: 12,
+  // Moons, drawn small so they read as attendants rather than as planets.
+  io: 4,
+  europa: 4,
+  ganymede: 5,
+  callisto: 4,
+  titan: 5,
 };
 
 const setPoint = (element: HTMLElement, point: Point): void => {

@@ -16,7 +16,14 @@ export type BodyId =
   | 'moon'
   | 'mars'
   | 'jupiter'
-  | 'saturn';
+  | 'saturn'
+  // Satellites, added as a demonstration of orbits within orbits. See
+  // SATELLITES below for what is and is not modelled about them.
+  | 'io'
+  | 'europa'
+  | 'ganymede'
+  | 'callisto'
+  | 'titan';
 
 export const BODY_IDS: readonly BodyId[] = [
   'sun',
@@ -27,6 +34,11 @@ export const BODY_IDS: readonly BodyId[] = [
   'mars',
   'jupiter',
   'saturn',
+  'io',
+  'europa',
+  'ganymede',
+  'callisto',
+  'titan',
 ] as const;
 
 /** Gaussian gravitational constant squared: GM of the Sun in AU^3/day^2. */
@@ -70,6 +82,37 @@ export interface LocalizedName {
   genitive: string;
 }
 
+/**
+ * A satellite's orbit about its primary — mean elements, and no more.
+ *
+ * Deliberately crude. These bodies are here to show orbits within orbits, not to
+ * predict an eclipse of Io, and the app makes no claim about their precision.
+ * The *periods* are accurate, which is what the two demonstrations they exist
+ * for actually need: Kepler's third law holds within the Jovian system to four
+ * significant figures, and the Laplace resonance locks Io, Europa and Ganymede
+ * into 1:2:4. The mean longitudes are approximate, so the phase of the system on
+ * a given date is not to be trusted.
+ *
+ * Inclinations are referred to the ecliptic, since that is the plane the app
+ * draws in. The Galileans sit nearly in it; Titan does not, because Saturn's
+ * equator is tilted some 27° and its largest moon goes round with it.
+ */
+export interface SatelliteOrbit {
+  /** Semi-major axis about the primary, AU. */
+  a: number;
+  e: number;
+  /** Inclination to the ecliptic, degrees. */
+  i: number;
+  /** Longitude of the ascending node, degrees. */
+  node: number;
+  /** Longitude of pericentre, degrees. */
+  peri: number;
+  /** Mean longitude at J2000, degrees — approximate. */
+  epochLongitude: number;
+  /** Sidereal period, days. Accurate; the demonstrations rest on it. */
+  periodDays: number;
+}
+
 export interface Body {
   id: BodyId;
   /** What this body orbits in the classical two-body picture. */
@@ -85,6 +128,8 @@ export interface Body {
   names: { en: LocalizedName; cs: LocalizedName };
   /** Absent for the Sun (the origin) and the Moon (see lunar theory). */
   orbit?: OrbitalModel;
+  /** Present only for satellites, which orbit `parent` rather than the Sun. */
+  satellite?: SatelliteOrbit;
 }
 
 /** Sun-to-body mass ratios (IAU 2009), the source of each body's GM. */
@@ -316,10 +361,143 @@ export const BODIES: Record<BodyId, Body> = {
       correction: { b: 0.00025899, c: -0.13434469, s: 0.87320147, f: 38.35125 },
     },
   },
+  io: {
+    id: 'io',
+    parent: 'jupiter',
+    radius: 1821.6,
+    gm: gm(2.200e+10),
+    // Galileo needed a telescope; nobody saw these with the naked eye.
+    nakedEye: false,
+    classicalPlanet: false,
+    names: {
+      en: { nominative: 'Io', genitive: 'Io' },
+      cs: { nominative: 'Io', genitive: 'Io' },
+    },
+    satellite: {
+      a: 421800.0 / AU_IN_KM,
+      e: 0.0041,
+      i: 2.21,
+      node: 337.0,
+      peri: 50.0,
+      epochLongitude: 120.0,
+      periodDays: 1.769138,
+    },
+  },
+  europa: {
+    id: 'europa',
+    parent: 'jupiter',
+    radius: 1560.8,
+    gm: gm(3.300e+10),
+    // Galileo needed a telescope; nobody saw these with the naked eye.
+    nakedEye: false,
+    classicalPlanet: false,
+    names: {
+      en: { nominative: 'Europa', genitive: 'Europa' },
+      cs: { nominative: 'Europa', genitive: 'Europy' },
+    },
+    satellite: {
+      a: 671100.0 / AU_IN_KM,
+      e: 0.0094,
+      i: 2.21,
+      node: 337.0,
+      peri: 130.0,
+      epochLongitude: 250.0,
+      periodDays: 3.551181,
+    },
+  },
+  ganymede: {
+    id: 'ganymede',
+    parent: 'jupiter',
+    radius: 2634.1,
+    gm: gm(1.300e+10),
+    // Galileo needed a telescope; nobody saw these with the naked eye.
+    nakedEye: false,
+    classicalPlanet: false,
+    names: {
+      en: { nominative: 'Ganymede', genitive: 'Ganymede' },
+      cs: { nominative: 'Ganymed', genitive: 'Ganymeda' },
+    },
+    satellite: {
+      a: 1070400.0 / AU_IN_KM,
+      e: 0.0013,
+      i: 2.21,
+      node: 337.0,
+      peri: 190.0,
+      epochLongitude: 15.0,
+      periodDays: 7.154553,
+    },
+  },
+  callisto: {
+    id: 'callisto',
+    parent: 'jupiter',
+    radius: 2410.3,
+    gm: gm(1.900e+10),
+    // Galileo needed a telescope; nobody saw these with the naked eye.
+    nakedEye: false,
+    classicalPlanet: false,
+    names: {
+      en: { nominative: 'Callisto', genitive: 'Callisto' },
+      cs: { nominative: 'Kallisto', genitive: 'Kallisto' },
+    },
+    satellite: {
+      a: 1882700.0 / AU_IN_KM,
+      e: 0.0074,
+      i: 2.21,
+      node: 337.0,
+      peri: 25.0,
+      epochLongitude: 200.0,
+      periodDays: 16.689018,
+    },
+  },
+  titan: {
+    id: 'titan',
+    parent: 'saturn',
+    radius: 2574.7,
+    gm: gm(1.500e+10),
+    // Galileo needed a telescope; nobody saw these with the naked eye.
+    nakedEye: false,
+    classicalPlanet: false,
+    names: {
+      en: { nominative: 'Titan', genitive: 'Titan' },
+      cs: { nominative: 'Titan', genitive: 'Titanu' },
+    },
+    satellite: {
+      a: 1221870.0 / AU_IN_KM,
+      e: 0.0288,
+      i: 26.73,
+      node: 169.0,
+      peri: 180.0,
+      epochLongitude: 60.0,
+      periodDays: 15.945421,
+    },
+  },
 };
 
 
 /** Bodies with heliocentric Keplerian elements — everything but Sun and Moon. */
 export const ORBITING_BODY_IDS = BODY_IDS.filter(
   (id) => BODIES[id].orbit !== undefined,
+);
+
+/**
+ * Bodies that take part in the gravitational simulation.
+ *
+ * **Not** the same as `BODY_IDS`, and the difference matters. The satellites are
+ * excluded because the integrator's quarter-day step cannot resolve them: Io
+ * goes round in 1.77 days, which is seven steps per orbit, and an orbit sampled
+ * seven times does not close. Resolving it would need a step fifteen times
+ * smaller and, with fourteen bodies instead of nine, would turn a 370 ms seek to
+ * 1602 into something near fifteen seconds.
+ *
+ * They are placed as two-body riders on their primary instead — which is not a
+ * dodge but Newton's own method. *Principia* Book III treats Jupiter's moons
+ * exactly so, and that is how he weighed Jupiter.
+ */
+export const GRAVITATING_BODY_IDS = BODY_IDS.filter(
+  (id) => BODIES[id].satellite === undefined,
+);
+
+/** Bodies that orbit a planet rather than the Sun. */
+export const SATELLITE_IDS = BODY_IDS.filter(
+  (id) => BODIES[id].satellite !== undefined,
 );

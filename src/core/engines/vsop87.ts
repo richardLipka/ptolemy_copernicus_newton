@@ -22,6 +22,7 @@ import { add, vec3, type Vec3 } from '../vec';
 import { moonGeocentricAt } from './keplerian';
 import type { Engine, PositionSet } from './types';
 import { VSOP87, type Vsop87Series } from './vsop87Data';
+import { addSatellites } from '../satellites';
 
 /** Days in the Julian millennium the series are expressed in. */
 const DAYS_PER_MILLENNIUM = 365_250;
@@ -94,6 +95,7 @@ export function vsop87Positions(jd: number): Map<BodyId, Vec3> {
   const earth = positions.get('earth');
   if (earth) positions.set('moon', add(earth, moonGeocentricAt(jd)));
 
+  addSatellites(jd, positions);
   return positions;
 }
 

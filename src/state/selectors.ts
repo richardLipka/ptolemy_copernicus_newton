@@ -7,7 +7,7 @@
  * means a resize needs no recomputation.
  */
 
-import { BODY_IDS, type BodyId } from '../core/bodies';
+import { BODIES, BODY_IDS, type BodyId } from '../core/bodies';
 import type { ConstructionRole } from '../core/construction';
 import { apparentLongitude, relativePosition } from '../core/coordinates';
 import type { EngineId, PositionSet } from '../core/engines/types';
@@ -112,11 +112,33 @@ function projectVector(v: Vec3, scaleMode: ScaleMode): Point {
 }
 
 /**
+ * Drawn radius of a Jovian or Saturnian moon's orbit, in map-radius units.
+ *
+ * Projected honestly these are hopeless: at compressed scale Io draws 0.0125% of
+ * the map radius from Jupiter, which on a 600px map is **four hundredths of a
+ * pixel**. Callisto, the widest, manages a sixth of one. So they get the same
+ * treatment the Moon does, and for the same reason.
+ *
+ * Linear in the true distance, which is what keeps the system legible as a
+ * *system*: the Galileans span 4.5:1 from Io to Callisto, and a linear
+ * exaggeration preserves both their order and their spacing. Anything that
+ * compressed them — a logarithm, a cap applied per moon — would flatten the one
+ * relationship worth showing.
+ */
+const SATELLITE_ORBIT_UNIT = 0.055;
+/** Callisto, the outermost drawn moon, sets the scale. */
+const SATELLITE_REFERENCE_AU = 0.01259;
+
+const satelliteDrawnRadius = (trueDistanceAu: number): number =>
+  SATELLITE_ORBIT_UNIT * (trueDistanceAu / SATELLITE_REFERENCE_AU);
+
+/**
  * Screen positions for every body.
  *
- * The Moon is placed relative to Earth's projected position rather than
- * projected from the frame origin, so that it stays visibly a satellite
- * whatever the map is centred on.
+ * Satellites are placed relative to their primary's *projected* position rather
+ * than projected from the frame origin, so they stay visibly attendants whatever
+ * the map is centred on — and so their orbits survive an exaggeration the
+ * primary's does not get.
  */
 export function projectPositions(
   positions: PositionSet,
@@ -129,7 +151,7 @@ export function projectPositions(
   for (const id of BODY_IDS) {
     const vector = centred.get(id);
     if (!vector) continue;
-    if (id === 'moon') continue;
+    if (id === 'moon' || BODIES[id].satellite) continue;
     projected.set(id, projectVector(vector, scaleMode));
   }
 
@@ -145,6 +167,33 @@ export function projectPositions(
     });
   } else if (moon) {
     projected.set('moon', projectVector(moon, scaleMode));
+  }
+
+  for (const id of BODY_IDS) {
+    if (!BODIES[id].satellite) continue;
+
+    const vector = centred.get(id);
+    const parent = BODIES[id].parent;
+    const primary = parent ? projected.get(parent) : undefined;
+    if (!vector) continue;
+
+    if (!primary || !parent) {
+      projected.set(id, projectVector(vector, scaleMode));
+      continue;
+    }
+
+    const offset = sub(vector, centred.get(parent)!);
+    const distance = Math.hypot(offset.x, offset.y);
+    if (distance === 0) {
+      projected.set(id, primary);
+      continue;
+    }
+
+    const radius = satelliteDrawnRadius(distance);
+    projected.set(id, {
+      x: primary.x + (offset.x / distance) * radius,
+      y: primary.y + (offset.y / distance) * radius,
+    });
   }
 
   return projected;

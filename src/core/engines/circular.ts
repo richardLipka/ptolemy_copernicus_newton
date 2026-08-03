@@ -23,6 +23,7 @@ import { centuriesSinceJ2000 } from '../time';
 import { DEG, add, vec3, type Vec3 } from '../vec';
 import { elementsAt } from './keplerian';
 import type { Engine, PositionSet } from './types';
+import { addSatellites } from '../satellites';
 
 /** Mean distance of the Moon from Earth, AU. */
 const MOON_MEAN_DISTANCE = 385_000.56 / AU_IN_KM;
@@ -85,6 +86,7 @@ export function circularPositions(jd: number): Map<BodyId, Vec3> {
   const earth = positions.get('earth')!;
   positions.set('moon', add(earth, circularMoonGeocentricAt(jd)));
 
+  addSatellites(jd, positions);
   return positions;
 }
 

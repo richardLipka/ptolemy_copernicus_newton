@@ -218,5 +218,10 @@
   "calc.tables.newton": "Principia (1687) neobsahují žádné efemeridy. Je to kniha teorie a propast mezi zákonem a použitelnou tabulkou zaplnilo až další století poruchového počtu. Clairautova teorie Měsíce dávala zprvu pohyb měsíčního apsidálního bodu poloviční oproti pozorování a Clairaut byl blízko tomu navrhnout úpravu samotného gravitačního zákona, než to spravilo dovedení aproximace dál. Mayerovy měsíční tabulky z 50. let 18. století získaly podíl na Ceně za určení délky; tabulky v Newtonově duchu přišly ještě později, od Laplacea, Le Verriera a Newcomba.",
   "engine.copernican": "Excentry a epicykly",
   "engine.help.copernican": "Heliocentrický model tak, jak jej skutečně popisuje De revolutionibus: každá dráha je excentrická kružnice a malý epicykl nahrazuje Ptolemaiův ekvant. Koperník mezi ně rozdělil výstřednost a výsledek sleduje elipsu velmi těsně — jeho kružnice nikdy nebyly soustředné.",
-  "calc.copernicus.equationOfCentre": "Rovnice středu (epicykl)"
+  "calc.copernicus.equationOfCentre": "Rovnice středu (epicykl)",
+  "body.io": "Io",
+  "body.europa": "Europa",
+  "body.ganymede": "Ganymed",
+  "body.callisto": "Kallisto",
+  "body.titan": "Titan"
 }

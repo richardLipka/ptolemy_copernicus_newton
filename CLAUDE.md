@@ -493,6 +493,57 @@ Two honesty notes that the tests carry as comments:
   advantage on those planets appears only once perturbation is added, which is
   Newton's territory.
 
+### 12.3b The moons, and why they sit outside every model
+
+The four Galileans and Titan are drawn **identically under all four models**,
+and that is not laziness. No pre-1610 model contains them: Ptolemy had never
+heard of them and Copernicus died sixty-seven years before anyone saw one. What
+changes when the model changes is where *Jupiter* is; the moons ride along.
+
+Which is the point Galileo made. Four bodies plainly going round something that
+is not the Earth was the first observation the geocentric system had no answer
+to, and selecting Jupiter in Ptolemy mode puts that contradiction on screen.
+
+**Precision is not claimed.** The mean longitudes are approximate, so the
+configuration on a given date is not to be trusted. The *periods* are accurate,
+because the two demonstrations rest only on them and both are asserted in
+`satellites.test.ts`:
+
+- **Kepler's third law holds inside the Jovian system.** `a³/P²` comes to
+  2.397, 2.396, 2.396, 2.396 ×10¹⁶ km³/day² across the four Galileans —
+  constant to four figures, with a constant of its own about a thousandth of the
+  Sun's, because the constant is set by the mass at the centre.
+- **The Laplace resonance**, 1:2:4, and not merely as a ratio: the test checks
+  the relation between the mean motions, `n_Io − 3·n_Europa + 2·n_Ganymede ≈ 0`,
+  which a coincidence of ratios would not satisfy.
+
+#### They are not in the integrator
+
+`GRAVITATING_BODY_IDS` is deliberately **not** `BODY_IDS`. The n-body run steps
+a quarter of a day, which gives Io — going round in 1.77 days — **seven steps
+per orbit**, and an orbit sampled seven times does not close. Resolving it would
+need a step fifteen times finer and, with fourteen bodies instead of nine,
+would turn a 370 ms seek to 1602 into something near fifteen seconds.
+
+So they are two-body riders on their integrated primary. That is not a dodge
+around the arithmetic but **Newton's own treatment**: *Principia* Book III takes
+Jupiter's moons as a two-body problem, and that is how he weighed Jupiter.
+
+#### Drawing them at all
+
+Projected honestly they are hopeless — at compressed scale Io sits 0.0125% of
+the map radius from Jupiter, which on a 600px map is four hundredths of a pixel,
+and Callisto manages a sixth of one. They get the same exaggeration the Moon
+does, **linear in the true distance**, which is what keeps the system legible as
+a system: the Galileans span 4.5:1 from Io to Callisto and a linear scaling
+preserves both their order and their spacing. Measured on screen at moderate
+zoom: 45, 66, 119 and 197 px from Jupiter, a 4.4:1 spread.
+
+They are also excluded from event scanning. Io and Europa conjoin every couple
+of days, and including them would bury every genuine planetary event under a
+drift of moon-on-moon conjunctions nobody in any century thought worth
+tabulating.
+
 ### 12.4 Deliberate simplifications
 
 - **Ptolemy's lunar crank is not implemented.** The engine uses the simple
