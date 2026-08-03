@@ -517,6 +517,68 @@
 }
 
 /*
+ * The scale bar, bottom-centre of the field. Shown only at true scale.
+ *
+ * It sits on a small panel-coloured chip rather than bare on the parchment,
+ * because the edge pointers run along this same bottom edge and the two would
+ * otherwise collide illegibly at deep zoom.
+ */
+.scalebar {
+  position: absolute;
+  bottom: 0.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.4rem 0.6rem 0.34rem;
+  border-radius: var(--panel-radius);
+  background: var(--panel-surface);
+  /* Above the edge pointers, which share this strip of the map. */
+  z-index: 4;
+  /* Never in the way of a drag: the map beneath stays grabbable. */
+  pointer-events: none;
+}
+
+/*
+ * The bar itself: a rule with a tick turned down at each end, in the manner of
+ * an engraved chart. --len is a plain pixel count written by the renderer.
+ */
+.scalebar__line {
+  position: relative;
+  width: calc(var(--len, 100) * 1px);
+  height: var(--line-medium);
+  background: var(--ink-soft);
+}
+
+.scalebar__line::before,
+.scalebar__line::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: var(--line-medium);
+  height: 6px;
+  background: var(--ink-soft);
+}
+
+.scalebar__line::before {
+  left: 0;
+}
+
+.scalebar__line::after {
+  right: 0;
+}
+
+.scalebar__label {
+  font-family: var(--face-display);
+  font-size: var(--size-label);
+  letter-spacing: var(--tracking-label);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/*
  * Edge-of-map pointer for a body that is off-screen.
  *
  * Both the chevron and the name are placed at the same point on the viewport

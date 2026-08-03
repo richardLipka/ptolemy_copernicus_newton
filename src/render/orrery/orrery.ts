@@ -17,12 +17,14 @@ import {
   buildConstruction,
   buildDynamicsView,
   buildView,
+  projectRadius,
   projectTrail,
   ringIntercept,
   type Point,
 } from '../../state/selectors';
 import { CONSTELLATION_FIGURES } from './constellations';
 import { edgePointerFor } from './offscreen';
+import { chooseScaleBar } from './scalebar';
 
 /** Radius of the sight-line ring, in map-radius units. Matches theme.css. */
 const RING_INNER = 1.06;
@@ -111,6 +113,20 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
   const bodyLayer = div('ring');
   instrument.append(ringLayer, figureLayer, pathLayer, harnessLayer, sightLayer, bodyLayer);
   bodyLayer.style.pointerEvents = 'auto';
+
+  /*
+   * The scale bar, a sibling of the instrument rather than a child of it.
+   *
+   * Inside the instrument it would be caught by the pan-and-zoom transform and
+   * would grow along with the map it is trying to measure, which is the one
+   * thing a scale bar must not do.
+   */
+  const scalebar = div('scalebar');
+  const scalebarLine = div('scalebar__line');
+  const scalebarLabel = div('scalebar__label');
+  scalebar.append(scalebarLine, scalebarLabel);
+  scalebar.style.display = 'none';
+  container.appendChild(scalebar);
 
   // --- fixed ring furniture ---------------------------------------------
 
@@ -603,6 +619,36 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
      * on the animation path.
      */
     const unitPx = (fieldPx / ringExtentNow / 2) * state.zoom;
+
+    /*
+     * The scale bar, drawn only at true scale.
+     *
+     * The compressed projection is logarithmic, so a bar of fixed pixel length
+     * would stand for one distance beside Mercury and quite another beside
+     * Saturn. There is no honest bar to draw, so none is.
+     *
+     * Pixels per AU is asked of the projection rather than restated from the
+     * system radius, so a change to the map's extent carries the bar with it.
+     */
+    if (state.scaleMode === 'true') {
+      const pxPerAu = unitPx * projectRadius(1, 'true');
+      // Roughly a fifth of the field, capped so it stays a bar and not a rule.
+      const target = Math.min(180, viewWidthPx * 0.22);
+      const bar = chooseScaleBar(pxPerAu, target);
+      if (bar) {
+        scalebar.style.display = '';
+        scalebarLine.style.setProperty('--len', String(bar.lengthPx));
+        setText(
+          scalebarLabel,
+          `${formatNumber(bar.value, bar.fractionDigits)} ${t(`info.unit.${bar.unit}`)}`,
+        );
+      } else {
+        scalebar.style.display = 'none';
+      }
+    } else {
+      scalebar.style.display = 'none';
+    }
+
     const viewport = {
       halfWidth: viewWidthPx / 2 / unitPx,
       halfHeight: viewHeightPx / 2 / unitPx,

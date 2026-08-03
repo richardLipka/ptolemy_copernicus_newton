@@ -85,7 +85,11 @@ quietly regress.
   realistic scale the zoom goes as far as a thousand times, which is what it
   takes to separate the Moon from the Earth and watch it go round — everything
   else is off the map by then, so each body left behind is drawn as a pointer on
-  the edge showing the direction to it.
+  the edge showing the direction to it. A scale bar along the bottom says what
+  the distances amount to — in AU across the planetary view, in kilometres once
+  you are down among the lunar orbit. It appears only on the realistic scale,
+  because the compressed one is logarithmic and no single bar could be true of
+  it.
 - **See the machinery.** In Ptolemy and Copernicus modes, select a body and the
   construction appears: deferent, epicycle, the arms carrying them, and the
   **equant** — the off-centre point about which the epicycle's centre sweeps

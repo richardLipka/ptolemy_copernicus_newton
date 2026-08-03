@@ -1248,6 +1248,40 @@ of a map unit). Measured in the browser at true scale, zoom 1000, Earth-centred:
 all six off-screen bodies on the rectangle to within 1.5 px, all six names
 wholly inside the field.
 
+### 13.3d The scale bar exists only at true scale
+
+A bar reading "1 AU" is a claim that a fixed run of pixels means a fixed
+distance **anywhere on the map**. That holds for the true-scale projection,
+which is a uniform scaling, and fails for the compressed one, which is
+logarithmic — the same bar would stand for one distance beside Mercury and quite
+another beside Saturn. So no bar is drawn on the compressed scale at all. This
+is not an omission to be filled in later; there is no honest bar to draw.
+
+Sized the way a chart's is: take a comfortable target width, ask what distance
+it covers, round **down** to the nearest 1/2/5 x 10^n, and shorten the bar to
+match. Rounding down rather than to nearest is what keeps the bar inside its
+target, and a 1-2-5 sequence can never fall below 40% of it, so the bar is
+always long enough to read as a bar.
+
+**Pixels per AU is asked of `projectRadius`, not restated from the system
+radius.** Changing the map's extent then carries the bar with it instead of
+quietly making it a lie.
+
+The unit switches to kilometres below 0.1 AU. AU is the map's native measure
+and the one the app teaches in, so it wins wherever it stays legible — but once
+the deep zoom of 13.3c brings the lunar orbit into view, the honest AU readings
+are 0.002 and 0.005, numbers that convey nothing. At that range the bar reads
+"1 000 000 km", which a reader can hold against the Moon's 384 400.
+
+The bar is a **sibling of `.instrument`, not a child**. Inside it, the
+pan-and-zoom transform would scale the bar along with the map it is measuring —
+the one thing a scale bar must never do. It sits on a small panel-coloured chip
+because the edge pointers run along the same bottom strip of the field and the
+two would otherwise overlap illegibly at high magnification.
+
+Verified across all four themes (the chip and ink resolve to sensible contrast
+pairs in each) and at mobile width, where the target shrinks with the viewport.
+
 ### 13.4 Sight-lines are two segments, and why they bend
 
 A sight-line runs **observer → body → zodiac ring**, as two segments rather than
