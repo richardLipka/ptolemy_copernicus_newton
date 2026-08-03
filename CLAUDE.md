@@ -1326,7 +1326,7 @@ Concentric, the bodies live inside 1.0 and a ring at 1.06 clears them by
 construction. Centred on the **observer** it does not: the observer is itself
 offset — Earth sits 0.36 out at compressed scale — so a body on the far side can
 be 1.36 away while the ring stays at 1.06. Saturn was being drawn *outside its
-own sphere of fixed stars*, and its sight-line doubled back **166 degrees** to
+own sphere of fixed stars*, and its sight-line doubled back **166°** to
 reach the ring.
 
 That was always true. It only became visible once both segments were drawn in
@@ -1337,16 +1337,16 @@ concentric so the default view is untouched. Measured worst kink afterwards:
 
 | sphere | scale | worst kink | ring scale |
 |---|---|---|---|
-| centre | compressed | 18 deg | 1 |
-| centre | true | 4 deg | 1 |
-| observer | compressed | 37 deg | 1.20 |
-| **observer** | **true** | **0.0000 deg** | **1** |
+| centre | compressed | 18° | 1 |
+| centre | true | 4° | 1 |
+| observer | compressed | 37° | 1.20 |
+| **observer** | **true** | **0.0000°** | **1** |
 
-The last row is the one worth understanding. At true scale 
+The last row is the one worth understanding. At true scale `projectVector`
 reduces to a *uniform scaling*, which preserves directions, so the drawn
 direction from observer to body is exactly the apparent longitude — and that is
 where the ring intercept sits when the sphere is centred there. The same
-direction twice, hence no kink at all.  asserts that
+direction twice, hence no kink at all. `scaleGeometry.test.ts` asserts that
 equality to 1e-9, and asserts it fails at compressed scale, which is what the
 remaining bend displays.
 
