@@ -80,8 +80,12 @@ quietly regress.
 
 - **Move the centre.** Any body can be the stationary point in any model. The
   Ptolemaic and Copernican maps of the same instant are the same geometry seen
-  from two chairs. The mouse wheel zooms about whatever you have made the centre;
-  double-click returns to the fitted view.
+  from two chairs. The mouse wheel zooms about whatever you have made the centre,
+  as do the `+` and `-` keys; double-click returns to the fitted view. On the
+  realistic scale the zoom goes as far as a thousand times, which is what it
+  takes to separate the Moon from the Earth and watch it go round — everything
+  else is off the map by then, so each body left behind is drawn as a pointer on
+  the edge showing the direction to it.
 - **See the machinery.** In Ptolemy and Copernicus modes, select a body and the
   construction appears: deferent, epicycle, the arms carrying them, and the
   **equant** — the off-centre point about which the epicycle's centre sweeps

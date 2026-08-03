@@ -516,6 +516,59 @@
   border-width: var(--line-medium);
 }
 
+/*
+ * Edge-of-map pointer for a body that is off-screen.
+ *
+ * Both the chevron and the name are placed at the same point on the viewport
+ * edge, in map units like everything else. Only the chevron is rotated; the
+ * name is a separate element, because a rotated container cannot hold upright
+ * text on both sides of the map — counter-rotating it about its own anchor
+ * leaves it hanging off the outward side for anything pointing left.
+ *
+ * The name is instead pushed inward along the screen-space vector (--nx, --ny)
+ * that the renderer already has, which works the same at every edge.
+ */
+.body__offscreen {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: translate(calc(var(--x) * var(--unit)), calc(var(--y) * var(--unit)))
+    rotate(calc(var(--angle) * 1deg));
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* The arrowhead, its apex on the anchor, pointing along +x before rotation. */
+.body__offscreen::before {
+  content: '';
+  position: absolute;
+  left: -9px;
+  top: -5px;
+  border-style: solid;
+  border-width: 5px 0 5px 9px;
+  border-color: transparent transparent transparent var(--tint);
+  opacity: 0.9;
+}
+
+.body__offscreen-name {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(
+    calc(var(--x) * var(--unit) - 50% - var(--nx) * 22px),
+    calc(var(--y) * var(--unit) - 50% - var(--ny) * 22px)
+  );
+  font-family: var(--face-display);
+  font-size: var(--size-label);
+  letter-spacing: var(--tracking-label);
+  color: var(--ink-soft);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 3;
+}
+
 .body__label {
   position: absolute;
   top: 50%;

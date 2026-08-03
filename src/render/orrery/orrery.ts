@@ -22,6 +22,7 @@ import {
   type Point,
 } from '../../state/selectors';
 import { CONSTELLATION_FIGURES } from './constellations';
+import { edgePointerFor } from './offscreen';
 
 /** Radius of the sight-line ring, in map-radius units. Matches theme.css. */
 const RING_INNER = 1.06;
@@ -87,9 +88,16 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
 
   // Size the field from the stage in plain pixels. See layout.css for why this
   // is not left to container-query units.
+  let fieldPx = 600;
+  let viewWidthPx = 600;
+  let viewHeightPx = 600;
+
   const fitToContainer = (): void => {
     const { width, height } = container.getBoundingClientRect();
     const field = Math.max(120, Math.min(width, height) * 0.97);
+    fieldPx = field;
+    viewWidthPx = width;
+    viewHeightPx = height;
     instrument.style.setProperty('--field', `${field}px`);
   };
   new ResizeObserver(fitToContainer).observe(container);
@@ -150,6 +158,9 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     sightlineOuter: HTMLDivElement;
     pip: HTMLDivElement;
     reading: HTMLDivElement;
+    /** Edge-of-map pointer, shown only while the body is out of view. */
+    offscreen: HTMLDivElement;
+    offscreenName: HTMLDivElement;
     ghosts: { body: HTMLDivElement; link: HTMLDivElement }[];
     takeGhost: (index: number) => { body: HTMLDivElement; link: HTMLDivElement };
     /** Live segment joining the logged trail to the body's current position. */
@@ -175,6 +186,17 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     marker.appendChild(phase);
 
     const label = div('body__label');
+
+    /**
+     * Shown at the edge of the map when the body itself is off-screen, pointing
+     * the way to it. Zooming to see the lunar orbit at true scale throws every
+     * planet out of view, and a map that simply loses them is disorienting.
+     */
+    const offscreen = div('body__offscreen');
+    offscreen.style.setProperty('--tint', tint);
+    offscreen.style.display = 'none';
+    const offscreenName = div('body__offscreen-name');
+    offscreenName.style.display = 'none';
     // Observer to body: solid, since it is a real line of sight.
     const sightline = div('sightline sightline--inner');
     sightline.style.setProperty('--stroke', tint);
@@ -217,7 +239,7 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     pathLayer.appendChild(trailLeader);
 
     sightLayer.append(sightline, sightlineOuter, pip, reading);
-    bodyLayer.append(marker, label);
+    bodyLayer.append(marker, label, offscreen, offscreenName);
 
     const select = (): void => store.selectBody(id);
     marker.addEventListener('click', select);
@@ -236,6 +258,8 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
       sightlineOuter,
       pip,
       reading,
+      offscreen,
+      offscreenName,
       ghosts,
       takeGhost,
       trailLeader,
@@ -250,6 +274,8 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
   let lastTrailKey = '';
 
   /** Last magnification written to the DOM. */
+  /** Whatever --ring-extent currently is, so --unit can be derived. */
+  let ringExtentNow = BASE_RING_EXTENT;
   let lastZoom = Number.NaN;
   let lastPanX = Number.NaN;
   let lastPanY = Number.NaN;
@@ -560,13 +586,30 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
       const offset = Math.hypot(sphere.x, sphere.y);
       const extra = Math.max(0, offset + RING_OUTER * ringScale + 0.2 - BASE_RING_EXTENT);
       const needed = BASE_RING_EXTENT + Math.ceil(extra / 0.05) * 0.05;
+      ringExtentNow = needed;
       instrument.style.setProperty('--ring-extent', needed.toFixed(3));
     } else {
+      ringExtentNow = BASE_RING_EXTENT;
       instrument.style.removeProperty('--ring-extent');
     }
 
     // The scale rides on the same transform, so circles, dividers, ticks,
     // labels and the star figures all grow together and stay registered.
+    /*
+     * How much of the map is actually on screen, in map units.
+     *
+     * Derived rather than measured: --unit is field / ringExtent / 2 * zoom, and
+     * the field is what the ResizeObserver last wrote, so no layout is read back
+     * on the animation path.
+     */
+    const unitPx = (fieldPx / ringExtentNow / 2) * state.zoom;
+    const viewport = {
+      halfWidth: viewWidthPx / 2 / unitPx,
+      halfHeight: viewHeightPx / 2 / unitPx,
+      // Panning moves the view, so the middle of the screen is at −pan.
+      centre: { x: -state.panX, y: -state.panY },
+    };
+
     const sphereShift =
       `translate(calc(${sphere.x} * var(--unit)), calc(${sphere.y} * var(--unit)))` +
       (ringScale === 1 ? '' : ` scale(${ringScale})`);
@@ -653,6 +696,24 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
         parts.marker.setAttribute('aria-label', name);
       }
       parts.marker.classList.toggle('body--selected', state.selectedBody === body.id);
+
+      // Off-screen bodies become a pointer at the edge. See offscreen.ts.
+      const pointer = edgePointerFor(body.point, viewport);
+      if (pointer) {
+        parts.offscreen.style.display = '';
+        parts.offscreenName.style.display = '';
+        setPoint(parts.offscreen, pointer.at);
+        setPoint(parts.offscreenName, pointer.at);
+        parts.offscreen.style.setProperty('--angle', String(pointer.angleDeg));
+        // Map units and screen pixels share an orientation, so the outward
+        // vector serves directly as the direction to push the name back in.
+        parts.offscreenName.style.setProperty('--nx', String(pointer.outward.x));
+        parts.offscreenName.style.setProperty('--ny', String(pointer.outward.y));
+        setText(parts.offscreenName, name);
+      } else {
+        parts.offscreen.style.display = 'none';
+        parts.offscreenName.style.display = 'none';
+      }
 
       // Every body except the Sun has a lit side, the observer's included —
       // Earth is as much a lit ball as anything else on the map.

@@ -11,7 +11,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { MAX_JD, MIN_JD, jdFromCalendar } from '../core/time';
-import { Store } from './store';
+import { projectRadius } from './selectors';
+import { MAX_ZOOM, MAX_ZOOM_TRUE_SCALE, MIN_ZOOM, Store } from './store';
+
+/** The Moon's mean distance, in AU. Mirrors the figure in selectors.ts. */
+const MOON_MEAN_DISTANCE_AU = 0.00257;
 
 let store: Store;
 
@@ -218,5 +222,75 @@ describe('dragging the map', () => {
     const store = new Store();
     expect(store.get().panX).toBe(0);
     expect(store.get().panY).toBe(0);
+  });
+});
+
+/**
+ * The zoom ceiling depends on the scale, because what there is to look at does.
+ *
+ * Compressed, the lunar orbit is exaggerated to 0.03 of the map radius and
+ * twenty times is ample. At true scale it is 0.000147, so twenty times leaves it
+ * under a pixel and the Moon sits welded to the Earth — which is precisely the
+ * thing a true-scale view is for showing.
+ */
+describe('zoom limits', () => {
+  it('stops at twenty times on the compressed scale', () => {
+    const store = new Store();
+    store.setScaleMode('compressed');
+    store.setZoom(5000);
+
+    expect(store.get().zoom).toBe(MAX_ZOOM);
+  });
+
+  it('allows a thousand times at true scale, enough to split the lunar orbit', () => {
+    const store = new Store();
+    store.setScaleMode('true');
+    store.setZoom(5000);
+
+    expect(store.get().zoom).toBe(MAX_ZOOM_TRUE_SCALE);
+
+    /*
+     * The point of the ceiling: put the Moon's real distance through the real
+     * projection and the orbit has to come out to something a reader can see.
+     * Asked of the projection rather than restated here, so that changing the
+     * scale of the map moves this test with it.
+     */
+    const drawnRadii = projectRadius(MOON_MEAN_DISTANCE_AU, 'true');
+    const halfFieldPx = 300;
+    expect(drawnRadii * halfFieldPx * store.get().zoom).toBeGreaterThan(20);
+    // and the old ceiling really was too low to show it — under two pixels.
+    expect(drawnRadii * halfFieldPx * MAX_ZOOM).toBeLessThan(2);
+  });
+
+  it('pulls the zoom back down when leaving true scale', () => {
+    /*
+     * Otherwise a reader who zooms deep at true scale and flicks to compressed
+     * lands at fifty times the compressed ceiling, staring at empty parchment
+     * with no indication of what happened.
+     */
+    const store = new Store();
+    store.setScaleMode('true');
+    store.setZoom(800);
+    store.setScaleMode('compressed');
+
+    expect(store.get().zoom).toBe(MAX_ZOOM);
+  });
+
+  it('leaves a modest zoom alone when the scale changes', () => {
+    const store = new Store();
+    store.setScaleMode('true');
+    store.setZoom(4);
+    store.setScaleMode('compressed');
+
+    expect(store.get().zoom).toBe(4);
+  });
+
+  it('holds the floor on both scales', () => {
+    const store = new Store();
+    for (const mode of ['compressed', 'true'] as const) {
+      store.setScaleMode(mode);
+      store.setZoom(0.001);
+      expect(store.get().zoom).toBe(MIN_ZOOM);
+    }
   });
 });

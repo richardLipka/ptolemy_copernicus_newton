@@ -1190,6 +1190,64 @@ to 0.058 AU, and the backstop stops the Moon overtaking it. `scaleGeometry.test.
 holds both halves for all six engines, and checks the Moon never passes Mercury
 across two years of dates.
 
+### 13.3c The zoom ceiling depends on the scale, and off-screen bodies get pointers
+
+Two changes that only make sense together.
+
+**The ceiling was too low to show what true scale draws.** Once the Moon stopped
+being exaggerated at true scale (13.3b) it sat 0.000147 of the map radius from
+Earth — honest, and at the old ceiling of twenty times, *invisible*. On a 650px
+field that is **0.65 px**: the Moon is welded to the Earth and the toggle shows
+nothing it promised. `maxZoomFor()` therefore returns **1000 at true scale** and
+keeps **20 on the compressed scale**, where the Moon is already drawn at 0.03 of
+the map radius and twenty times is ample. At 1000 the lunar orbit comes out at
+about **33 px** and traces a plain circle around the Earth.
+
+`setScaleMode` re-clamps on the way out, or a reader who zoomed deep at true
+scale and flicked to compressed would land at fifty times that scale's ceiling,
+staring at empty parchment with no idea what had happened.
+
+The wheel is exponential at 0.0016 per pixel, which needs some **forty notches**
+to climb to 1000 — reachable in principle and not in practice. So `+` and `-`
+zoom by half again per press, which gets there in seventeen and, with
+auto-repeat, in one held key. This is a lecture tool; presenters already have
+space and the arrows.
+
+**At that magnification every planet is off the map.** A view that silently
+loses them destroys the sense of direction the whole app exists to build, so
+each off-screen body is drawn as a tinted chevron on the edge of the field with
+its name beside it. `edgePointerFor()` in `render/orrery/offscreen.ts` places it
+where the ray from the middle of the screen to the body crosses a rectangle
+inset to `EDGE_INSET = 0.92` of the half-extents — inset because a chevron
+placed exactly on the boundary is half eaten by the stage's overflow clip.
+
+Three details that are easy to get wrong:
+
+- **The ray is measured from the middle of the screen, not the frame origin.**
+  A body renders at `centre + (p + pan) · unit`, so the map point under the
+  crosshairs is `−pan`. Measuring from the origin would draw an edge pointer to
+  a body sitting dead centre under a pan.
+- **Which side it leaves through is not the larger component.** The field is
+  usually wider than it is tall, so a body at 45° exits the top or bottom. Taking
+  the smaller of the two ratios gets this right by construction.
+- **The name is a separate element, not a child of the rotated chevron.** The
+  first attempt counter-rotated the label inside the chevron to keep it upright;
+  that is a net rotation of zero, so the box always extended *leftward in screen
+  space* — inward on the right edge and straight off the map on the left. The
+  name is instead placed at the same point and pushed 22px back along the
+  outward unit vector the renderer already has, which behaves the same at every
+  edge.
+
+The extraction into a pure function was deliberate: projection arithmetic in
+this project has a long record of looking right and being wrong, and
+`offscreen.test.ts` pins the two properties that matter — the pointer is on the
+ray to the body, and it lands *on* the inset rectangle rather than inside it —
+for all 360 bearings, plus the pan term, which the browser cannot really
+exercise (at 1000× a full drag across the screen moves the view by a thousandth
+of a map unit). Measured in the browser at true scale, zoom 1000, Earth-centred:
+all six off-screen bodies on the rectangle to within 1.5 px, all six names
+wholly inside the field.
+
 ### 13.4 Sight-lines are two segments, and why they bend
 
 A sight-line runs **observer → body → zodiac ring**, as two segments rather than

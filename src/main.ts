@@ -329,6 +329,9 @@ const ZOOM_SENSITIVITY = 0.0016;
 /** Rough pixel equivalents, for wheels that report lines or pages. */
 const DELTA_TO_PIXELS = [1, 16, 400];
 
+/** What one press of the zoom key multiplies by. See the key handler. */
+const KEY_ZOOM_STEP = 1.5;
+
 /**
  * Wheel zoom, listened for on the whole app rather than the instrument.
  *
@@ -492,6 +495,25 @@ window.addEventListener('keydown', (event: KeyboardEvent) => {
     case 'ArrowRight':
       event.preventDefault();
       store.stepDays(1);
+      break;
+    /*
+     * Zoom by the keyboard as well as the wheel.
+     *
+     * At true scale the ceiling is a thousand times, and the wheel's
+     * exponential needs some forty notches to climb it — far enough that the
+     * lunar orbit is technically reachable and practically not. A key that
+     * multiplies by half again gets there in seventeen presses, and auto-repeat
+     * makes it one held key.
+     */
+    case '+':
+    case '=':
+      event.preventDefault();
+      store.zoomBy(KEY_ZOOM_STEP);
+      break;
+    case '-':
+    case '_':
+      event.preventDefault();
+      store.zoomBy(1 / KEY_ZOOM_STEP);
       break;
     default:
       break;

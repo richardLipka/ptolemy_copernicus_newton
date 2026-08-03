@@ -87,7 +87,24 @@ export const RATE_LADDER: readonly number[] = [0.25, 1, 5, 20, 100, 400];
  * separates cleanly from Earth.
  */
 export const MIN_ZOOM = 0.4;
+
+/**
+ * How far in the wheel may go, which depends on what the scale is doing.
+ *
+ * Compressed, the Moon's orbit is already exaggerated to 0.03 of the map radius
+ * and twenty times is plenty to inspect it. **True scale needs far more.** There
+ * the Moon sits 0.000147 of the map radius from Earth — a twentieth of a pixel —
+ * so a ceiling of twenty tops out at under a pixel of separation and the lunar
+ * orbit can never be seen at all, which rather defeats the honest view.
+ *
+ * A thousand puts it around thirty pixels across, which is the point of being
+ * able to look.
+ */
 export const MAX_ZOOM = 20;
+export const MAX_ZOOM_TRUE_SCALE = 1000;
+
+export const maxZoomFor = (scaleMode: ScaleMode): number =>
+  scaleMode === 'true' ? MAX_ZOOM_TRUE_SCALE : MAX_ZOOM;
 
 /** Closest rung to an arbitrary rate, for stepping from an off-ladder value. */
 function nearestRung(rate: number): number {
@@ -324,7 +341,13 @@ export class Store {
 
   setScaleMode(scaleMode: ScaleMode): void {
     this.trails.invalidateProjection();
-    this.patch({ scaleMode });
+    // Leaving true scale drops the ceiling from a thousand to twenty, so a deep
+    // lunar zoom has to come back with it or the compressed view opens somewhere
+    // absurd.
+    this.patch({
+      scaleMode,
+      zoom: Math.min(this.state.zoom, maxZoomFor(scaleMode)),
+    });
   }
 
   /**
@@ -341,7 +364,7 @@ export class Store {
   }
 
   setZoom(zoom: number): void {
-    const clamped = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
+    const clamped = Math.min(maxZoomFor(this.state.scaleMode), Math.max(MIN_ZOOM, zoom));
     if (clamped === this.state.zoom) return;
     this.patch({ zoom: clamped });
   }
