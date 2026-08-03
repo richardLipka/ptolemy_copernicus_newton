@@ -22,6 +22,7 @@ import {
   relativePosition,
   solarElongation,
 } from '../../core/coordinates';
+import { inDeferentParts } from '../../core/engines/ptolemaicUnits';
 import type { EngineId } from '../../core/engines/types';
 import { illuminationOf, phaseName } from '../../core/illumination';
 import { t, bodyName, formatNumber } from '../../i18n/i18n';
@@ -134,20 +135,55 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
     ),
   );
 
-  card.appendChild(
-    readout(
-      t('info.distanceFromSun'),
-      `${formatNumber(body.distanceFromSun, 3)} ${t('info.unit.au')}`,
-    ),
-  );
+  /*
+   * Distances read in Ptolemy's own unit while one of his constructions is
+   * running. See core/engines/ptolemaicUnits.ts: the Almagest fixes no absolute
+   * distance at all, only each body's measurements in parts of its own deferent
+   * of 60, so AU here would be an anachronism twice over.
+   *
+   * The reframe mode is excluded on purpose. It is modern positions wearing
+   * geocentric dress rather than anything Ptolemy computed, so AU is exactly
+   * right for it.
+   */
+  const inPtolemysUnits =
+    state.engineId === 'ptolemaic-epicyclic' || state.engineId === 'ptolemaic-almagest';
+  const parts = inPtolemysUnits
+    ? (au: number): number | null => inDeferentParts(au, state.julianDate, selected)
+    : (): number | null => null;
+
+  /** A length, in whichever unit the running model actually had. */
+  const distance = (au: number): string => {
+    const asParts = parts(au);
+    // One decimal, always: Czech takes the genitive singular after a decimal,
+    // so "63,2 dílu" is right for every value the readout can show.
+    if (asParts !== null) return `${formatNumber(asParts, 1)} ${t('info.unit.parts')}`;
+    return `${formatNumber(au, 3)} ${t('info.unit.au')}`;
+  };
+
+  /*
+   * No distance from the Sun while Ptolemy is running.
+   *
+   * His construction determines one length and one only: how far a body is from
+   * the Earth, in parts of its own deferent. A Sun-relative distance is not a
+   * quantity the Almagest contains, and the figure this app could compute for it
+   * would depend on where the nested spheres were anchored — a modern choice
+   * made in ptolemaic.ts, not a result of his model. Printing it beside his own
+   * numbers would dress that choice up as one of his findings.
+   */
+  if (!inPtolemysUnits) {
+    card.appendChild(readout(t('info.distanceFromSun'), distance(body.distanceFromSun)));
+  }
 
   if (!body.isObserver) {
     card.appendChild(
-      readout(
-        t('info.distanceFromObserver'),
-        `${formatNumber(body.distanceFromObserver, 3)} ${t('info.unit.au')}`,
-      ),
+      readout(t('info.distanceFromObserver'), distance(body.distanceFromObserver)),
     );
+    // Said next to the figure it qualifies: a reader who does not know that each
+    // body's 60 is a different length will compare these across bodies and draw
+    // a conclusion the Almagest never supported.
+    if (inPtolemysUnits && parts(body.distanceFromObserver) !== null) {
+      card.appendChild(el('p', 'note', t('info.ptolemyParts')));
+    }
     card.appendChild(
       readout(
         t('info.elongation'),

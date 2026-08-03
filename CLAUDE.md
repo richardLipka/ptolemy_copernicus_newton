@@ -1282,6 +1282,48 @@ two would otherwise overlap illegibly at high magnification.
 Verified across all four themes (the chip and ink resolve to sensible contrast
 pairs in each) and at mobile width, where the target shrinks with the viewport.
 
+### 13.3e Ptolemy's distances are in his own unit, not in AU
+
+The Almagest parameters were checked against Toomer and are right: apogee,
+eccentricity and epicycle radius for all five planets, the solar apogee 65;30
+and e 2;30, and the Hipparchan lunar epicycle 5;15 for the model actually
+implemented. The nested-sphere chain reproduces the Planetary Hypotheses
+distance table to within 3-7% (Sun 1210 exact, Mars 5216 against 5040, Saturn
+17830 against 17026).
+
+What was wrong was the **unit the info panel printed**. It hard-coded AU for
+every model, which for Ptolemy is an anachronism twice over: the unit did not
+exist, and *the quantity was not determined*. Directions seen from the Earth do
+not change when a deferent, its eccentricity and its epicycle are scaled
+together, so nothing Ptolemy could observe would have fixed any absolute
+distance, and he did not claim one. The Almagest states every measurement in
+parts of that body's own deferent, which is always 60. That is what the panel
+now shows, via `core/engines/ptolemaicUnits.ts`.
+
+The unit's own catch has to be said out loud, so a note sits beside the figure:
+**each body's 60 is a different real length**, so the readings cannot be
+compared between bodies. That is the state of the question in the Almagest, not
+a limitation of this app.
+
+Two exclusions, both deliberate:
+
+- **The reframe sub-mode keeps AU.** It is modern positions wearing geocentric
+  dress rather than anything Ptolemy computed, so AU is exactly right for it.
+  Only `ptolemaic-epicyclic` and `ptolemaic-almagest` switch.
+- **The distance-from-the-Sun row disappears** under the two authentic modes.
+  His construction determines one length — how far a body is from the Earth —
+  and a Sun-relative figure would depend on where this app anchors the nested
+  spheres, a modern choice made in `ptolemaic.ts`. Printing it beside his own
+  numbers would dress that choice up as one of his findings. It first showed up
+  as the Moon reading "24 104,7 parts from the Sun", which is arithmetically
+  fine and historically meaningless.
+
+`ptolemaicUnits.test.ts` checks the readout against the source text rather than
+against the engine's own table: every planet's geocentric distance must stay
+inside 60 +/- (e + r) and must reach both ends of it over thirty-two years. The
+Moon comes out at 59.1 parts, which is Almagest IV's mean lunar distance of
+about 59 Earth radii and one of the work's genuine successes.
+
 ### 13.4 Sight-lines are two segments, and why they bend
 
 A sight-line runs **observer → body → zodiac ring**, as two segments rather than

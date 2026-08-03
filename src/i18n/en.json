@@ -218,5 +218,7 @@
   "calc.tables.newton": "The Principia (1687) contains no ephemeris at all. It is a book of theory, and the gap between the law and a usable table took another century of perturbation work to close. Clairaut's lunar theory first gave the Moon's apsidal motion at half the observed rate, and he came close to proposing an amendment to gravitation itself before carrying the approximation further fixed it. Mayer's lunar tables of the 1750s won a share of the Longitude Prize; tables in Newton's spirit came later still, from Laplace, Le Verrier and Newcomb.",
   "engine.copernican": "Eccentrics and epicyclets",
   "engine.help.copernican": "The heliocentric model as De revolutionibus actually describes it: each orbit an eccentric circle, with a small epicyclet replacing Ptolemy's equant. Copernicus split the eccentricity between the two, and the result follows an ellipse closely — his circles were never concentric.",
-  "calc.copernicus.equationOfCentre": "Equation of centre (the epicyclet)"
+  "calc.copernicus.equationOfCentre": "Equation of centre (the epicyclet)",
+  "info.unit.parts": "parts",
+  "info.ptolemyParts": "Ptolemy gives no absolute distances. The Almagest states every measurement in parts of that body’s own deferent, which he always takes as 60 — and directions seen from the Earth are unchanged if a deferent, its eccentricity and its epicycle are scaled together, so nothing he could observe would have fixed the scale. Each body’s 60 is therefore a different real length, and these figures cannot be compared between bodies."
 }
