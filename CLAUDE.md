@@ -517,6 +517,39 @@ because the two demonstrations rest only on them and both are asserted in
   the relation between the mean motions, `n_Io − 3·n_Europa + 2·n_Ganymede ≈ 0`,
   which a coincidence of ratios would not satisfy.
 
+#### How they are drawn
+
+Four rules, all about keeping a system of four legible rather than about
+accuracy:
+
+- **Orbits like any other body.** A moon's trail is logged and projected exactly
+  as a planet's is. Its *marker*, its *trail* and its *orbit circle* are computed
+  in three different places, so all three go through the same exaggeration —
+  `satelliteView.test.ts` asserts that every sampled point of the drawn circle
+  sits at the marker's own radius, and that the trail keeps to it too. Get one of
+  them wrong and the moon sits off its own orbit.
+- **The harness is the whole family.** Selecting Jupiter draws all four Galilean
+  orbits; selecting Io draws its siblings as well. A single circle says nothing
+  about a system whose entire interest is the relation between its members — the
+  1:2:4 spacing is only visible with all of them present.
+- **Sight-lines only for a selected moon.** Five more rays converging on the
+  observer, from bodies sitting a pixel or two from their planet, would put five
+  near-identical lines and five pips on one spot of the ring, exactly where the
+  planet's own reading belongs.
+- **Names only when the family is selected *and* the map is magnified**
+  (`SATELLITE_LABEL_ZOOM = 3`). At the fitted view the four Galileans share a few
+  pixels, so the labels would overlap each other and Jupiter's.
+
+The orbit circles come from `satelliteConstruction()` in `selectors.ts` rather
+than from an engine, because **no engine supplies one** — the moons are not
+derived by any model here, and Newton's engine exposes no `construction` at all.
+Without that they would be bare dots in that one mode.
+
+One consequence of "orbits are logged, never pre-computed" is worth knowing: at
+high time rates a frame-rate log cannot resolve Io's 1.77-day orbit, and the
+trail degenerates into a polygon. That is honest rather than broken — at 20
+days/s you genuinely are not sampling Io — and it comes right at ordinary rates.
+
 #### They are not in the integrator
 
 `GRAVITATING_BODY_IDS` is deliberately **not** `BODY_IDS`. The n-body run steps

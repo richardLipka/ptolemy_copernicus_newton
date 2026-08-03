@@ -8,7 +8,7 @@
  */
 
 import { BODIES, BODY_IDS, type BodyId } from '../core/bodies';
-import type { ConstructionRole } from '../core/construction';
+import type { Construction, ConstructionRole } from '../core/construction';
 import { apparentLongitude, relativePosition } from '../core/coordinates';
 import type { EngineId, PositionSet } from '../core/engines/types';
 import { recenter } from '../core/frame';
@@ -317,6 +317,29 @@ export function projectTrail(
     const origin = sample.positions.get(frameOrigin);
     if (!body || !origin) continue;
 
+    // A satellite's trail must follow the same exaggeration its marker gets, or
+    // the recorded path parts company with the body drawing it.
+    const satellite = BODIES[bodyId].satellite;
+    if (satellite) {
+      const parent = BODIES[bodyId].parent;
+      const primary = parent ? sample.positions.get(parent) : undefined;
+      if (!primary || !parent) continue;
+
+      const primaryPoint = projectVector(sub(primary, origin), scaleMode);
+      const offset = sub(body, primary);
+      const distance = Math.hypot(offset.x, offset.y);
+      if (distance === 0) {
+        points.push(primaryPoint);
+        continue;
+      }
+      const radius = satelliteDrawnRadius(distance);
+      points.push({
+        x: primaryPoint.x + (offset.x / distance) * radius,
+        y: primaryPoint.y + (offset.y / distance) * radius,
+      });
+      continue;
+    }
+
     if (bodyId === 'moon') {
       const earth = sample.positions.get('earth');
       if (!earth) continue;
@@ -382,6 +405,26 @@ function constructionProjector(
 ): (point: Vec3) => Point {
   const origin = positions.get(state.frameOrigin)!;
 
+  // A satellite's geometry is exaggerated about its primary, exactly as its
+  // marker and its trail are, so the three cannot drift apart.
+  const satellite = BODIES[bodyId].satellite;
+  if (satellite) {
+    const parent = BODIES[bodyId].parent!;
+    const primary = positions.get(parent)!;
+    const primaryPoint = projectVector(sub(primary, origin), state.scaleMode);
+
+    return (point) => {
+      const offset = sub(point, primary);
+      const distance = Math.hypot(offset.x, offset.y);
+      if (distance === 0) return primaryPoint;
+      const radius = satelliteDrawnRadius(distance);
+      return {
+        x: primaryPoint.x + (offset.x / distance) * radius,
+        y: primaryPoint.y + (offset.y / distance) * radius,
+      };
+    };
+  }
+
   if (bodyId !== 'moon') {
     return (point) => projectVector(sub(point, origin), state.scaleMode);
   }
@@ -418,35 +461,89 @@ function constructionProjector(
  * the frame origin does not project to a circle, and a deferent drawn as a true
  * circle would sit visibly off its own planet.
  */
+/**
+ * A satellite's orbit, as construction geometry.
+ *
+ * The engines do not supply one: no model in the app *derives* these bodies, so
+ * there is no machinery to reveal in the way a deferent or an ellipse is
+ * machinery. What there is worth drawing is the orbit itself — the circle the
+ * moon runs round, and the arm joining it to its planet — which is what makes
+ * a system of four visible as a system rather than as four loose dots.
+ *
+ * Sampled about the *primary*, so the exaggeration in `constructionProjector`
+ * lands on it correctly.
+ */
+function satelliteConstruction(
+  bodyId: BodyId,
+  positions: PositionSet,
+): Construction | null {
+  const orbit = BODIES[bodyId].satellite;
+  const parent = BODIES[bodyId].parent;
+  if (!orbit || !parent) return null;
+
+  const primary = positions.get(parent);
+  const body = positions.get(bodyId);
+  if (!primary || !body) return null;
+
+  return {
+    circles: [{ centre: primary, radius: orbit.a, role: 'deferent' }],
+    arms: [{ from: primary, to: body, role: 'deferent-arm' }],
+    markers: [],
+  };
+}
+
 export function buildConstruction(
   state: State,
   bodyId: BodyId,
 ): ProjectedConstruction | null {
   const engine = ENGINES[state.engineId];
+
+  // Satellites come first: they have geometry worth drawing in every model,
+  // including the ones whose engine exposes no construction at all.
+  if (BODIES[bodyId].satellite) {
+    const positions = engine.positionsAt(state.julianDate);
+    const construction = satelliteConstruction(bodyId, positions);
+    if (!construction) return null;
+    return projectConstruction(construction, constructionProjector(state, bodyId, positions));
+  }
+
   if (!engine.construction) return null;
 
   const construction = engine.construction(state.julianDate, bodyId);
   if (!construction) return null;
 
   const positions = engine.positionsAt(state.julianDate);
-  const project = constructionProjector(state, bodyId, positions);
+  return projectConstruction(construction, constructionProjector(state, bodyId, positions));
+}
 
+/**
+ * Sample a construction's curves and project the whole thing.
+ *
+ * Circles and ellipses both become polylines: the compressed scale is
+ * nonlinear, so neither survives as the shape it started as, and nothing
+ * downstream needs to tell them apart.
+ */
+function projectConstruction(
+  construction: Construction,
+  project: (point: Vec3) => Point,
+): ProjectedConstruction {
   const circles = construction.circles.map(({ centre, radius, role }) => {
     const points: Point[] = [];
     for (let i = 0; i <= CIRCLE_SAMPLES; i++) {
       const angle = (i / CIRCLE_SAMPLES) * Math.PI * 2;
       points.push(
         project(
-          vec3(centre.x + Math.cos(angle) * radius, centre.y + Math.sin(angle) * radius, centre.z),
+          vec3(
+            centre.x + Math.cos(angle) * radius,
+            centre.y + Math.sin(angle) * radius,
+            centre.z,
+          ),
         ),
       );
     }
     return { points, role };
   });
 
-  // Sampled the same way and into the same array: the projection is nonlinear,
-  // so an ellipse would not survive as an ellipse any more than a circle
-  // survives as a circle. Both become polylines and are drawn as such.
   const ellipses = (construction.ellipses ?? []).map(
     ({ centre, majorAxis, minorAxis, role }) => {
       const points: Point[] = [];
@@ -477,6 +574,7 @@ export function buildConstruction(
     })),
     markers: construction.markers.map(({ at, role }) => ({ at: project(at), role })),
   };
+
 }
 
 // --- Newton's machinery: force and velocity vectors ---------------------
