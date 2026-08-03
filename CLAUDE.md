@@ -1320,6 +1320,36 @@ the inner segment starts exactly at the observer, the two segments meet at the
 body marker, and the outer ends exactly at the ring pip, all to floating-point
 exactness (worst residual 3e-16 map units).
 
+#### The ring grows to enclose the bodies
+
+Concentric, the bodies live inside 1.0 and a ring at 1.06 clears them by
+construction. Centred on the **observer** it does not: the observer is itself
+offset — Earth sits 0.36 out at compressed scale — so a body on the far side can
+be 1.36 away while the ring stays at 1.06. Saturn was being drawn *outside its
+own sphere of fixed stars*, and its sight-line doubled back **166 degrees** to
+reach the ring.
+
+That was always true. It only became visible once both segments were drawn in
+this mode, and the fix belongs to the geometry rather than the line: the ring
+layer is scaled per frame until it encloses the furthest body, quantised so the
+instrument does not breathe as the observer moves, and pinned to 1 when
+concentric so the default view is untouched. Measured worst kink afterwards:
+
+| sphere | scale | worst kink | ring scale |
+|---|---|---|---|
+| centre | compressed | 18 deg | 1 |
+| centre | true | 4 deg | 1 |
+| observer | compressed | 37 deg | 1.20 |
+| **observer** | **true** | **0.0000 deg** | **1** |
+
+The last row is the one worth understanding. At true scale 
+reduces to a *uniform scaling*, which preserves directions, so the drawn
+direction from observer to body is exactly the apparent longitude — and that is
+where the ring intercept sits when the sphere is centred there. The same
+direction twice, hence no kink at all.  asserts that
+equality to 1e-9, and asserts it fails at compressed scale, which is what the
+remaining bend displays.
+
 ### 13.5 Two illumination displays, answering different questions
 
 **The map** is a plan view, so a body's lit side is simply the half facing the

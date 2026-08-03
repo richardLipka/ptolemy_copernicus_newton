@@ -18,7 +18,8 @@ import { nbodyEngine } from '../core/engines/nbody';
 import { ptolemaicEpicyclicPositions } from '../core/engines/ptolemaic';
 import { vsop87Positions } from '../core/engines/vsop87';
 import { jdFromCalendar } from '../core/time';
-import { length, sub } from '../core/vec';
+import { angleDiffDeg, length, normalizeDeg, sub } from '../core/vec';
+import { apparentLongitude } from '../core/coordinates';
 import { projectPositions, projectRadius } from './selectors';
 
 const JD = jdFromCalendar(2026, 3, 15);
@@ -130,5 +131,59 @@ describe('the compressed scale still exaggerates it', () => {
         expect(toMoon, `${name} +${day}d`).toBeLessThan(toMercury);
       }
     }
+  });
+});
+
+describe('why true scale makes an observer-centred sight-line straight', () => {
+  /**
+   * The invariant behind it, and the reason the renderer can draw the line in
+   * two segments without introducing a bend.
+   *
+   * At true scale `projectVector` reduces to a *uniform scaling*: the radius is
+   * `distance / SYSTEM_RADIUS_AU` and the direction is kept, so the whole map is
+   * the real geometry multiplied by a constant. A uniform scaling preserves
+   * directions, so the on-screen direction from observer to body is exactly the
+   * body's apparent longitude — which is where the ring intercept is placed when
+   * the sphere is centred on the observer. Same direction twice: no kink.
+   *
+   * Under the compressed scale the radius is a logarithm and this fails, which
+   * is precisely the distortion the bend displays.
+   */
+  it('keeps the drawn direction equal to the apparent longitude', () => {
+    for (const [name, positionsAt, frame] of MODELS) {
+      const positions = positionsAt(JD);
+      const projected = projectPositions(positions, frame, 'true');
+      const earth = projected.get('earth')!;
+
+      for (const id of ['mercury', 'venus', 'mars', 'jupiter', 'saturn'] as const) {
+        const point = projected.get(id)!;
+        const drawn = normalizeDeg(
+          (Math.atan2(point.y - earth.y, point.x - earth.x) * 180) / Math.PI,
+        );
+        const apparent = normalizeDeg(apparentLongitude(positions, 'earth', id));
+
+        expect(Math.abs(angleDiffDeg(drawn, apparent)), `${name}/${id}`).toBeLessThan(1e-9);
+      }
+    }
+  });
+
+  /** And that it genuinely does *not* hold at compressed scale. */
+  it('does not hold at compressed scale, which is what the bend shows', () => {
+    const positions = keplerianPositions(JD);
+    const projected = projectPositions(positions, 'sun', 'compressed');
+    const earth = projected.get('earth')!;
+
+    let worst = 0;
+    for (const id of ['mercury', 'venus', 'mars', 'jupiter', 'saturn'] as const) {
+      const point = projected.get(id)!;
+      const drawn = normalizeDeg(
+        (Math.atan2(point.y - earth.y, point.x - earth.x) * 180) / Math.PI,
+      );
+      worst = Math.max(
+        worst,
+        Math.abs(angleDiffDeg(drawn, normalizeDeg(apparentLongitude(positions, 'earth', id)))),
+      );
+    }
+    expect(worst).toBeGreaterThan(1);
   });
 });

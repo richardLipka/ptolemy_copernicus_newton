@@ -519,6 +519,36 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     const observerCentred = state.sphereCentre === 'observer';
     const sphere = observerCentred ? view.observerPoint : { x: 0, y: 0 };
 
+    /*
+     * Grow the ring until it encloses every body, as seen from wherever it is
+     * centred.
+     *
+     * Concentric, the bodies live inside 1.0 and the ring at 1.06 clears them
+     * by construction. Centred on the observer it does not: the observer is
+     * itself offset — Earth sits 0.36 out at compressed scale — so a body on
+     * the far side can be 1.36 away while the ring stays at 1.06. Saturn was
+     * being drawn *outside its own sphere of fixed stars*, and its sight-line
+     * had to double back 166° to reach the ring.
+     *
+     * That was always true; it only became visible once both segments were
+     * drawn in this mode. Scaling the ring layer fixes the geometry rather than
+     * the symptom. Quantised so the instrument does not breathe as the observer
+     * moves, and pinned to 1 when concentric so the default view is untouched.
+     */
+    let ringScale = 1;
+    if (observerCentred) {
+      let furthest = 0;
+      for (const body of view.bodies) {
+        furthest = Math.max(
+          furthest,
+          Math.hypot(body.point.x - sphere.x, body.point.y - sphere.y),
+        );
+      }
+      const wanted = (furthest + 0.06) / RING_INNER;
+      if (wanted > 1) ringScale = Math.ceil(wanted / 0.05) * 0.05;
+    }
+    const ringInner = RING_INNER * ringScale;
+
     // Zoom out enough that an off-centre ring is not clipped, quantised so the
     // instrument does not breathe as the observer's distance varies. The
     // concentric case keeps the stylesheet's own value exactly, so the default
@@ -528,14 +558,18 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
       // that happens to sit at the centre — Ptolemy's Earth — costs nothing and
       // the view matches the frame-centred one exactly.
       const offset = Math.hypot(sphere.x, sphere.y);
-      const extra = Math.max(0, offset + RING_OUTER + 0.2 - BASE_RING_EXTENT);
+      const extra = Math.max(0, offset + RING_OUTER * ringScale + 0.2 - BASE_RING_EXTENT);
       const needed = BASE_RING_EXTENT + Math.ceil(extra / 0.05) * 0.05;
       instrument.style.setProperty('--ring-extent', needed.toFixed(3));
     } else {
       instrument.style.removeProperty('--ring-extent');
     }
 
-    const sphereShift = `translate(calc(${sphere.x} * var(--unit)), calc(${sphere.y} * var(--unit)))`;
+    // The scale rides on the same transform, so circles, dividers, ticks,
+    // labels and the star figures all grow together and stay registered.
+    const sphereShift =
+      `translate(calc(${sphere.x} * var(--unit)), calc(${sphere.y} * var(--unit)))` +
+      (ringScale === 1 ? '' : ` scale(${ringScale})`);
     ringLayer.style.transform = sphereShift;
     figureLayer.style.transform = sphereShift;
 
@@ -671,7 +705,7 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
         parts.reading.style.display = 'none';
       } else {
         // The ring intercept is measured from whatever the sphere is centred on.
-        const ray = ringIntercept(body.apparentLongitude, RING_INNER);
+        const ray = ringIntercept(body.apparentLongitude, ringInner);
         const target = { x: sphere.x + ray.x, y: sphere.y + ray.y };
 
         parts.sightline.style.display = '';
