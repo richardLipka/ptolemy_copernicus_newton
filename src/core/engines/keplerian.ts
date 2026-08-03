@@ -40,7 +40,6 @@ import {
   type Vec3,
 } from '../vec';
 import type { Engine, PositionSet, StateVector } from './types';
-import { addSatellites } from '../satellites';
 
 /** Resolve mean elements to a given date by applying secular rates. */
 export function elementsAt(jd: number, model: OrbitalModel): KeplerianElements {
@@ -336,7 +335,6 @@ export function keplerianPositions(jd: number): Map<BodyId, Vec3> {
   positions.set('earth', earth);
   positions.set('moon', add(earth, moonOffset));
 
-  addSatellites(jd, positions);
   return positions;
 }
 

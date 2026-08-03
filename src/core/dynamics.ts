@@ -15,7 +15,7 @@
  * how nearly two-body the real problem is.
  */
 
-import { BODIES, GRAVITATING_BODY_IDS, type BodyId } from './bodies';
+import { BODIES, BODY_IDS, type BodyId } from './bodies';
 import { add, length, scale, sub, type Vec3 } from './vec';
 
 /** Metres in an astronomical unit (IAU 2012). */
@@ -83,7 +83,7 @@ export function dynamicsOf(states: StateVectors, target: BodyId): Dynamics | nul
   const pulls: GravityPull[] = [];
   let net: Vec3 = { x: 0, y: 0, z: 0 };
 
-  for (const source of GRAVITATING_BODY_IDS) {
+  for (const source of BODY_IDS) {
     if (source === target) continue;
     const other = states.positions.get(source);
     if (!other) continue;

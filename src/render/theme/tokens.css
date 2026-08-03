@@ -96,17 +96,6 @@
     --body-jupiter: #b08a5f;
     --body-saturn: #a89468;
 
-    /*
-     * The moons, kept close to their primary's hue so a glance reads them as
-     * belonging to it, and distinguished from each other by value rather than
-     * by picking five more colours out of the air.
-     */
-    --body-io: #c8a05a;
-    --body-europa: #cbb894;
-    --body-ganymede: #9c7f56;
-    --body-callisto: #8a7355;
-    --body-titan: #c2a468;
-
     --ghost-opacity: 0.42;
     --sightline-opacity: 0.55;
 

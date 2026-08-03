@@ -3,10 +3,6 @@
 An interactive 2D model of the solar system that runs the same sky through four
 world-systems, so you can watch where they agree and where they part company.
 
-Sun, Mercury, Venus, Earth, Moon, Mars, Jupiter and Saturn — plus the four
-Galilean moons and Titan, which keep their own time inside the larger system and
-were the first thing anyone saw going round something other than the Earth.
-
 Pick any body as the stationary point and every orbit redraws around it. Centre
 the map on Earth, run the clock, and Mars accumulates the looping rosette that
 cost Ptolemy his epicycles — not because the code knows what a retrograde loop
