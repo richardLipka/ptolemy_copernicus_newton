@@ -40,6 +40,14 @@ export interface TrackStripInput {
   observer: BodyId;
   /** Current date, for the playhead. */
   julianDate: number;
+  /**
+   * One full cycle of the apparent motion, days — the physical quantity.
+   *
+   * Distinct from the window, which is a little over it and is bounded below.
+   * Both are shown, because a strip labelled only with its own width invites
+   * the question of why Saturn reads 435 days when its synodic period is 378.
+   */
+  cycleDays: number;
   /** Zodiac scheme, so the axis is labelled the way the ring is. */
   zodiacScheme: ZodiacScheme;
   /**
@@ -158,7 +166,14 @@ export function renderTrackStrip(container: HTMLElement, input: TrackStripInput)
   const axis = div('track__axis');
   axis.appendChild(el('span', undefined, yearOf(track.startJd)));
   axis.appendChild(
-    el('span', 'track__axis-note', t('track.window', { days: Math.round(span) })),
+    el(
+      'span',
+      'track__axis-note',
+      t('track.window', {
+        days: Math.round(span),
+        cycle: Math.round(input.cycleDays),
+      }),
+    ),
   );
   axis.appendChild(el('span', undefined, yearOf(track.endJd)));
   strip.appendChild(axis);

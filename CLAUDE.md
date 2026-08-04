@@ -1419,9 +1419,16 @@ own primary** likewise runs on its own period — and for the Moon that is the
 29.53-day synodic month, which is the cycle relative to the Sun and governs the
 phases rather than the longitude this axis plots.
 
-The label reads "at least one full cycle" rather than naming the synodic period,
-because for the Sun, the Moon and any body that hits the 45-day floor it is not
-one.
+**The window is not the cycle, and the strip prints both.** It is 1.15 cycles
+wide, so Saturn's strip spans 435 days while Saturn's synodic period is 378 —
+and a label carrying only the width invites exactly the question of why the two
+disagree. `trackCycleDays()` returns the physical quantity and `trackWindowDays()`
+the width; the axis reads "435 days shown, cycle 378".
+
+Keeping them as separate functions is not tidiness. Recovering the cycle by
+dividing the window by 1.15 is valid only while the clamp is idle: the Moon's
+window is floored to 45 days against a cycle of 27, and Io's to 45 against 1.77,
+so the division would silently report 39 and 39.
 
 **Segments crossing the 0°/360° seam are dropped, not drawn.** On a 0–360 axis
 the seam would sweep the full height of the plot and read as a planet crossing

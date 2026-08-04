@@ -10,15 +10,14 @@
 import { describe, expect, it } from 'vitest';
 
 import type { BodyId } from './bodies';
-import { buildLongitudeTrack, trackWindowDays } from './longitudeTrack';
+import { buildLongitudeTrack, trackCycleDays, trackWindowDays } from './longitudeTrack';
 import { keplerianPositions } from './engines/keplerian';
 import { jdFromCalendar } from './time';
 
 const JD = jdFromCalendar(2026, 8, 3);
 
-/** Mirrors the constants in longitudeTrack.ts, which are deliberately private. */
+/** Mirrors the constant in longitudeTrack.ts, which is deliberately private. */
 const WINDOW_SHARE = 1.15;
-const SIDEREAL_MONTH_FOR_TEST = 27.321661;
 
 const track = (target: BodyId, observer: BodyId = 'earth', centre = JD) =>
   buildLongitudeTrack(
@@ -36,9 +35,9 @@ describe('trackWindowDays', () => {
      * because the loop is the beat between its orbit and the Earth's. Framing
      * 687 would cut a retrograde episode in half about half the time.
      */
-    expect(trackWindowDays('earth', 'mars') / WINDOW_SHARE).toBeCloseTo(780, -1);
-    expect(trackWindowDays('earth', 'jupiter') / WINDOW_SHARE).toBeCloseTo(399, -1);
-    expect(trackWindowDays('earth', 'venus') / WINDOW_SHARE).toBeCloseTo(584, -1);
+    expect(trackCycleDays('earth', 'mars')).toBeCloseTo(780, -1);
+    expect(trackCycleDays('earth', 'jupiter')).toBeCloseTo(399, -1);
+    expect(trackCycleDays('earth', 'venus')).toBeCloseTo(584, -1);
   });
 
   it('matches the published synodic periods to a tenth of a percent', () => {
@@ -62,8 +61,7 @@ describe('trackWindowDays', () => {
     };
 
     for (const [id, real] of Object.entries(published)) {
-      const implied = trackWindowDays('earth', id as BodyId) / WINDOW_SHARE;
-      expect(Math.abs(implied / real - 1), id).toBeLessThan(0.001);
+      expect(Math.abs(trackCycleDays('earth', id as BodyId) / real - 1), id).toBeLessThan(0.001);
     }
   });
 
@@ -76,7 +74,7 @@ describe('trackWindowDays', () => {
      * The window itself lands on the floor rather than on either, since a strip
      * a month wide is too narrow to read.
      */
-    expect(SIDEREAL_MONTH_FOR_TEST).toBeCloseTo(27.32166, 4);
+    expect(trackCycleDays('earth', 'moon')).toBeCloseTo(27.32166, 4);
     expect(trackWindowDays('earth', 'moon')).toBe(45);
   });
 
@@ -85,7 +83,25 @@ describe('trackWindowDays', () => {
     // observer's orbit, seen from inside.
     // The sidereal year, 365.256 days: the Sun's return to the same place among
     // the stars, which is what this axis measures.
-    expect(trackWindowDays('earth', 'sun') / WINDOW_SHARE).toBeCloseTo(365.256, 1);
+    expect(trackCycleDays('earth', 'sun')).toBeCloseTo(365.256, 1);
+  });
+
+  it('shows a little more than one cycle, and says which number is which', () => {
+    /*
+     * The window is 1.15 cycles, so Saturn's strip is 435 days wide while its
+     * synodic period is 378. Both numbers are real and the view prints both;
+     * dividing the window by 1.15 to recover the cycle is only valid when the
+     * clamp has not engaged, which is why `trackCycleDays` exists separately.
+     */
+    for (const id of ['venus', 'mars', 'jupiter', 'saturn', 'mercury'] as BodyId[]) {
+      const cycle = trackCycleDays('earth', id);
+      expect(trackWindowDays('earth', id), id).toBeCloseTo(cycle * WINDOW_SHARE, 6);
+    }
+
+    // Where the clamp does engage the two part company, and the ratio is no
+    // longer 1.15 — the case that makes the division unsafe.
+    expect(trackCycleDays('earth', 'moon')).toBeLessThan(30);
+    expect(trackWindowDays('earth', 'moon')).toBe(45);
   });
 
   it('stays inside sane bounds for every pairing', () => {
