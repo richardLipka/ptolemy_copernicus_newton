@@ -281,40 +281,57 @@ const FOCUS_FRACTION = 0.35;
 /** Magnification for a body that has nothing going round it. */
 const FOCUS_DEFAULT_ZOOM = 6;
 
+/** Where to put the camera to look at one body. */
+export interface FocusView {
+  zoom: number;
+  /** The map point to bring to the middle of the screen. */
+  centreOn: Point;
+}
+
 /**
- * A magnification that frames `bodyId` and whatever orbits it.
+ * The camera move that brings `bodyId` to the middle of the screen, framed.
  *
- * Used by the double-click shortcut on the body chips. Derived from the
- * *projected* distance to the body's own satellites rather than from their
- * elements, so it lands correctly whichever scale is running — at true scale
- * the same family needs a few hundred times the magnification it needs
- * compressed, and asking the projection is what keeps the two in step without
- * this function knowing anything about exaggeration.
+ * **This moves the view and nothing else.** The stationary point is a statement
+ * about the *model* — which body the whole geometry is constructed around, and
+ * therefore what every other body's path looks like — so a reader asking to look
+ * more closely at Jupiter must not have the system silently rebuilt around it.
+ * The pan is what centres the body; the frame origin is left alone.
  *
- * The Sun is excluded from the satellite search rather than special-cased in the
- * caller: every planet names it as parent, so it would otherwise "frame its
- * system" by zooming out until Saturn fitted, which is the opposite of what a
- * reader double-clicking it is asking for.
+ * Everything is measured under the frame origin already in force, so the
+ * projection this reads is the one on screen. The magnification comes from the
+ * *projected* distance to the body's satellites rather than from their elements,
+ * which is what lets one call serve both scales without knowing anything about
+ * exaggeration — the same family needs a few hundred times more at true scale.
+ *
+ * The Sun is excluded from that satellite search here rather than by the caller.
+ * Every planet names it as parent, so it would otherwise "frame its system" by
+ * zooming out until Saturn fitted, which is the opposite of what a reader
+ * double-clicking it is asking for.
  */
-export function focusZoomFor(state: State, bodyId: BodyId): number {
+export function focusViewFor(state: State, bodyId: BodyId): FocusView {
   const projected = projectPositions(
     ENGINES[state.engineId].positionsAt(state.julianDate),
-    bodyId,
+    state.frameOrigin,
     state.scaleMode,
   );
+
+  const point = projected.get(bodyId) ?? { x: 0, y: 0 };
 
   let reach = 0;
   if (bodyId !== 'sun') {
     for (const id of BODY_IDS) {
       if (id === bodyId || BODIES[id].parent !== bodyId) continue;
-      const point = projected.get(id);
-      if (!point) continue;
-      reach = Math.max(reach, Math.hypot(point.x, point.y));
+      const moon = projected.get(id);
+      if (!moon) continue;
+      reach = Math.max(reach, Math.hypot(moon.x - point.x, moon.y - point.y));
     }
   }
 
   const wanted = reach > 0 ? FOCUS_FRACTION / reach : FOCUS_DEFAULT_ZOOM;
-  return Math.min(maxZoomFor(state.scaleMode), Math.max(MIN_ZOOM, wanted));
+  return {
+    zoom: Math.min(maxZoomFor(state.scaleMode), Math.max(MIN_ZOOM, wanted)),
+    centreOn: point,
+  };
 }
 
 export function projectTrail(

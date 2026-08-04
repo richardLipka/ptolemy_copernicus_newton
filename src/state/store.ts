@@ -318,6 +318,18 @@ export class Store {
     this.patch({ frameOrigin, panX: 0, panY: 0 });
   }
 
+  /**
+   * Put a given map point in the middle of the screen.
+   *
+   * A body renders at `centre + (p + pan) · unit`, so centring the point `p`
+   * means a pan of exactly `−p`, at any magnification. Absolute rather than
+   * relative because the caller knows where it wants to be, not how far it is
+   * from where it happens to be.
+   */
+  panTo(x: number, y: number): void {
+    this.patch({ panX: -x, panY: -y });
+  }
+
   /** Drag the view. Offsets are in map-radius units, as `panX` documents. */
   panBy(dx: number, dy: number): void {
     this.patch({ panX: this.state.panX + dx, panY: this.state.panY + dy });

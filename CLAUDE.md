@@ -1326,12 +1326,24 @@ about 59 Earth radii and one of the work's genuine successes.
 
 ### 13.3f Double-clicking a body chip goes to it
 
-Centres the map on that body, clears the drag and magnifies enough to frame
-whatever orbits it. `focusZoomFor()` reads the *projected* distance to the
-body's satellites rather than their elements, so one call serves both scales
-without knowing anything about exaggeration — the same family needs a few
-hundred times more magnification at true scale than compressed, and asking the
-projection is what keeps the two in step.
+Brings that body to the middle of the screen and magnifies enough to frame
+whatever orbits it.
+
+**It moves the view and nothing else.** The first version also set the stationary
+point to the body, which is wrong: the stationary point is a claim about the
+*model* — which body the whole geometry is constructed around, and therefore what
+every other body's path looks like — so asking for a closer look at Jupiter must
+not silently rebuild the system around it. `focusViewFor()` returns a zoom and a
+point to centre; `panTo()` does the centring. A body renders at
+`centre + (p + pan)·unit`, so the pan that centres `p` is exactly `−p`, at any
+magnification.
+
+The magnification reads the *projected* distance to the body's satellites rather
+than their elements, so one call serves both scales without knowing anything
+about exaggeration — the same family needs a few hundred times more at true scale
+than compressed, and asking the projection is what keeps the two in step. It
+projects under the frame origin already in force, since the Moon's drawn radius
+is capped against Mercury's gap and so is not quite frame-independent.
 
 Two details that are not obvious:
 
@@ -1343,6 +1355,10 @@ Two details that are not obvious:
   against the ceiling of 1000 (§13.3c), so the shortcut settles for the ceiling.
   That is still the closest look the app allows, and the lunar orbit covers about
   a seventh of the map.
+
+Measured in the page with the stationary point on the Sun: double-clicking Mars,
+Earth and Saturn in turn leaves it on the Sun every time, lands each body dead
+centre to nine decimals, and gives 6x, 11.75x and 6x respectively.
 
 **A `dblclick` listener cannot be used here, and that is the whole difficulty.**
 The first click selects the body, which rebuilds the control panel, so the
