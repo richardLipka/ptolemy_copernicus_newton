@@ -12,7 +12,7 @@ import { MODES, type EngineId, type ModeId } from '../core/engines/types';
 import type { ZodiacScheme } from '../core/zodiac';
 import { formatNumber, t } from '../i18n/i18n';
 import type { GhostSelection, ScaleMode, SphereCentre, Store } from '../state/store';
-import { COMPARISON_ENGINES, focusZoomFor } from '../state/selectors';
+import { COMPARISON_ENGINES, focusViewFor } from '../state/selectors';
 import { el, field, panel, select, toggleButton } from './dom';
 
 const bodyOptions = (): { value: BodyId; label: string }[] =>
@@ -173,9 +173,13 @@ export function renderControls(container: HTMLElement, store: Store): void {
       lastChipClick = second ? null : { id, at: now };
 
       if (second) {
+        // The view moves; the stationary point does not. Which body the model is
+        // built around is a claim about the model, not about where the reader
+        // happens to be looking.
+        const view = focusViewFor(store.get(), id);
         store.selectBody(id);
-        store.setFrameOrigin(id);
-        store.setZoom(focusZoomFor(store.get(), id));
+        store.setZoom(view.zoom);
+        store.panTo(view.centreOn.x, view.centreOn.y);
         return;
       }
       store.selectBody(store.get().selectedBody === id ? null : id);
