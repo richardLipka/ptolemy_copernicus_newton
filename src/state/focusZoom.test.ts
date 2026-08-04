@@ -95,7 +95,7 @@ describe('focusViewFor', () => {
      */
     for (const scaleMode of ['compressed', 'true'] as ScaleMode[]) {
       const state = stateWith(scaleMode);
-      const zoom = focusZoomFor(state, 'jupiter');
+      const zoom = focusViewFor(state, 'jupiter').zoom;
       expect(reachOf(state, 'jupiter', 'callisto') * zoom, scaleMode).toBeCloseTo(0.35, 6);
       // Every moon of the family lands inside the frame, none of them on the rim.
       for (const moon of ['io', 'europa', 'ganymede', 'callisto'] as BodyId[]) {
@@ -108,14 +108,14 @@ describe('focusViewFor', () => {
 
   it('frames Titan when focusing Saturn', () => {
     const state = stateWith('compressed');
-    const zoom = focusZoomFor(state, 'saturn');
+    const zoom = focusViewFor(state, 'saturn').zoom;
     expect(reachOf(state, 'saturn', 'titan') * zoom).toBeCloseTo(0.35, 6);
   });
 
   it('needs far more magnification for the Galileans at true scale', () => {
     // Honest, they sit hard against Jupiter; exaggerated, they are a system.
-    const compressed = focusZoomFor(stateWith('compressed'), 'jupiter');
-    const trueScale = focusZoomFor(stateWith('true'), 'jupiter');
+    const compressed = focusViewFor(stateWith('compressed'), 'jupiter').zoom;
+    const trueScale = focusViewFor(stateWith('true'), 'jupiter').zoom;
     expect(trueScale / compressed).toBeGreaterThan(20);
   });
 
