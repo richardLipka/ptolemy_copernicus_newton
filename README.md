@@ -94,6 +94,12 @@ quietly regress.
   you are down among the lunar orbit. It appears only on the realistic scale,
   because the compressed one is logarithmic and no single bar could be true of
   it.
+- **See what an observer would have written down.** The *sky track* draws the
+  selected body's position among the stars against time — the record every
+  pre-telescopic astronomer actually kept. Where the curve doubles back, the
+  planet is retrograde; that shape is the single phenomenon both Ptolemy's
+  epicycle and Copernicus's moving Earth were built to reproduce, and switching
+  model redraws it.
 - **See the machinery.** In Ptolemy and Copernicus modes, select a body and the
   construction appears: deferent, epicycle, the arms carrying them, and the
   **equant** — the off-centre point about which the epicycle's centre sweeps

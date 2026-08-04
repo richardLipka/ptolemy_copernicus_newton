@@ -17,6 +17,9 @@ import './render/theme/shell.css';
 import './render/theme/layout.css';
 
 import { createOrrery } from './render/orrery/orrery';
+import { renderTrackStrip } from './render/track/trackStrip';
+import { buildLongitudeTrack, trackWindowDays } from './core/longitudeTrack';
+import { precessionSinceJ2000 } from './core/zodiac';
 import { renderEventPanel } from './render/event-panel/eventPanel';
 import { renderInfoPanel } from './render/info-panel/infoPanel';
 import { applyTheme } from './render/theme/themes';
@@ -28,12 +31,20 @@ import { renderWelcome } from './ui/welcome';
 import { el } from './ui/dom';
 import { dateFromJd } from './core/time';
 import { formatDateTime, setLocale, t } from './i18n/i18n';
-import { store } from './state/store';
+import { ENGINES, store } from './state/store';
 import { applyNotes } from './state/preferences';
 import { encodeUrlState, readUrlState, writeUrlState } from './state/urlState';
 
 const root = document.querySelector<HTMLDivElement>('#app');
 if (!root) throw new Error('Missing #app');
+
+/**
+ * The same element, in a binding TypeScript will trust inside a closure.
+ *
+ * The null check above narrows `root` at the top level only; a function body is
+ * checked as if it could run at any time, so it sees the wider type.
+ */
+const app: HTMLDivElement = root;
 
 setLocale(store.get().locale);
 applyTheme(store.get().theme);
@@ -41,9 +52,6 @@ applyNotes(store.get().showNotes);
 document.title = t('app.title');
 
 // --- structure -----------------------------------------------------------
-
-const stage = document.createElement('div');
-stage.className = 'stage';
 
 /**
  * The region the instrument is measured against.
@@ -126,6 +134,16 @@ const welcomeHost = document.createElement('div');
 welcomeHost.className = 'overlay overlay--welcome';
 welcomeHost.hidden = true;
 root.appendChild(welcomeHost);
+
+/*
+ * The longitude strip sits above the map, inside the stage rather than a dock:
+ * it is a second view of the same instant, not a control, and it spans the full
+ * width the map has.
+ */
+const trackHost = document.createElement('div');
+trackHost.className = 'track-host';
+trackHost.hidden = true;
+root.appendChild(trackHost);
 
 const orrery = createOrrery(field, store);
 
@@ -243,6 +261,64 @@ let lastEventScanJd = Number.NaN;
 /** Whether the event panel has been drawn at least once. */
 let eventsRendered = false;
 
+/**
+ * Redraw the longitude strip when anything it depends on moves.
+ *
+ * Rebuilt on a signature rather than every frame: it samples the engine 240
+ * times, which is far too much to do at 60Hz, and none of its inputs change
+ * during ordinary playback except the date. The date only shifts the playhead
+ * and the window, so it is quantised to whole days — a strip spanning two years
+ * cannot show a difference finer than that anyway.
+ */
+let lastTrackSignature = '';
+
+function renderTrack(): void {
+  const state = store.get();
+  trackHost.hidden = !state.showTrack;
+  // The field is inset to match, so the strip never covers the zodiac ring —
+  // the ResizeObserver in orrery.ts refits the map on its own.
+  app.dataset.track = state.showTrack ? 'on' : 'off';
+  if (!state.showTrack || !state.selectedBody) {
+    if (state.showTrack) {
+      trackHost.replaceChildren(el('p', 'note track-host__empty', t('track.none')));
+    }
+    lastTrackSignature = '';
+    return;
+  }
+
+  const signature = [
+    state.selectedBody,
+    state.observationPoint,
+    state.engineId,
+    state.zodiacScheme,
+    state.locale,
+    Math.round(state.julianDate),
+  ].join('|');
+  if (signature === lastTrackSignature) return;
+  lastTrackSignature = signature;
+
+  const observer = state.observationPoint;
+  const target = state.selectedBody;
+  const windowDays = trackWindowDays(observer, target);
+
+  renderTrackStrip(trackHost, {
+    track: buildLongitudeTrack(
+      ENGINES[state.engineId].positionsAt,
+      state.julianDate,
+      observer,
+      target,
+      windowDays,
+    ),
+    target,
+    observer,
+    julianDate: state.julianDate,
+    zodiacScheme: state.zodiacScheme,
+    // The same offset the ring applies, so the two agree about where a sign is.
+    precession:
+      state.zodiacScheme === 'signs' ? -precessionSinceJ2000(state.julianDate) : 0,
+  });
+}
+
 function render(): void {
   const state = store.get();
   const now = performance.now();
@@ -251,6 +327,7 @@ function render(): void {
   lastContext = context;
 
   orrery.update();
+  renderTrack();
 
   const reading = formatDateTime(dateFromJd(state.julianDate));
   if (clockReadout && clockReadout.textContent !== reading) {

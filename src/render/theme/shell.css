@@ -55,6 +55,43 @@
     pointer-events: auto;
   }
 
+  /*
+   * The longitude strip, along the top of the gap between the docks.
+   *
+   * Inset the same way .stage__field is, so it lines up with the map beneath
+   * rather than sliding under the panels. When it is showing, the field's own
+   * top inset grows by the same amount and the map shrinks to fit — the
+   * ResizeObserver in orrery.ts picks that up with no help from here.
+   */
+  #app {
+    /* How much room the strip takes when it is showing. */
+    --track-height: 13.5rem;
+  }
+
+  .track-host {
+    position: absolute;
+    top: calc(var(--dock-gap) * 2 + 2.1rem);
+    left: calc(var(--dock-width) + var(--dock-gap) * 2);
+    right: calc(var(--dock-width) + var(--dock-gap) * 2);
+    z-index: 2;
+  }
+
+  .track-host[hidden] {
+    display: none;
+  }
+
+  #app[data-track='on'] .stage__field {
+    top: calc(var(--dock-gap) * 3 + 2.1rem + var(--track-height));
+  }
+
+  .track-host__empty {
+    padding: 0.9rem 1rem;
+    border: var(--line-fine) solid var(--panel-border);
+    border-radius: var(--panel-radius);
+    background: var(--panel-bg);
+    text-align: center;
+  }
+
   /* --- docks ------------------------------------------------------------- */
 
   .dock {

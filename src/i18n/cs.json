@@ -226,5 +226,11 @@
   "body.ganymede": "Ganymed",
   "body.callisto": "Kallisto",
   "body.titan": "Titan",
-  "bodies.focusHint": "Kliknutím vyberete. Dvojklik na těleso zacentruje mapu a přiblíží ji."
+  "bodies.focusHint": "Kliknutím vyberete. Dvojklik na těleso zacentruje mapu a přiblíží ji.",
+  "bodies.focusHint": "Kliknutím vyberete. Dvojklik na těleso zacentruje mapu a přiblíží ji.",
+  "view.track": "Dráha na obloze",
+  "track.title": "Kde se {{body}} objevuje noc co noc",
+  "track.window": "{{days}} dní — jeden synodický cyklus",
+  "track.none": "Vyberte těleso a zobrazí se dráha, kterou opisuje mezi hvězdami.",
+  "track.hint": "Svisle běží délka, vodorovně čas — je to tedy záznam, jaký si vede pozorovatel: poloha tělesa mezi hvězdami v řadě nocí. Tam, kde se křivka vrací, je těleso ve zpětném pohybu a kroužky značí obě zastávky po jeho stranách. Ptolemaiův epicykl i Koperníkova pohyblivá Země byly sestrojeny právě proto, aby tento tvar napodobily."
 }
