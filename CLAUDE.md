@@ -1488,6 +1488,11 @@ The hint is a panel note rather than a `title` on each chip, matching how the
 app explains its other controls and keeping it under the same explanations
 toggle.
 
+On this branch the shortcut has real families to frame, which is what it was
+written for: Jupiter lands at 6.32x framing Callisto and Saturn at 10.97x
+framing Titan, against Earth's 12.18x for the Moon. Mars takes the fixed
+fallback, and so does Io — nothing orbits a moon.
+
 ### 13.4 Sight-lines are two segments, and why they bend
 
 A sight-line runs **observer → body → zodiac ring**, as two segments rather than
