@@ -98,6 +98,30 @@ describe('inDeferentParts', () => {
     expect(parts).toBeLessThan(DEFERENT_PARTS + 5.25 + 1e-6);
   });
 
+  it('reads a moon against its planet, never in AU', () => {
+    /*
+     * The Galileans have no deferent of their own — Ptolemy never heard of them
+     * — and used to fall through to AU, which is the one unit the Almagest
+     * certainly does not contain. They inherit Jupiter's sphere instead, so each
+     * reads essentially what Jupiter reads: they sit, to a part in a thousand,
+     * exactly where Jupiter sits.
+     */
+    const jupiter = inDeferentParts(geocentricAu(JD, 'jupiter'), JD, 'jupiter')!;
+    expect(jupiter).not.toBeNull();
+
+    for (const id of ['io', 'europa', 'ganymede', 'callisto'] as BodyId[]) {
+      const parts = inDeferentParts(geocentricAu(JD, id), JD, id);
+      expect(parts, id).not.toBeNull();
+      // Within a part or so of the planet they attend.
+      expect(Math.abs(parts! - jupiter), id).toBeLessThan(1);
+    }
+
+    const titan = inDeferentParts(geocentricAu(JD, 'titan'), JD, 'titan');
+    const saturn = inDeferentParts(geocentricAu(JD, 'saturn'), JD, 'saturn')!;
+    expect(titan).not.toBeNull();
+    expect(Math.abs(titan! - saturn)).toBeLessThan(1);
+  });
+
   it('has no reading for the Earth, which is the centre and not a body on a circle', () => {
     expect(inDeferentParts(1, JD, 'earth')).toBeNull();
   });
