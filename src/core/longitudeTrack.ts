@@ -102,34 +102,49 @@ function heliocentricPeriodDays(id: BodyId): number | null {
 }
 
 /**
- * How long a window frames one full cycle of `target` seen from `observer`.
+ * How long one full cycle of `target`'s apparent motion takes, seen from
+ * `observer`. Days, unclamped and unscaled — the physical quantity.
  *
  * The synodic period, because the apparent motion — including the retrograde
  * loop — repeats on the beat between the two bodies' orbits rather than on
  * either one alone. That is why Mars loops every 780 days and not every 687.
  */
-export function trackWindowDays(observer: BodyId, target: BodyId): number {
-  const clamp = (days: number): number =>
-    Math.min(MAX_WINDOW, Math.max(MIN_WINDOW, days * WINDOW_SHARE));
-
+export function trackCycleDays(observer: BodyId, target: BodyId): number {
   if (observer === target) return DEFAULT_WINDOW;
 
   // A moon seen from its own primary runs on its own period, with no beat:
   // there is no second orbit for it to beat against.
-  if (BODIES[target].parent === observer) return clamp(satellitePeriodDays(target));
+  if (BODIES[target].parent === observer) return satellitePeriodDays(target);
 
   const observerPeriod = heliocentricPeriodDays(observer);
   const targetPeriod = heliocentricPeriodDays(target);
 
   // The Sun's apparent circuit is the observer's own year, and vice versa.
-  if (target === 'sun') return clamp(observerPeriod ?? DEFAULT_WINDOW);
-  if (observer === 'sun') return clamp(targetPeriod ?? DEFAULT_WINDOW);
+  if (target === 'sun') return observerPeriod ?? DEFAULT_WINDOW;
+  if (observer === 'sun') return targetPeriod ?? DEFAULT_WINDOW;
 
   if (observerPeriod === null || targetPeriod === null) return DEFAULT_WINDOW;
 
   const beat = Math.abs(1 / targetPeriod - 1 / observerPeriod);
   if (beat < 1e-9) return DEFAULT_WINDOW;
-  return clamp(1 / beat);
+  return 1 / beat;
+}
+
+/**
+ * How wide the strip should be to frame that cycle.
+ *
+ * A little over one cycle, so a retrograde episode is framed whole with its
+ * approach and departure either side rather than clipped at an edge — and
+ * bounded, because Io's 1.77 days would be unreadable and Saturn's cycle seen
+ * from Jupiter would be decades.
+ *
+ * **The window is not the cycle**, and the view says so: `trackCycleDays` is
+ * what a reader should take away, and showing only the window invites exactly
+ * the question of why Saturn reads 435 days when its synodic period is 378.
+ */
+export function trackWindowDays(observer: BodyId, target: BodyId): number {
+  const wanted = trackCycleDays(observer, target) * WINDOW_SHARE;
+  return Math.min(MAX_WINDOW, Math.max(MIN_WINDOW, wanted));
 }
 
 /**

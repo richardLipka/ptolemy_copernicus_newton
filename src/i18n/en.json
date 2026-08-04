@@ -230,7 +230,7 @@
   "bodies.focusHint": "Click to select. Double-click to centre the map on it and zoom in.",
   "view.track": "Sky track",
   "track.title": "Where {{body}} appears, night after night",
-  "track.window": "{{days}} days — at least one full cycle",
+  "track.window": "{{days}} days shown, cycle {{cycle}}",
   "track.none": "Select a body to plot the track it traces against the stars.",
   "track.hint": "Longitude runs up the plot and time across it, so this is the record an observer keeps: a body’s place among the stars on a series of nights. Where the curve doubles back the body is retrograde, and the rings mark the two stations either side of it. Ptolemy’s epicycle and Copernicus’s moving Earth were both built to reproduce exactly this shape."
 }

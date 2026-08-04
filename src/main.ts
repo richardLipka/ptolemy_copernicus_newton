@@ -18,7 +18,11 @@ import './render/theme/layout.css';
 
 import { createOrrery } from './render/orrery/orrery';
 import { renderTrackStrip } from './render/track/trackStrip';
-import { buildLongitudeTrack, trackWindowDays } from './core/longitudeTrack';
+import {
+  buildLongitudeTrack,
+  trackCycleDays,
+  trackWindowDays,
+} from './core/longitudeTrack';
 import { precessionSinceJ2000 } from './core/zodiac';
 import { renderEventPanel } from './render/event-panel/eventPanel';
 import { renderInfoPanel } from './render/info-panel/infoPanel';
@@ -312,6 +316,7 @@ function renderTrack(): void {
     target,
     observer,
     julianDate: state.julianDate,
+    cycleDays: trackCycleDays(observer, target),
     zodiacScheme: state.zodiacScheme,
     // The same offset the ring applies, so the two agree about where a sign is.
     precession:
