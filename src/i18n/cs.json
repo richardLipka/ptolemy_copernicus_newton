@@ -225,5 +225,6 @@
   "body.europa": "Europa",
   "body.ganymede": "Ganymed",
   "body.callisto": "Kallisto",
-  "body.titan": "Titan"
+  "body.titan": "Titan",
+  "bodies.focusHint": "Kliknutím vyberete. Dvojklik na těleso zacentruje mapu a přiblíží ji."
 }

@@ -12,7 +12,7 @@ import { MODES, type EngineId, type ModeId } from '../core/engines/types';
 import type { ZodiacScheme } from '../core/zodiac';
 import { formatNumber, t } from '../i18n/i18n';
 import type { GhostSelection, ScaleMode, SphereCentre, Store } from '../state/store';
-import { COMPARISON_ENGINES } from '../state/selectors';
+import { COMPARISON_ENGINES, focusZoomFor } from '../state/selectors';
 import { el, field, panel, select, toggleButton } from './dom';
 
 const bodyOptions = (): { value: BodyId; label: string }[] =>
@@ -27,6 +27,23 @@ const MODEL_TOKEN: Partial<Record<EngineId, string>> = {
 };
 
 /** The left dock: which model, seen from where, and what to draw over it. */
+/**
+ * Double-click on a body chip, tracked by hand rather than by the DOM.
+ *
+ * A `dblclick` listener cannot work here. The first click selects the body,
+ * which rebuilds the whole control panel, so the element the second click lands
+ * on is a *different node* from the one the first hit — and the browser only
+ * raises `dblclick` for two clicks on the same element. Keeping the timing in
+ * module state is what survives the rebuild.
+ *
+ * 400ms is the usual platform threshold. Erring long is the safer direction: a
+ * slow second click merely toggles the selection off, which is what a single
+ * click does anyway.
+ */
+const DOUBLE_CLICK_MS = 400;
+
+let lastChipClick: { id: BodyId; at: number } | null = null;
+
 export function renderControls(container: HTMLElement, store: Store): void {
   const state = store.get();
   container.replaceChildren();
@@ -146,12 +163,30 @@ export function renderControls(container: HTMLElement, store: Store): void {
     chip.setAttribute('aria-pressed', String(state.selectedBody === id));
     chip.style.setProperty('--tint', `var(--body-${id})`);
     chip.append(el('span', 'chip__swatch'), el('span', undefined, t(`body.${id}`)));
-    chip.addEventListener('click', () =>
-      store.selectBody(state.selectedBody === id ? null : id),
-    );
+    chip.addEventListener('click', () => {
+      const now = performance.now();
+      const second =
+        lastChipClick !== null &&
+        lastChipClick.id === id &&
+        now - lastChipClick.at <= DOUBLE_CLICK_MS;
+      // Cleared on the second, so a triple click is not read as two doubles.
+      lastChipClick = second ? null : { id, at: now };
+
+      if (second) {
+        store.selectBody(id);
+        store.setFrameOrigin(id);
+        store.setZoom(focusZoomFor(store.get(), id));
+        return;
+      }
+      store.selectBody(store.get().selectedBody === id ? null : id);
+    });
     chips.appendChild(chip);
   }
   bodyPanel.appendChild(chips);
+  // A note rather than a tooltip on each chip: a title attribute becomes the
+  // button's accessible name, which would leave all eight reading as the same
+  // sentence instead of as the body they name.
+  bodyPanel.appendChild(el('p', 'note', t('bodies.focusHint')));
   container.appendChild(bodyPanel);
 
   // --- view -------------------------------------------------------------

@@ -225,5 +225,6 @@
   "body.europa": "Europa",
   "body.ganymede": "Ganymede",
   "body.callisto": "Callisto",
-  "body.titan": "Titan"
+  "body.titan": "Titan",
+  "bodies.focusHint": "Click to select. Double-click to centre the map on it and zoom in."
 }
