@@ -1528,9 +1528,35 @@ Overlays panel.
 to go round the Sun and loops on the sky every 780, because the loop is the beat
 between its orbit and the Earth's. `trackWindowDays()` computes
 `1/|1/T_target − 1/T_observer|` and shows 1.15 of it, so a retrograde episode is
-always framed whole with its approach and departure either side. The Sun is a
-special case — its apparent circuit is the observer's own year, with no second
-orbit to beat against — as is a moon seen from its own primary.
+always framed whole with its approach and departure either side.
+
+Checked against the measured values rather than against the formula that
+produced them, and accurate to better than a hundredth of a percent:
+
+| | strip | published | error |
+|---|---|---|---|
+| Mercury | 115.88 d | 115.877 | 0.000% |
+| Venus | 583.89 d | 583.921 | −0.006% |
+| Mars | 779.92 d | 779.946 | −0.003% |
+| Jupiter | 398.87 d | 398.884 | −0.003% |
+| Saturn | 378.08 d | 378.092 | −0.002% |
+
+The residual is two things, both harmless here: `T = a^(3/2)` neglects the
+planet's own mass, and the semi-major axes in `bodies.ts` are JPL's 3000BC–3000AD
+fit rather than the modern-epoch one — the right choice for an app that runs to
+ancient dates. A hundredth of a percent of Mars's synodic period is two hours
+against a window of nine hundred days.
+
+Two special cases. The **Sun** has no second orbit to beat against: its apparent
+circuit is the observer's own sidereal year, 365.256 days. A **moon seen from its
+own primary** likewise runs on its own period — and for the Moon that is the
+*sidereal* month of 27.32 days, the circuit against the stars, not the familiar
+29.53-day synodic month, which is the cycle relative to the Sun and governs the
+phases rather than the longitude this axis plots.
+
+The label reads "at least one full cycle" rather than naming the synodic period,
+because for the Sun, the Moon and any body that hits the 45-day floor it is not
+one.
 
 **Segments crossing the 0°/360° seam are dropped, not drawn.** On a 0–360 axis
 the seam would sweep the full height of the plot and read as a planet crossing

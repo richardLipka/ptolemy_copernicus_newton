@@ -21,7 +21,15 @@ import { BODIES, type BodyId } from './bodies';
 import { apparentLongitude } from './coordinates';
 import type { PositionSet } from './engines/types';
 
-/** Days in a sidereal month — the Moon's own period, which has no `orbit`. */
+/**
+ * The Moon's own period, days. Not in `bodies.ts`, which holds heliocentric
+ * elements only.
+ *
+ * **Sidereal, not synodic.** The strip plots position against the *stars*, and
+ * that circuit takes 27.32 days. The familiar 29.53-day month is the Moon's
+ * cycle relative to the Sun — it governs the phases, and using it here would
+ * stretch the window by two days for no reason connected to what is drawn.
+ */
 const SIDEREAL_MONTH = 27.321661;
 
 /** A year in days, the fallback window when a period cannot be worked out. */
