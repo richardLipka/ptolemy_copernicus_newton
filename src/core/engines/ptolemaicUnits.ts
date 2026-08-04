@@ -21,11 +21,43 @@
  * nineteen times too small.
  */
 
-import type { BodyId } from '../bodies';
+import { BODIES, type BodyId } from '../bodies';
 import { ptolemaicGeometryFor } from './ptolemaic';
 
 /** Ptolemy's divisor. Every Almagest parameter is in sixtieths of a deferent. */
 export const DEFERENT_PARTS = 60;
+
+/**
+ * The deferent a body's distances should be read against.
+ *
+ * Its own, where the engine gives it one. **A moon falls back to its planet's**,
+ * because that is the sphere it actually rides in: a Galilean sits, to a part in
+ * a thousand, exactly where Jupiter sits, and reading it against its own tiny
+ * orbit about Jupiter would put the Earth some hundred thousand parts away and
+ * say nothing. Against Jupiter's deferent it reads what Jupiter reads, which is
+ * both true and useful.
+ *
+ * The moons are of course an anachronism in this mode — Ptolemy had never heard
+ * of them, and they are the observation that broke his system. But if they are
+ * going to be drawn here at all, they should be measured in the units the rest
+ * of the mode is measured in rather than dropping to AU, which is the one unit
+ * the Almagest certainly does not contain.
+ */
+function deferentRadiusFor(jd: number, id: BodyId): number | null {
+  const own = ptolemaicGeometryFor(jd, id);
+  if (own) return own.deferentRadius;
+
+  /*
+   * Only a moon inherits, which is why the Sun is barred as a parent rather than
+   * the test being a plain "has a parent". Every planet names the Sun as its
+   * parent, and the Earth most of all — in this model it is the *centre*, not a
+   * body riding in the Sun's sphere, and it must keep returning nothing rather
+   * than acquire a distance from a deferent it is not on.
+   */
+  const parent = BODIES[id].parent;
+  if (!parent || parent === 'sun') return null;
+  return ptolemaicGeometryFor(jd, parent)?.deferentRadius ?? null;
+}
 
 /**
  * Express `au` in parts of `id`'s deferent, or null where there is no deferent
@@ -38,9 +70,8 @@ export const DEFERENT_PARTS = 60;
  * Almagest and modern-motion sub-modes share one scale.
  */
 export function inDeferentParts(au: number, jd: number, id: BodyId): number | null {
-  const geometry = ptolemaicGeometryFor(jd, id);
-  if (!geometry) return null;
-  const { deferentRadius } = geometry;
+  const deferentRadius = deferentRadiusFor(jd, id);
+  if (deferentRadius === null) return null;
   if (!Number.isFinite(deferentRadius) || deferentRadius <= 0) return null;
   if (!Number.isFinite(au)) return null;
   return (au / deferentRadius) * DEFERENT_PARTS;
