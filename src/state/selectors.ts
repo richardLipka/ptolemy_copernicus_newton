@@ -12,6 +12,7 @@ import type { Construction, ConstructionRole } from '../core/construction';
 import { apparentLongitude, relativePosition } from '../core/coordinates';
 import type { EngineId, PositionSet } from '../core/engines/types';
 import { recenter } from '../core/frame';
+import { satelliteHarness } from '../core/satelliteHarness';
 import { illuminationOf, type Illumination } from '../core/illumination';
 import { DEG, length, sub, vec3, type Vec3 } from '../core/vec';
 import { locate, type ZodiacPosition } from '../core/zodiac';
@@ -487,34 +488,31 @@ function constructionProjector(
  * circle would sit visibly off its own planet.
  */
 /**
- * A satellite's orbit, as construction geometry.
+ * A satellite's orbit, in the machinery of whichever model is running.
  *
- * The engines do not supply one: no model in the app *derives* these bodies, so
- * there is no machinery to reveal in the way a deferent or an ellipse is
- * machinery. What there is worth drawing is the orbit itself — the circle the
- * moon runs round, and the arm joining it to its planet — which is what makes
- * a system of four visible as a system rather than as four loose dots.
+ * The engines supply none: no model in the app *derives* these bodies, so there
+ * is nothing to ask them for. What `satelliteHarness` gives instead is the
+ * counterfactual — the same orbit described the way each model would have
+ * described it — which is the one place the moons can say something about the
+ * models rather than merely riding along. See `core/satelliteHarness.ts`.
  *
  * Sampled about the *primary*, so the exaggeration in `constructionProjector`
  * lands on it correctly.
  */
 function satelliteConstruction(
   bodyId: BodyId,
+  engineId: EngineId,
+  jd: number,
   positions: PositionSet,
 ): Construction | null {
-  const orbit = BODIES[bodyId].satellite;
   const parent = BODIES[bodyId].parent;
-  if (!orbit || !parent) return null;
+  if (!parent) return null;
 
   const primary = positions.get(parent);
   const body = positions.get(bodyId);
   if (!primary || !body) return null;
 
-  return {
-    circles: [{ centre: primary, radius: orbit.a, role: 'deferent' }],
-    arms: [{ from: primary, to: body, role: 'deferent-arm' }],
-    markers: [],
-  };
+  return satelliteHarness(jd, bodyId, engineId, primary, body);
 }
 
 export function buildConstruction(
@@ -527,7 +525,12 @@ export function buildConstruction(
   // including the ones whose engine exposes no construction at all.
   if (BODIES[bodyId].satellite) {
     const positions = engine.positionsAt(state.julianDate);
-    const construction = satelliteConstruction(bodyId, positions);
+    const construction = satelliteConstruction(
+      bodyId,
+      state.engineId,
+      state.julianDate,
+      positions,
+    );
     if (!construction) return null;
     return projectConstruction(construction, constructionProjector(state, bodyId, positions));
   }

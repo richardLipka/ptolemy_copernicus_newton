@@ -3,7 +3,7 @@
  *
  * The four Galileans and Titan are here as a demonstration of orbits within
  * orbits — a system that keeps its own time inside the one the app is otherwise
- * about. They are drawn identically under Ptolemy, Copernicus, Kepler and
+ * about. They are *placed* identically under Ptolemy, Copernicus, Kepler and
  * Newton, and that is not laziness: **no pre-1610 model contains them at all.**
  * Ptolemy had never heard of them, and Copernicus died sixty-seven years before
  * anyone saw one. What changes when you switch model is where *Jupiter* is; the
@@ -13,6 +13,10 @@
  * something that is not the Earth was the first observation the geocentric
  * system had no answer to, and selecting Jupiter in Ptolemy mode puts that
  * contradiction on the screen.
+ *
+ * Their *harness* does differ by model — see `satelliteHarness.ts`. That is not
+ * a claim about history but a counterfactual: given this orbit, what would each
+ * model have drawn? Positions stay identical because no model derives them.
  *
  * **Precision is not claimed.** The mean longitudes are approximate, so the
  * configuration on any particular date is not to be trusted. The *periods* are

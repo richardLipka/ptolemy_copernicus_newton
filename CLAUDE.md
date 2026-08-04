@@ -545,10 +545,41 @@ accuracy:
   At the fitted view the four Galileans share a few
   pixels, so the labels would overlap each other and Jupiter's.
 
-The orbit circles come from `satelliteConstruction()` in `selectors.ts` rather
+The harness comes from `satelliteHarness()` in `core/satelliteHarness.ts` rather
 than from an engine, because **no engine supplies one** — the moons are not
 derived by any model here, and Newton's engine exposes no `construction` at all.
-Without that they would be bare dots in that one mode.
+
+What it draws is a counterfactual, not a historical claim: neither Ptolemy nor
+Copernicus wrote a word about the Galileans, and one of them was dead sixty-seven
+years before anyone saw one. The question it answers is *given this orbit, what
+would each model have drawn?* — from one set of elements in `bodies.ts`,
+described five ways:
+
+| mode | machinery |
+|---|---|
+| circular, reframe | one circle centred on the planet |
+| Ptolemaic | eccentric circle, centre at *ae*/2, equant at *ae*, apsidal line |
+| Copernican | eccentric at 3/2·*ae* carrying an epicyclet of 1/2·*ae* |
+| Kepler | ellipse, both foci marked, apsidal line, radius vector |
+| Newton | the same conic, one focus, radius only — derived, not described |
+
+The uneven result is the lesson, and `satelliteHarness.test.ts` measures it.
+Over a revolution the plain circle's radial error reaches *ae*; displacing the
+centre to *ae*/2 **halves it**, one extra number for half the error. That the
+eccentric is still wrong by O(e) radially is the device's known limitation
+rather than a defect here — the bisected eccentricity was built to get
+*directions* right, which is why the geocentric system survived as long as it
+did on longitude alone. Kepler's ellipse is exact, and the test holds it to the
+definition: the distances to the two foci sum to 2a at every sampled point, to
+nine places.
+
+A caveat for the eye rather than the arithmetic. These orbits are nearly
+circular — Io at e = 0.0041, Titan the most eccentric at 0.029 — so the
+eccentric offsets and the epicyclet run to a fraction of a percent of the
+deferent and will not be *visible* at most magnifications even though they are
+drawn. What separates the models on screen is the apparatus: an equant dot, a
+second focus, an apsidal line, a radius instead of an arm. Titan shows the
+offsets best.
 
 One consequence of "orbits are logged, never pre-computed" is worth knowing: at
 high time rates a frame-rate log cannot resolve Io's 1.77-day orbit, and the
