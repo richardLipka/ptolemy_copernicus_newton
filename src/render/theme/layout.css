@@ -516,6 +516,170 @@
   border-width: var(--line-medium);
 }
 
+/* --- longitude-against-time strip ---------------------------------------- */
+
+/*
+ * What an observer records: a body's place among the stars, night after night.
+ *
+ * Same technique as the orbit trails — a chain of rotated hairlines, no canvas.
+ * The plot's own coordinate space runs 0-1 across and down, so the renderer
+ * hands over fractions and the CSS turns them into the box's real size. That
+ * keeps the strip resolution-independent and free of any layout read-back.
+ */
+.track {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.6rem 0.8rem 0.5rem;
+  border: var(--line-fine) solid var(--panel-border);
+  border-radius: var(--panel-radius);
+  background: var(--panel-bg);
+  backdrop-filter: blur(var(--panel-blur));
+  box-shadow: var(--panel-shadow);
+}
+
+.track__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.track__title {
+  font-family: var(--face-display);
+  font-size: var(--size-label);
+  letter-spacing: var(--tracking-label);
+  color: var(--ink-strong, var(--text-strong));
+}
+
+.track__from {
+  font-family: var(--face-text);
+  font-size: var(--size-label);
+  font-style: italic;
+  color: var(--ink-faint);
+}
+
+/*
+ * The plot box. Height is fixed rather than an aspect ratio: the y-axis is a
+ * full 360 degrees whatever the window, so a wide screen should give a longer
+ * time axis, not a taller sky.
+ */
+.track__plot {
+  position: relative;
+  height: 8.5rem;
+  overflow: hidden;
+  border-radius: calc(var(--panel-radius) * 0.5);
+  background: var(--panel-inner);
+}
+
+/* A zodiac division, banded so neighbours are distinguishable at a glance. */
+.track__band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--y) * 100%);
+  height: calc(var(--span) * 100%);
+  border-top: var(--line-hairline) solid var(--ink-faint);
+  opacity: 0.55;
+}
+
+.track__band[data-parity='1'] {
+  background: var(--surface-shade, transparent);
+  opacity: 0.75;
+}
+
+.track__band-label {
+  position: absolute;
+  left: 0.3rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--face-display);
+  font-size: calc(var(--size-label) * 0.82);
+  letter-spacing: var(--tracking-label);
+  color: var(--ink-faint);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/*
+ * One step of the curve.
+ *
+ * Drawn as a rectangle spanning the step's own extent in both axes rather than
+ * as a rotated line. A rotation would need the angle in *pixels*, and the plot's
+ * width is fluid while its height is fixed — so the renderer cannot know the
+ * aspect ratio and any angle it computed would be wrong at every size but one.
+ *
+ * A rectangle needs no angle. Consecutive steps share their x boundaries and
+ * meet at their y boundaries, so the union is continuous, and at 240 samples
+ * each is a couple of pixels wide: the staircase reads as a curve. The minimum
+ * height is what keeps a flat stretch — a body near its station — visible.
+ */
+.track__segment {
+  position: absolute;
+  left: calc(var(--x) * 100%);
+  width: calc(var(--w) * 100%);
+  top: calc(var(--y) * 100%);
+  height: calc(var(--h) * 100%);
+  min-width: 1px;
+  min-height: 2px;
+  background: var(--tint, var(--ink-soft));
+  opacity: 0.5;
+}
+
+/*
+ * Retrograde stretches, which are the reason the strip exists. Full strength
+ * against the half-toned direct motion, so the eye finds the loop before it
+ * reads the axis.
+ */
+.track__segment--retrograde {
+  opacity: 1;
+  min-height: 3px;
+}
+
+/* Where the motion reverses: the moment the epicycle was invented to produce. */
+.track__station {
+  position: absolute;
+  left: calc(var(--x) * 100%);
+  top: calc(var(--y) * 100%);
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border: var(--line-fine) solid var(--ink-soft);
+  border-radius: 50%;
+  background: var(--panel-bg);
+}
+
+.track__station[data-direction='retrograde'] {
+  background: var(--ink-soft);
+}
+
+/* The clock's position in the window, tying the strip to the map below it. */
+.track__playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--x) * 100%);
+  width: var(--line-medium);
+  margin-left: calc(var(--line-medium) / -2);
+  background: var(--accent-dark, var(--ink-soft));
+  opacity: 0.85;
+}
+
+.track__axis {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-family: var(--face-display);
+  font-size: calc(var(--size-label) * 0.86);
+  letter-spacing: var(--tracking-label);
+  color: var(--ink-faint);
+}
+
+.track__axis-note {
+  font-style: italic;
+}
+
 /*
  * The scale bar, bottom-centre of the field. Shown only at true scale.
  *

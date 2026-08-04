@@ -148,6 +148,13 @@ export interface State {
   showStarFigures: boolean;
   /** Draw the selected body's deferent, epicycle and equant. */
   showConstruction: boolean;
+  /**
+   * The longitude-against-time strip along the top of the stage.
+   *
+   * Off by default: it is the observer's record rather than the map, and a
+   * reader meeting the app for the first time should meet the map.
+   */
+  showTrack: boolean;
   locale: Locale;
   theme: ThemeId;
   /** The calculation and demonstrations overlay, opened on demand. */
@@ -196,6 +203,7 @@ export class Store {
       showSightLines: true,
       showStarFigures: true,
       showConstruction: true,
+      showTrack: false,
       locale: getLocale(),
       theme: readStoredTheme(),
       showCalculation: false,
@@ -391,7 +399,12 @@ export class Store {
   }
 
   toggle(
-    key: 'showOrbits' | 'showSightLines' | 'showStarFigures' | 'showConstruction',
+    key:
+      | 'showOrbits'
+      | 'showSightLines'
+      | 'showStarFigures'
+      | 'showConstruction'
+      | 'showTrack',
   ): void {
     this.patch({ [key]: !this.state[key] } as Partial<State>);
   }

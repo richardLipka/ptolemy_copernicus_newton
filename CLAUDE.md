@@ -1374,6 +1374,56 @@ The hint is a panel note rather than a `title` on each chip, matching how the
 app explains its other controls and keeping it under the same explanations
 toggle.
 
+### 13.3g The longitude strip: what an observer actually records
+
+Everything else in this app is a plan view — the solar system from outside,
+which is a thing nobody has ever seen. What was *observed*, for two thousand
+years before anyone left the ground, is one number against a date: a body's
+place among the fixed stars. Babylonian tablets, Ptolemy's own data and Tycho's
+are all lists of exactly that.
+
+Plotted, it is where retrograde motion stops being a word and becomes a shape.
+The app had been *naming* retrograde motion in the event list and never drawing
+it; the plan view shows the loop in space, which is a different thing from the
+loop on the sky. Both systems the app compares were built to reproduce this one
+curve, so it is the fairest ground to compare them on. Off by default, from the
+Overlays panel.
+
+**The window is the synodic period, not the orbital one.** Mars takes 687 days
+to go round the Sun and loops on the sky every 780, because the loop is the beat
+between its orbit and the Earth's. `trackWindowDays()` computes
+`1/|1/T_target − 1/T_observer|` and shows 1.15 of it, so a retrograde episode is
+always framed whole with its approach and departure either side. The Sun is a
+special case — its apparent circuit is the observer's own year, with no second
+orbit to beat against — as is a moon seen from its own primary.
+
+**Segments crossing the 0°/360° seam are dropped, not drawn.** On a 0–360 axis
+the seam would sweep the full height of the plot and read as a planet crossing
+the whole zodiac between two nights. The direction is still recovered from the
+wrapped value, so a station that happens to fall on the seam is not missed.
+
+**The curve is rectangles, not a polyline.** A rotated line needs its angle in
+*pixels*, and the plot's width is fluid while its height is fixed — so the
+renderer cannot know the aspect ratio and any angle it computed would be right
+at exactly one window size. Each step is instead a box spanning its own extent
+in both axes. Consecutive steps share x boundaries and meet at y boundaries, so
+the union is continuous, and at 240 samples each is a couple of pixels wide.
+This keeps the CSS-only constraint of §6 without a single trigonometric call in
+the view.
+
+Rebuilt on a signature rather than per frame: 240 engine evaluations is far too
+much for 60Hz, and the date is quantised to whole days, which is finer than a
+two-year strip can show anyway.
+
+Measured in the page for Mars from Earth: an 897-day window, 238 steps of which
+**21 are retrograde in one contiguous run** — 8.8% against the real 9.2% of a
+synodic cycle — and exactly two stations. Switching to Ptolemy gives 22 rather
+than 21, which is the app's whole thesis in one number.
+
+`longitudeTrack.test.ts` cross-checks every station it finds against a longitude
+rate computed by a different method, and requires the stations to alternate in
+direction and the Sun never to go backwards as seen from the Earth.
+
 ### 13.4 Sight-lines are two segments, and why they bend
 
 A sight-line runs **observer → body → zodiac ring**, as two segments rather than

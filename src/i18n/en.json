@@ -221,5 +221,10 @@
   "calc.copernicus.equationOfCentre": "Equation of centre (the epicyclet)",
   "info.unit.parts": "parts",
   "info.ptolemyParts": "Ptolemy gives no absolute distances. The Almagest states every measurement in parts of that body’s own deferent, which he always takes as 60 — and directions seen from the Earth are unchanged if a deferent, its eccentricity and its epicycle are scaled together, so nothing he could observe would have fixed the scale. Each body’s 60 is therefore a different real length, and these figures cannot be compared between bodies.",
-  "bodies.focusHint": "Click to select. Double-click to centre the map on it and zoom in."
+  "bodies.focusHint": "Click to select. Double-click to centre the map on it and zoom in.",
+  "view.track": "Sky track",
+  "track.title": "Where {{body}} appears, night after night",
+  "track.window": "{{days}} days — one synodic cycle",
+  "track.none": "Select a body to plot the track it traces against the stars.",
+  "track.hint": "Longitude runs up the plot and time across it, so this is the record an observer keeps: a body’s place among the stars on a series of nights. Where the curve doubles back the body is retrograde, and the rings mark the two stations either side of it. Ptolemy’s epicycle and Copernicus’s moving Earth were both built to reproduce exactly this shape."
 }

@@ -274,6 +274,7 @@ export function renderControls(container: HTMLElement, store: Store): void {
   const toggles = el('div', 'toggle-grid');
   toggles.append(
     toggleButton(t('view.orbits'), state.showOrbits, () => store.toggle('showOrbits')),
+    toggleButton(t('view.track'), state.showTrack, () => store.toggle('showTrack')),
     toggleButton(t('view.sightlines'), state.showSightLines, () =>
       store.toggle('showSightLines'),
     ),

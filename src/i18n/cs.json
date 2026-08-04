@@ -221,5 +221,10 @@
   "calc.copernicus.equationOfCentre": "Rovnice středu (epicykl)",
   "info.unit.parts": "dílu",
   "info.ptolemyParts": "Ptolemaios neudává absolutní vzdálenosti. Almagest vyjadřuje každou míru v dílech deferentu daného tělesa, který vždy klade rovný 60 — a směr viděný ze Země se nezmění, když se deferent, výstřednost i epicykl zvětší společně, takže žádné jeho pozorování nemohlo měřítko určit. Šedesátka je proto u každého tělesa jinak dlouhá a tyto údaje nelze mezi tělesy porovnávat.",
-  "bodies.focusHint": "Kliknutím vyberete. Dvojklik na těleso zacentruje mapu a přiblíží ji."
+  "bodies.focusHint": "Kliknutím vyberete. Dvojklik na těleso zacentruje mapu a přiblíží ji.",
+  "view.track": "Dráha na obloze",
+  "track.title": "Kde se {{body}} objevuje noc co noc",
+  "track.window": "{{days}} dní — jeden synodický cyklus",
+  "track.none": "Vyberte těleso a zobrazí se dráha, kterou opisuje mezi hvězdami.",
+  "track.hint": "Svisle běží délka, vodorovně čas — je to tedy záznam, jaký si vede pozorovatel: poloha tělesa mezi hvězdami v řadě nocí. Tam, kde se křivka vrací, je těleso ve zpětném pohybu a kroužky značí obě zastávky po jeho stranách. Ptolemaiův epicykl i Koperníkova pohyblivá Země byly sestrojeny právě proto, aby tento tvar napodobily."
 }
