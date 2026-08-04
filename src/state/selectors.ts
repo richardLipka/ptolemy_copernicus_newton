@@ -7,7 +7,7 @@
  * means a resize needs no recomputation.
  */
 
-import { BODY_IDS, type BodyId } from '../core/bodies';
+import { BODIES, BODY_IDS, type BodyId } from '../core/bodies';
 import type { ConstructionRole } from '../core/construction';
 import { apparentLongitude, relativePosition } from '../core/coordinates';
 import type { EngineId, PositionSet } from '../core/engines/types';
@@ -16,7 +16,7 @@ import { illuminationOf, type Illumination } from '../core/illumination';
 import { DEG, length, sub, vec3, type Vec3 } from '../core/vec';
 import { locate, type ZodiacPosition } from '../core/zodiac';
 import type { ScaleMode, State } from './store';
-import { ENGINES } from './store';
+import { ENGINES, MIN_ZOOM, maxZoomFor } from './store';
 import type { TrailSample } from './trails';
 
 export interface Point {
@@ -270,6 +270,53 @@ export function buildView(state: State): OrreryView {
  * cost Ptolemy his epicycles — not because anything here knows what a loop is,
  * but because that is where Mars was seen to be.
  */
+/**
+ * Fraction of the map's half-width a focused body's system should fill.
+ *
+ * Short of 1 on purpose: framed edge to edge the outermost moon sits exactly on
+ * the rim and reads as escaping rather than orbiting.
+ */
+const FOCUS_FRACTION = 0.35;
+
+/** Magnification for a body that has nothing going round it. */
+const FOCUS_DEFAULT_ZOOM = 6;
+
+/**
+ * A magnification that frames `bodyId` and whatever orbits it.
+ *
+ * Used by the double-click shortcut on the body chips. Derived from the
+ * *projected* distance to the body's own satellites rather than from their
+ * elements, so it lands correctly whichever scale is running — at true scale
+ * the same family needs a few hundred times the magnification it needs
+ * compressed, and asking the projection is what keeps the two in step without
+ * this function knowing anything about exaggeration.
+ *
+ * The Sun is excluded from the satellite search rather than special-cased in the
+ * caller: every planet names it as parent, so it would otherwise "frame its
+ * system" by zooming out until Saturn fitted, which is the opposite of what a
+ * reader double-clicking it is asking for.
+ */
+export function focusZoomFor(state: State, bodyId: BodyId): number {
+  const projected = projectPositions(
+    ENGINES[state.engineId].positionsAt(state.julianDate),
+    bodyId,
+    state.scaleMode,
+  );
+
+  let reach = 0;
+  if (bodyId !== 'sun') {
+    for (const id of BODY_IDS) {
+      if (id === bodyId || BODIES[id].parent !== bodyId) continue;
+      const point = projected.get(id);
+      if (!point) continue;
+      reach = Math.max(reach, Math.hypot(point.x, point.y));
+    }
+  }
+
+  const wanted = reach > 0 ? FOCUS_FRACTION / reach : FOCUS_DEFAULT_ZOOM;
+  return Math.min(maxZoomFor(state.scaleMode), Math.max(MIN_ZOOM, wanted));
+}
+
 export function projectTrail(
   samples: readonly TrailSample[],
   bodyId: BodyId,
