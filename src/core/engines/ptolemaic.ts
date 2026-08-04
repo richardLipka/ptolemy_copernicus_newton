@@ -33,6 +33,7 @@ import { DEG, add, scale, sub, vec3, type Vec3 } from '../vec';
 import { elementsAt } from './keplerian';
 import { vsop87Positions } from './vsop87';
 import type { Engine, PositionSet } from './types';
+import { addSatellites } from '../satellites';
 
 // --- Sub-mode 1: Earth-centred reframe ----------------------------------
 
@@ -565,6 +566,11 @@ export function ptolemaicEpicyclicPositions(
     positions.set(id, ptolemaicPlanetGeometry(jd, id, model, motions).position);
   }
 
+  // Ptolemy's system has nothing whatever to say about these — which is the
+  // point of drawing them here. They hang off Jupiter and Saturn wherever his
+  // deferents have put them, and four bodies going round something that is not
+  // the Earth is precisely the observation his cosmology had no answer to.
+  addSatellites(jd, positions);
   return positions;
 }
 

@@ -8,7 +8,7 @@
  * compositor does the rest.
  */
 
-import { BODY_IDS, type BodyId } from '../../core/bodies';
+import { BODIES, BODY_IDS, type BodyId } from '../../core/bodies';
 import { DEG, normalizeDeg } from '../../core/vec';
 import { divisionsFor, precessionSinceJ2000 } from '../../core/zodiac';
 import { formatNumber, t } from '../../i18n/i18n';
@@ -31,6 +31,14 @@ const RING_INNER = 1.06;
 const RING_OUTER = 1.26;
 const RING_FIGURES = 1.16;
 
+/**
+ * Magnification at which a moon's name becomes readable.
+ *
+ * Below this the four Galileans share a few pixels and their labels would sit on
+ * top of one another and of Jupiter's.
+ */
+const SATELLITE_LABEL_ZOOM = 3;
+
 /** Headroom for a concentric ring and its labels. Matches layout.css. */
 const BASE_RING_EXTENT = 1.46;
 
@@ -44,6 +52,12 @@ const BODY_SIZE: Record<BodyId, number> = {
   mars: 7,
   jupiter: 14,
   saturn: 12,
+  // Moons, drawn small so they read as attendants rather than as planets.
+  io: 4,
+  europa: 4,
+  ganymede: 5,
+  callisto: 4,
+  titan: 5,
 };
 
 const setPoint = (element: HTMLElement, point: Point): void => {
@@ -400,12 +414,31 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
       return element;
     };
 
-    const construction =
-      state.showConstruction && state.selectedBody
-        ? buildConstruction(state, state.selectedBody)
-        : null;
+    /*
+     * Which bodies' machinery to draw.
+     *
+     * Normally just the selection. For a satellite system it is the whole
+     * family: selecting Jupiter draws all four Galilean orbits, and selecting
+     * one moon draws its siblings too, because a single circle says nothing
+     * about a system whose interest is entirely in the relation between its
+     * members — the 1:2:4 spacing is only visible when all of them are there.
+     */
+    const harnessBodies: BodyId[] = [];
+    if (state.showConstruction && state.selectedBody) {
+      const selected = state.selectedBody;
+      const family = BODIES[selected].satellite ? BODIES[selected].parent : selected;
 
-    if (construction) {
+      harnessBodies.push(selected);
+      for (const id of BODY_IDS) {
+        if (id === selected) continue;
+        if (BODIES[id].satellite && BODIES[id].parent === family) harnessBodies.push(id);
+      }
+    }
+
+    for (const harnessBody of harnessBodies) {
+      const construction = buildConstruction(state, harnessBody);
+      if (!construction) continue;
+
       for (const curve of construction.curves) {
         for (let i = 1; i < curve.points.length; i++) {
           const from = curve.points[i - 1]!;
@@ -738,13 +771,43 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
       setPoint(parts.label, body.point);
       const name = t(`body.${body.id}`);
       setText(parts.label, name);
+
+      /*
+       * Moon names appear only when their system is the one being looked at,
+       * and only once it is big enough to read.
+       *
+       * At the fitted view the four Galileans occupy a few pixels between them,
+       * so five labels would overlap each other and Jupiter's. Requiring both
+       * the selection *and* the magnification means the names arrive exactly
+       * when they become useful and never before.
+       */
+      const satellite = BODIES[body.id].satellite;
+      const family = state.selectedBody
+        ? BODIES[state.selectedBody].satellite
+          ? BODIES[state.selectedBody].parent
+          : state.selectedBody
+        : null;
+      const inFamily = family !== null && BODIES[body.id].parent === family;
+      if (satellite) {
+        parts.label.style.display =
+          inFamily && state.zoom >= SATELLITE_LABEL_ZOOM ? '' : 'none';
+      }
       if (parts.marker.getAttribute('aria-label') !== name) {
         parts.marker.setAttribute('aria-label', name);
       }
       parts.marker.classList.toggle('body--selected', state.selectedBody === body.id);
 
-      // Off-screen bodies become a pointer at the edge. See offscreen.ts.
-      const pointer = edgePointerFor(body.point, viewport);
+      /*
+       * Off-screen bodies become a pointer at the edge. See offscreen.ts.
+       *
+       * A satellite earns one only while its own system is the selection, on the
+       * same reasoning as its label. Zoom deep enough to throw Jupiter off the
+       * map and it takes its moons with it, all on the same bearing: five
+       * stacked chevrons saying what Jupiter's already says. When the Jovian
+       * system *is* what is being looked at, they are the whole point.
+       */
+      const pointer =
+        satellite && !inFamily ? null : edgePointerFor(body.point, viewport);
       if (pointer) {
         parts.offscreen.style.display = '';
         parts.offscreenName.style.display = '';
@@ -805,7 +868,17 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
       parts.sightlineOuter.classList.toggle('sightline--selected', isSelected);
       parts.pip.classList.toggle('sightline__pip--selected', isSelected);
 
-      if (body.isObserver) {
+      /*
+       * A satellite gets a sight-line only when it is itself the selection.
+       *
+       * Five more rays converging on the observer, from bodies that sit within a
+       * pixel or two of their planet, would add five near-identical lines and
+       * five pips crowding one point of the ring — noise standing exactly where
+       * the planet's own reading belongs.
+       */
+      const isMoonUnselected = Boolean(BODIES[body.id].satellite) && !isSelected;
+
+      if (body.isObserver || isMoonUnselected) {
         parts.sightline.style.display = 'none';
         parts.sightlineOuter.style.display = 'none';
         parts.pip.style.display = 'none';
