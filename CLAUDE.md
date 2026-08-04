@@ -1324,6 +1324,40 @@ inside 60 +/- (e + r) and must reach both ends of it over thirty-two years. The
 Moon comes out at 59.1 parts, which is Almagest IV's mean lunar distance of
 about 59 Earth radii and one of the work's genuine successes.
 
+### 13.3f Double-clicking a body chip goes to it
+
+Centres the map on that body, clears the drag and magnifies enough to frame
+whatever orbits it. `focusZoomFor()` reads the *projected* distance to the
+body's satellites rather than their elements, so one call serves both scales
+without knowing anything about exaggeration — the same family needs a few
+hundred times more magnification at true scale than compressed, and asking the
+projection is what keeps the two in step.
+
+Two details that are not obvious:
+
+- **The Sun is excluded from the satellite search**, in the function rather than
+  in the caller. Every planet names the Sun as its parent, so it would otherwise
+  "frame its system" by zooming *out* until Saturn fitted — the exact opposite of
+  what a reader double-clicking it is asking for.
+- **At true scale the Moon cannot be fully framed.** It would want about 2400x
+  against the ceiling of 1000 (§13.3c), so the shortcut settles for the ceiling.
+  That is still the closest look the app allows, and the lunar orbit covers about
+  a seventh of the map.
+
+**A `dblclick` listener cannot be used here, and that is the whole difficulty.**
+The first click selects the body, which rebuilds the control panel, so the
+second click lands on a *different DOM node* from the first — and the browser
+raises `dblclick` only for two clicks on the same element. Confirmed in the page:
+after one click the original chip is no longer in the document, and a `dblclick`
+handler bound to it never fires. The timing is therefore kept in module state in
+`controls.ts`, which survives the rebuild, with the usual 400ms threshold. Erring
+long is the safe direction, since a late second click merely toggles the
+selection off — which is what a single click does anyway.
+
+The hint is a panel note rather than a `title` on each chip, matching how the
+app explains its other controls and keeping it under the same explanations
+toggle.
+
 ### 13.4 Sight-lines are two segments, and why they bend
 
 A sight-line runs **observer → body → zodiac ring**, as two segments rather than
