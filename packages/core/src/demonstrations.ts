@@ -14,9 +14,9 @@
  * remarkable if the geometry really does put Mercury across the Sun's disc.
  */
 
-import type { BodyId } from './bodies';
-import type { ModeId } from './engines/types';
-import { jdFromCalendar } from './time';
+import type { BodyId } from './bodies.js';
+import type { ModeId } from './engines/types.js';
+import { jdFromCalendar } from './time.js';
 
 export interface Demonstration {
   id: string;

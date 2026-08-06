@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { AU_IN_KM, BODIES } from '../bodies';
-import { apparentLongitude, toSpherical } from '../coordinates';
-import { J2000, jdFromCalendar } from '../time';
-import { angleDiffDeg, length, normalizeDeg } from '../vec';
+import { AU_IN_KM, BODIES } from '../bodies.js';
+import { apparentLongitude, toSpherical } from '../coordinates.js';
+import { J2000, jdFromCalendar } from '../time.js';
+import { angleDiffDeg, length, normalizeDeg } from '../vec.js';
 import {
   elementsAt,
   heliocentricAt,
@@ -12,7 +12,7 @@ import {
   meanAnomalyAt,
   moonGeocentricAt,
   solveKepler,
-} from './keplerian';
+} from './keplerian.js';
 
 describe('solveKepler', () => {
   it('is exact for a circular orbit', () => {

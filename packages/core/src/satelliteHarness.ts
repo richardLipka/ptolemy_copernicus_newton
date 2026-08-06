@@ -25,12 +25,12 @@
  * satellite exaggeration in `constructionProjector` lands on it correctly.
  */
 
-import { BODIES, type BodyId } from './bodies';
-import type { Construction } from './construction';
-import type { SatelliteOrbit } from './bodies';
-import type { EngineId } from './engines/types';
-import { J2000 } from './time';
-import { DEG, add, vec3, type Vec3 } from './vec';
+import { BODIES, type BodyId } from './bodies.js';
+import type { Construction } from './construction.js';
+import type { SatelliteOrbit } from './bodies.js';
+import type { EngineId } from './engines/types.js';
+import { J2000 } from './time.js';
+import { DEG, add, vec3, type Vec3 } from './vec.js';
 
 /*
  * Copernicus's split of the eccentricity, taken from the engine that owns it
@@ -38,7 +38,7 @@ import { DEG, add, vec3, type Vec3 } from './vec';
  * made data; a fitted set that moved the shares would have moved the planets
  * and left the moons drawn to Copernicus's own numbers.
  */
-import { COPERNICAN_PARAMETERS } from './engines/copernican';
+import { COPERNICAN_PARAMETERS } from './engines/copernican.js';
 
 /**
  * Map a point in the orbital plane — pericentre along +x — into the frame the

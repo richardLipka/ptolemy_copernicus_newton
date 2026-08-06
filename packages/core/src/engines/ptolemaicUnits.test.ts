@@ -7,10 +7,10 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { BodyId } from '../bodies';
-import { jdFromCalendar } from '../time';
-import { DEFERENT_PARTS, inDeferentParts } from './ptolemaicUnits';
-import { ptolemaicEpicyclicPositions } from './ptolemaic';
+import type { BodyId } from '../bodies.js';
+import { jdFromCalendar } from '../time.js';
+import { DEFERENT_PARTS, inDeferentParts } from './ptolemaicUnits.js';
+import { ptolemaicEpicyclicPositions } from './ptolemaic.js';
 
 const JD = jdFromCalendar(2026, 8, 3);
 

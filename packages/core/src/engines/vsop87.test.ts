@@ -9,12 +9,12 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { BodyId } from '../bodies';
-import { apparentLongitude } from '../coordinates';
-import { jdFromCalendar } from '../time';
-import { angleDiffDeg, length, sub } from '../vec';
-import { keplerianPositions } from './keplerian';
-import { vsop87Position, vsop87Positions } from './vsop87';
+import type { BodyId } from '../bodies.js';
+import { apparentLongitude } from '../coordinates.js';
+import { jdFromCalendar } from '../time.js';
+import { angleDiffDeg, length, sub } from '../vec.js';
+import { keplerianPositions } from './keplerian.js';
+import { vsop87Position, vsop87Positions } from './vsop87.js';
 
 const DEG = 180 / Math.PI;
 const PLANETS: BodyId[] = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn'];

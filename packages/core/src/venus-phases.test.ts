@@ -8,12 +8,12 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { circularPositions } from './engines/circular';
-import { keplerianPositions } from './engines/keplerian';
-import { ptolemaicEpicyclicPositions } from './engines/ptolemaic';
-import type { PositionSet } from './engines/types';
-import { illuminationOf } from './illumination';
-import { jdFromCalendar } from './time';
+import { circularPositions } from './engines/circular.js';
+import { keplerianPositions } from './engines/keplerian.js';
+import { ptolemaicEpicyclicPositions } from './engines/ptolemaic.js';
+import type { PositionSet } from './engines/types.js';
+import { illuminationOf } from './illumination.js';
+import { jdFromCalendar } from './time.js';
 
 function venusPhaseRange(positionsAt: (jd: number) => PositionSet): {
   min: number;

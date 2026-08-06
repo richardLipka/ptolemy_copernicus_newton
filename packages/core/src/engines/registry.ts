@@ -19,17 +19,17 @@
  * consumer does not reach.
  */
 
-import { circularEngine } from './circular';
-import { copernicanEngine } from './copernican';
-import { keplerianEngine } from './keplerian';
-import { nbodyEngine } from './nbody';
+import { circularEngine } from './circular.js';
+import { copernicanEngine } from './copernican.js';
+import { keplerianEngine } from './keplerian.js';
+import { nbodyEngine } from './nbody.js';
 import {
   ptolemaicAlmagestEngine,
   ptolemaicEpicyclicEngine,
   ptolemaicReframeEngine,
-} from './ptolemaic';
-import { vsop87Engine } from './vsop87';
-import type { Engine, EngineId } from './types';
+} from './ptolemaic.js';
+import { vsop87Engine } from './vsop87.js';
+import type { Engine, EngineId } from './types.js';
 
 export const ENGINES: Record<EngineId, Engine> = {
   keplerian: keplerianEngine,

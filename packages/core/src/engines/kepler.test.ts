@@ -11,14 +11,14 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { BodyId } from '../bodies';
-import { apparentLongitude } from '../coordinates';
-import { MODES } from './types';
-import { jdFromCalendar } from '../time';
-import { angleDiffDeg, sub, length, type Vec3 } from '../vec';
-import { circularPositions } from './circular';
-import { keplerianConstruction, keplerianPositions } from './keplerian';
-import { vsop87Positions } from './vsop87';
+import type { BodyId } from '../bodies.js';
+import { apparentLongitude } from '../coordinates.js';
+import { MODES } from './types.js';
+import { jdFromCalendar } from '../time.js';
+import { angleDiffDeg, sub, length, type Vec3 } from '../vec.js';
+import { circularPositions } from './circular.js';
+import { keplerianConstruction, keplerianPositions } from './keplerian.js';
+import { vsop87Positions } from './vsop87.js';
 
 const PLANETS: readonly BodyId[] = ['mercury', 'venus', 'mars', 'jupiter', 'saturn'];
 

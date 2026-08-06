@@ -24,9 +24,9 @@ import {
   type BodyId,
   type KeplerianElements,
   type OrbitalModel,
-} from '../bodies';
-import type { Construction } from '../construction';
-import { centuriesSinceJ2000 } from '../time';
+} from '../bodies.js';
+import type { Construction } from '../construction.js';
+import { centuriesSinceJ2000 } from '../time.js';
 import {
   DEG,
   add,
@@ -38,9 +38,9 @@ import {
   sub,
   vec3,
   type Vec3,
-} from '../vec';
-import type { Engine, EngineId, PositionSet, StateVector } from './types';
-import { addSatellites } from '../satellites';
+} from '../vec.js';
+import type { Engine, EngineId, PositionSet, StateVector } from './types.js';
+import { addSatellites } from '../satellites.js';
 
 /** Resolve mean elements to a given date by applying secular rates. */
 export function elementsAt(jd: number, model: OrbitalModel): KeplerianElements {

@@ -11,15 +11,15 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { BODIES, type BodyId } from '../bodies';
-import { jdFromCalendar } from '../time';
-import { length, sub, type Vec3 } from '../vec';
+import { BODIES, type BodyId } from '../bodies.js';
+import { jdFromCalendar } from '../time.js';
+import { length, sub, type Vec3 } from '../vec.js';
 import {
   copernicanConstruction,
   copernicanHeliocentricAt,
   copernicanPositions,
-} from './copernican';
-import { elementsAt, meanAnomalyAt } from './keplerian';
+} from './copernican.js';
+import { elementsAt, meanAnomalyAt } from './keplerian.js';
 
 const PLANETS: readonly BodyId[] = ['mercury', 'venus', 'mars', 'jupiter', 'saturn'];
 const JD = jdFromCalendar(1543, 5, 24);

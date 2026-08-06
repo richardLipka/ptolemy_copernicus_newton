@@ -15,8 +15,8 @@
  * how nearly two-body the real problem is.
  */
 
-import { BODIES, GRAVITATING_BODY_IDS, type BodyId } from './bodies';
-import { add, length, scale, sub, type Vec3 } from './vec';
+import { BODIES, GRAVITATING_BODY_IDS, type BodyId } from './bodies.js';
+import { add, length, scale, sub, type Vec3 } from './vec.js';
 
 /** Metres in an astronomical unit (IAU 2012). */
 const AU_IN_METRES = 1.495_978_707e11;

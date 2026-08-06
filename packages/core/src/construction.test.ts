@@ -9,17 +9,17 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { BodyId } from './bodies';
-import { circularConstruction, circularPositions } from './engines/circular';
+import type { BodyId } from './bodies.js';
+import { circularConstruction, circularPositions } from './engines/circular.js';
 import {
   ptolemaicConstruction,
   ptolemaicEpicyclicPositions,
   ptolemaicGeometryFor,
-} from './engines/ptolemaic';
-import { nbodyEngine } from './engines/nbody';
-import { ptolemaicReframeEngine } from './engines/ptolemaic';
-import { jdFromCalendar } from './time';
-import { distance, length, sub } from './vec';
+} from './engines/ptolemaic.js';
+import { nbodyEngine } from './engines/nbody.js';
+import { ptolemaicReframeEngine } from './engines/ptolemaic.js';
+import { jdFromCalendar } from './time.js';
+import { distance, length, sub } from './vec.js';
 
 const JDS = [
   jdFromCalendar(1600, 3, 1),

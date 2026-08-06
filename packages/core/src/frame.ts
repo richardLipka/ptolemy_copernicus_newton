@@ -9,9 +9,9 @@
  * observable — which is exactly the point the app is trying to make.
  */
 
-import type { BodyId } from './bodies';
-import type { PositionSet } from './engines/types';
-import { sub, type Vec3 } from './vec';
+import type { BodyId } from './bodies.js';
+import type { PositionSet } from './engines/types.js';
+import { sub, type Vec3 } from './vec.js';
 
 export function recenter(positions: PositionSet, originId: BodyId): Map<BodyId, Vec3> {
   const origin = positions.get(originId);

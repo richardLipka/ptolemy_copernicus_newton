@@ -11,12 +11,12 @@
  * table of constants that gets pasted into `nbody.ts`.
  */
 
-import { BODIES, type BodyId } from '../bodies';
-import { apparentLongitude, toSpherical } from '../coordinates';
-import { J2000 } from '../time';
-import { DEG, angleDiffDeg, sub } from '../vec';
-import { keplerianPositions } from './keplerian';
-import { NBodySimulation } from './nbody';
+import { BODIES, type BodyId } from '../bodies.js';
+import { apparentLongitude, toSpherical } from '../coordinates.js';
+import { J2000 } from '../time.js';
+import { DEG, angleDiffDeg, sub } from '../vec.js';
+import { keplerianPositions } from './keplerian.js';
+import { NBodySimulation } from './nbody.js';
 
 const CALIBRATED_BODIES: readonly BodyId[] = [
   'mercury',

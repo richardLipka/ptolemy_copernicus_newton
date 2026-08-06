@@ -26,14 +26,14 @@
  * His epicycles encode the heliocentric distances he did not believe in.
  */
 
-import { AU_IN_KM, BODIES, type BodyId } from '../bodies';
-import type { Construction } from '../construction';
-import { centuriesSinceJ2000, jdFromCalendar } from '../time';
-import { DEG, add, scale, sub, vec3, type Vec3 } from '../vec';
-import { elementsAt } from './keplerian';
-import { vsop87Positions } from './vsop87';
-import type { Engine, EngineId, PositionSet } from './types';
-import { addSatellites } from '../satellites';
+import { AU_IN_KM, BODIES, type BodyId } from '../bodies.js';
+import type { Construction } from '../construction.js';
+import { centuriesSinceJ2000, jdFromCalendar } from '../time.js';
+import { DEG, add, scale, sub, vec3, type Vec3 } from '../vec.js';
+import { elementsAt } from './keplerian.js';
+import { vsop87Positions } from './vsop87.js';
+import type { Engine, EngineId, PositionSet } from './types.js';
+import { addSatellites } from '../satellites.js';
 
 // --- Sub-mode 1: Earth-centred reframe ----------------------------------
 

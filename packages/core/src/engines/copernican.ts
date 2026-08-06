@@ -54,13 +54,13 @@ import {
   type BodyId,
   type KeplerianElements,
   type OrbitalModel,
-} from '../bodies';
-import type { Construction } from '../construction';
-import { centuriesSinceJ2000 } from '../time';
-import { DEG, add, sub, vec3, type Vec3 } from '../vec';
-import { elementsAt, meanAnomalyAt, orbitalPlaneToEcliptic } from './keplerian';
-import type { Engine, EngineId, PositionSet } from './types';
-import { addSatellites } from '../satellites';
+} from '../bodies.js';
+import type { Construction } from '../construction.js';
+import { centuriesSinceJ2000 } from '../time.js';
+import { DEG, add, sub, vec3, type Vec3 } from '../vec.js';
+import { elementsAt, meanAnomalyAt, orbitalPlaneToEcliptic } from './keplerian.js';
+import type { Engine, EngineId, PositionSet } from './types.js';
+import { addSatellites } from '../satellites.js';
 
 /**
  * Everything the construction needs, as data.

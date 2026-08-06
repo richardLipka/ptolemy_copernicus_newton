@@ -12,10 +12,10 @@
  * of days.
  */
 
-import type { BodyId } from './bodies';
-import { apparentLongitude } from './coordinates';
-import type { EngineId, PositionSet } from './engines/types';
-import { angleDiffDeg } from './vec';
+import type { BodyId } from './bodies.js';
+import { apparentLongitude } from './coordinates.js';
+import type { EngineId, PositionSet } from './engines/types.js';
+import { angleDiffDeg } from './vec.js';
 
 export type EventKind = 'conjunction' | 'opposition' | 'station-retrograde' | 'station-direct';
 

@@ -19,12 +19,14 @@
   ],
   "scripts": {
     "//scripts": "The trailing `--` matters: without it npm appends any extra arguments bare, so `npm run dev -- --port 5180` reaches the inner script as npm config flags and the port is silently ignored.",
-    "dev": "npm run dev --workspace @orrery/app --",
-    "build": "npm run build --workspace @orrery/app --",
+    "//core": "@orrery/core is consumed through its built output, the same way a separate repository consumes it, so everything here builds it first. Core's own `prepare` covers a fresh clone; these cover an edit.",
+    "build:core": "npm run build --workspace @orrery/core",
+    "dev": "npm run build:core && npm run dev --workspace @orrery/app --",
+    "build": "npm run build:core && npm run build --workspace @orrery/app --",
     "preview": "npm run preview --workspace @orrery/app --",
-    "test": "vitest run",
+    "test": "npm run build:core && vitest run",
     "test:watch": "vitest",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run build:core && npm run typecheck --workspaces --if-present"
   },
   "devDependencies": {
     "typescript": "^5.7.2",

@@ -7,11 +7,11 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { BodyId } from './bodies';
-import { massInKg, dynamicsOf } from './dynamics';
-import { nbodyDynamics, sharedSimulation } from './engines/nbody';
-import { jdFromCalendar } from './time';
-import { dot, length, sub } from './vec';
+import type { BodyId } from './bodies.js';
+import { massInKg, dynamicsOf } from './dynamics.js';
+import { nbodyDynamics, sharedSimulation } from './engines/nbody.js';
+import { jdFromCalendar } from './time.js';
+import { dot, length, sub } from './vec.js';
 
 const JD = jdFromCalendar(2026, 1, 1);
 

@@ -14,9 +14,9 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { BODIES, type BodyId } from '../bodies';
-import { apparentLongitude } from '../coordinates';
-import { jdFromCalendar } from '../time';
+import { BODIES, type BodyId } from '../bodies.js';
+import { apparentLongitude } from '../coordinates.js';
+import { jdFromCalendar } from '../time.js';
 import {
   ALMAGEST_PARAMETERS,
   MODERN_MOTIONS,
@@ -24,20 +24,20 @@ import {
   ptolemaicEpicyclicPositions,
   ptolemaicGeometryFor,
   type PtolemaicParameters,
-} from './ptolemaic';
+} from './ptolemaic.js';
 import {
   COPERNICAN_PARAMETERS,
   copernicanPositions,
   createCopernicanEngine,
   type CopernicanParameters,
-} from './copernican';
+} from './copernican.js';
 import {
   KEPLERIAN_PARAMETERS,
   createKeplerianEngine,
   keplerianPositions,
   type KeplerianParameters,
-} from './keplerian';
-import { vsop87Positions } from './vsop87';
+} from './keplerian.js';
+import { vsop87Positions } from './vsop87.js';
 
 const JD = jdFromCalendar(2026, 8, 6);
 

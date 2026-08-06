@@ -17,13 +17,13 @@ import {
   AU_IN_KM,
   type BodyId,
   type OrbitalModel,
-} from '../bodies';
-import type { Construction } from '../construction';
-import { centuriesSinceJ2000 } from '../time';
-import { DEG, add, vec3, type Vec3 } from '../vec';
-import { elementsAt } from './keplerian';
-import type { Engine, PositionSet } from './types';
-import { addSatellites } from '../satellites';
+} from '../bodies.js';
+import type { Construction } from '../construction.js';
+import { centuriesSinceJ2000 } from '../time.js';
+import { DEG, add, vec3, type Vec3 } from '../vec.js';
+import { elementsAt } from './keplerian.js';
+import type { Engine, PositionSet } from './types.js';
+import { addSatellites } from '../satellites.js';
 
 /** Mean distance of the Moon from Earth, AU. */
 const MOON_MEAN_DISTANCE = 385_000.56 / AU_IN_KM;

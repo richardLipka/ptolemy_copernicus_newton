@@ -16,13 +16,13 @@
  * what the Moon is offset from.
  */
 
-import { BODY_IDS, type BodyId } from '../bodies';
-import { J2000 } from '../time';
-import { add, vec3, type Vec3 } from '../vec';
-import { moonGeocentricAt } from './keplerian';
-import type { Engine, PositionSet } from './types';
-import { VSOP87, type Vsop87Series } from './vsop87Data';
-import { addSatellites } from '../satellites';
+import { BODY_IDS, type BodyId } from '../bodies.js';
+import { J2000 } from '../time.js';
+import { add, vec3, type Vec3 } from '../vec.js';
+import { moonGeocentricAt } from './keplerian.js';
+import type { Engine, PositionSet } from './types.js';
+import { VSOP87, type Vsop87Series } from './vsop87Data.js';
+import { addSatellites } from '../satellites.js';
 
 /** Days in the Julian millennium the series are expressed in. */
 const DAYS_PER_MILLENNIUM = 365_250;

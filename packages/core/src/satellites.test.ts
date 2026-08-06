@@ -14,16 +14,16 @@ import {
   GRAVITATING_BODY_IDS,
   SATELLITE_IDS,
   type BodyId,
-} from './bodies';
-import { circularPositions } from './engines/circular';
-import { copernicanPositions } from './engines/copernican';
-import { keplerianPositions } from './engines/keplerian';
-import { nbodyEngine } from './engines/nbody';
-import { ptolemaicEpicyclicPositions } from './engines/ptolemaic';
-import { vsop87Positions } from './engines/vsop87';
-import { satelliteOffsetAt } from './satellites';
-import { jdFromCalendar } from './time';
-import { length, sub } from './vec';
+} from './bodies.js';
+import { circularPositions } from './engines/circular.js';
+import { copernicanPositions } from './engines/copernican.js';
+import { keplerianPositions } from './engines/keplerian.js';
+import { nbodyEngine } from './engines/nbody.js';
+import { ptolemaicEpicyclicPositions } from './engines/ptolemaic.js';
+import { vsop87Positions } from './engines/vsop87.js';
+import { satelliteOffsetAt } from './satellites.js';
+import { jdFromCalendar } from './time.js';
+import { length, sub } from './vec.js';
 
 const GALILEANS: readonly BodyId[] = ['io', 'europa', 'ganymede', 'callisto'];
 const JD = jdFromCalendar(1610, 1, 7); // The night Galileo first saw them.

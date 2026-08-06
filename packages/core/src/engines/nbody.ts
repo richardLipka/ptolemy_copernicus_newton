@@ -9,13 +9,13 @@
  * nudging the result back towards the reference ephemeris.
  */
 
-import { BODIES, GRAVITATING_BODY_IDS, type BodyId } from '../bodies';
-import { dynamicsOf, type Dynamics, type StateVectors } from '../dynamics';
-import { J2000, MAX_JD, MIN_JD } from '../time';
-import { ZERO, add, scale, sub, vec3, type Vec3 } from '../vec';
-import { keplerianStates } from './keplerian';
-import type { Engine, PositionSet, StateVector } from './types';
-import { addSatellites } from '../satellites';
+import { BODIES, GRAVITATING_BODY_IDS, type BodyId } from '../bodies.js';
+import { dynamicsOf, type Dynamics, type StateVectors } from '../dynamics.js';
+import { J2000, MAX_JD, MIN_JD } from '../time.js';
+import { ZERO, add, scale, sub, vec3, type Vec3 } from '../vec.js';
+import { keplerianStates } from './keplerian.js';
+import type { Engine, PositionSet, StateVector } from './types.js';
+import { addSatellites } from '../satellites.js';
 
 /**
  * Integration step, days. The Moon sets this: it laps its orbit ~10,700 times

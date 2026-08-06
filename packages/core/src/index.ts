@@ -36,7 +36,7 @@ export {
   AU_IN_KM,
   GM_SUN,
   MOON_TO_EMB_MASS_FRACTION,
-} from './bodies';
+} from './bodies.js';
 export type {
   Body,
   BodyId,
@@ -44,7 +44,7 @@ export type {
   LocalizedName,
   OrbitalModel,
   SatelliteOrbit,
-} from './bodies';
+} from './bodies.js';
 
 // --- time ----------------------------------------------------------------
 
@@ -60,24 +60,24 @@ export {
   dateFromJd,
   jdFromCalendar,
   jdFromDate,
-} from './time';
-export type { CalendarDate } from './time';
+} from './time.js';
+export type { CalendarDate } from './time.js';
 
 // --- geometry ------------------------------------------------------------
 
-export { DEG, RAD, ZERO, add, angleDiffDeg, cross, dot, normalizeDeg, scale, sub, vec3 } from './vec';
-export type { Vec3 } from './vec';
+export { DEG, RAD, ZERO, add, angleDiffDeg, cross, dot, normalizeDeg, scale, sub, vec3 } from './vec.js';
+export type { Vec3 } from './vec.js';
 
-export { apparentLongitude, apparentLongitudeRate, relativePosition, solarElongation, toSpherical } from './coordinates';
-export type { SphericalPosition } from './coordinates';
+export { apparentLongitude, apparentLongitudeRate, relativePosition, solarElongation, toSpherical } from './coordinates.js';
+export type { SphericalPosition } from './coordinates.js';
 
-export { recenter } from './frame';
+export { recenter } from './frame.js';
 
 // --- the models ----------------------------------------------------------
 
-export { ENGINES, REFERENCE_ENGINE_ID, engineFor } from './engines/registry';
-export { MODES } from './engines/types';
-export type { Engine, EngineId, Mode, ModeId, PositionSet, StateVector } from './engines/types';
+export { ENGINES, REFERENCE_ENGINE_ID, engineFor } from './engines/registry.js';
+export { MODES } from './engines/types.js';
+export type { Engine, EngineId, Mode, ModeId, PositionSet, StateVector } from './engines/types.js';
 
 export type {
   Construction,
@@ -87,4 +87,4 @@ export type {
   ConstructionMarker,
   ConstructionRole,
   ConstructionSource,
-} from './construction';
+} from './construction.js';

@@ -9,10 +9,10 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { BodyId } from './bodies';
-import { buildLongitudeTrack, trackCycleDays, trackWindowDays } from './longitudeTrack';
-import { keplerianPositions } from './engines/keplerian';
-import { jdFromCalendar } from './time';
+import type { BodyId } from './bodies.js';
+import { buildLongitudeTrack, trackCycleDays, trackWindowDays } from './longitudeTrack.js';
+import { keplerianPositions } from './engines/keplerian.js';
+import { jdFromCalendar } from './time.js';
 
 const JD = jdFromCalendar(2026, 8, 3);
 

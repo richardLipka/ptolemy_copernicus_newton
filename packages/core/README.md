@@ -10,12 +10,23 @@ something a reviewer has to catch.
 
 ## Install
 
-Inside this workspace it is already linked. From elsewhere, depend on the
-repository directory or add it as a workspace.
+The package ships **compiled JavaScript with type declarations**, so it works
+from anywhere — a Vite app, a plain Node script, a test runner, a notebook. No
+bundler is required and no TypeScript build is imposed on the consumer.
 
-Source is exported directly — both current consumers are Vite apps, which
-transform TypeScript in linked workspace dependencies. Publishing to a registry
-would need a build step emitting `.js` and `.d.ts`.
+From another repository, until this is on a registry:
+
+```bash
+npm pack --workspace @orrery/core        # in this repo -> orrery-core-x.y.z.tgz
+npm install ../path/to/orrery-core-0.4.0.tgz
+```
+
+or depend on the git repository directly. Inside this workspace it is already
+linked; `npm install` builds it through the package's `prepare` script.
+
+Output is **per module, not bundled** — 27 separate files — because the whole
+shape of the package is that each engine stands on its own. Bundling would
+collapse the subpaths and take the tree-shaking with them.
 
 ## Use
 

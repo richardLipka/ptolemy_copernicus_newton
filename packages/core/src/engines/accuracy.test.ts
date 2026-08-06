@@ -22,15 +22,15 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { BodyId } from '../bodies';
-import { apparentLongitude } from '../coordinates';
-import { jdFromCalendar } from '../time';
-import { angleDiffDeg } from '../vec';
-import { circularPositions } from './circular';
-import { copernicanPositions } from './copernican';
-import { keplerianPositions } from './keplerian';
-import { vsop87Positions } from './vsop87';
-import { ptolemaicEpicyclicPositions } from './ptolemaic';
+import type { BodyId } from '../bodies.js';
+import { apparentLongitude } from '../coordinates.js';
+import { jdFromCalendar } from '../time.js';
+import { angleDiffDeg } from '../vec.js';
+import { circularPositions } from './circular.js';
+import { copernicanPositions } from './copernican.js';
+import { keplerianPositions } from './keplerian.js';
+import { vsop87Positions } from './vsop87.js';
+import { ptolemaicEpicyclicPositions } from './ptolemaic.js';
 
 const SAMPLE_JDS = [1600, 1700, 1800, 1900, 2000, 2100, 2250, 2400].map((year) =>
   jdFromCalendar(year, 1, 1),

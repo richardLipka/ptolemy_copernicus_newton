@@ -8,9 +8,9 @@
  * without changing anything a viewer could see.
  */
 
-import type { BodyId } from './bodies';
-import type { PositionSet } from './engines/types';
-import { angleDiffDeg, length, normalizeDeg, sub, type Vec3 } from './vec';
+import type { BodyId } from './bodies.js';
+import type { PositionSet } from './engines/types.js';
+import { angleDiffDeg, length, normalizeDeg, sub, type Vec3 } from './vec.js';
 
 export interface SphericalPosition {
   /** Ecliptic longitude, degrees in [0, 360). */

@@ -9,12 +9,12 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { BODIES } from './bodies';
-import type { EngineId } from './engines/types';
-import { satelliteHarness } from './satelliteHarness';
-import { satelliteOffsetAt } from './satellites';
-import { jdFromCalendar } from './time';
-import { add, length, sub, vec3 } from './vec';
+import { BODIES } from './bodies.js';
+import type { EngineId } from './engines/types.js';
+import { satelliteHarness } from './satelliteHarness.js';
+import { satelliteOffsetAt } from './satellites.js';
+import { jdFromCalendar } from './time.js';
+import { add, length, sub, vec3 } from './vec.js';
 
 const JD = jdFromCalendar(1610, 1, 7);
 /** Jupiter somewhere away from the origin, so nothing passes by accident. */

@@ -14,8 +14,8 @@
  * project it exactly as it does everything else.
  */
 
-import type { BodyId } from './bodies';
-import type { Vec3 } from './vec';
+import type { BodyId } from './bodies.js';
+import type { Vec3 } from './vec.js';
 
 export type ConstructionRole =
   /** The main circle: Ptolemy's deferent, or a Copernican orbit. */

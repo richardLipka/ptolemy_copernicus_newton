@@ -28,9 +28,9 @@
  *     which is visible within a fortnight of running the clock.
  */
 
-import { BODIES, type BodyId } from './bodies';
-import { J2000 } from './time';
-import { DEG, add, vec3, type Vec3 } from './vec';
+import { BODIES, type BodyId } from './bodies.js';
+import { J2000 } from './time.js';
+import { DEG, add, vec3, type Vec3 } from './vec.js';
 
 /**
  * Solve Kepler's equation for a satellite.

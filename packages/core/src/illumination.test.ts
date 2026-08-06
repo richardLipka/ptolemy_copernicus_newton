@@ -4,17 +4,17 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { BodyId } from './bodies';
-import { circularPositions } from './engines/circular';
-import { keplerianPositions } from './engines/keplerian';
-import { nbodyEngine } from './engines/nbody';
+import type { BodyId } from './bodies.js';
+import { circularPositions } from './engines/circular.js';
+import { keplerianPositions } from './engines/keplerian.js';
+import { nbodyEngine } from './engines/nbody.js';
 import {
   ptolemaicEpicyclicPositions,
   ptolemaicReframePositions,
-} from './engines/ptolemaic';
-import type { PositionSet } from './engines/types';
-import { illuminationOf } from './illumination';
-import { jdFromCalendar } from './time';
+} from './engines/ptolemaic.js';
+import type { PositionSet } from './engines/types.js';
+import { illuminationOf } from './illumination.js';
+import { jdFromCalendar } from './time.js';
 
 const START = jdFromCalendar(2026, 1, 1);
 const DAYS = 800;

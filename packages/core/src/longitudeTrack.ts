@@ -17,9 +17,9 @@
  * and it plots what that model predicts an observer would have recorded.
  */
 
-import { BODIES, type BodyId } from './bodies';
-import { apparentLongitude } from './coordinates';
-import type { PositionSet } from './engines/types';
+import { BODIES, type BodyId } from './bodies.js';
+import { apparentLongitude } from './coordinates.js';
+import type { PositionSet } from './engines/types.js';
 
 /**
  * The Moon's own period, days. Not in `bodies.ts`, which holds heliocentric

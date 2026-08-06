@@ -9,15 +9,15 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { relativePosition, solarElongation } from './coordinates';
-import { DEMONSTRATIONS, type Demonstration } from './demonstrations';
-import { circularPositions } from './engines/circular';
-import { keplerianPositions } from './engines/keplerian';
-import { ptolemaicEpicyclicPositions } from './engines/ptolemaic';
-import { vsop87Positions } from './engines/vsop87';
-import { findConjunctions, findOppositions } from './events';
-import { illuminationOf } from './illumination';
-import { MAX_JD, MIN_JD, jdFromCalendar } from './time';
+import { relativePosition, solarElongation } from './coordinates.js';
+import { DEMONSTRATIONS, type Demonstration } from './demonstrations.js';
+import { circularPositions } from './engines/circular.js';
+import { keplerianPositions } from './engines/keplerian.js';
+import { ptolemaicEpicyclicPositions } from './engines/ptolemaic.js';
+import { vsop87Positions } from './engines/vsop87.js';
+import { findConjunctions, findOppositions } from './events.js';
+import { illuminationOf } from './illumination.js';
+import { MAX_JD, MIN_JD, jdFromCalendar } from './time.js';
 
 const find = (id: string): Demonstration =>
   DEMONSTRATIONS.find((demonstration) => demonstration.id === id)!;

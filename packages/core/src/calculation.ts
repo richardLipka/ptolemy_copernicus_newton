@@ -22,20 +22,20 @@
  * for display, so the panel cannot drift away from what the map is drawing.
  */
 
-import { BODIES, GM_SUN, type BodyId } from './bodies';
-import { apparentLongitude } from './coordinates';
-import { copernicanHeliocentricAt, copernicanPositions } from './engines/copernican';
+import { BODIES, GM_SUN, type BodyId } from './bodies.js';
+import { apparentLongitude } from './coordinates.js';
+import { copernicanHeliocentricAt, copernicanPositions } from './engines/copernican.js';
 import {
   elementsAt,
   keplerianPositions,
   meanAnomalyAt,
   solveKeplerTraced,
-} from './engines/keplerian';
-import { nbodyEngine } from './engines/nbody';
-import { ptolemaicEpicyclicPositions, ptolemaicGeometryFor } from './engines/ptolemaic';
-import type { EngineId } from './engines/types';
-import { J2000 } from './time';
-import { normalizeDeg } from './vec';
+} from './engines/keplerian.js';
+import { nbodyEngine } from './engines/nbody.js';
+import { ptolemaicEpicyclicPositions, ptolemaicGeometryFor } from './engines/ptolemaic.js';
+import type { EngineId } from './engines/types.js';
+import { J2000 } from './time.js';
+import { normalizeDeg } from './vec.js';
 
 /**
  * How a value should read once it reaches a reader.

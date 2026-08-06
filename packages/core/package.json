@@ -10,20 +10,41 @@
     "url": "https://github.com/richardLipka/ptolemy_copernicus_newton.git",
     "directory": "packages/core"
   },
+  "keywords": [
+    "astronomy",
+    "orrery",
+    "ephemeris",
+    "ptolemy",
+    "copernicus",
+    "kepler",
+    "vsop87",
+    "history-of-science"
+  ],
   "engines": {
     "node": ">=20"
   },
-  "//": "Source is exported directly: both consumers are Vite apps, which transform TypeScript in linked workspace dependencies. Publishing to a registry would need a build step emitting .js and .d.ts.",
+  "//": "Compiled output, per module rather than bundled: every engine and data module keeps its own subpath so a consumer can take one without the rest.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./*": "./src/*.ts",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js"
+    },
     "./package.json": "./package.json"
   },
   "sideEffects": false,
   "files": [
-    "src"
+    "dist",
+    "README.md"
   ],
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepare": "npm run build",
     "typecheck": "tsc --noEmit",
     "generate:vsop87": "node scripts/generate-vsop87.mjs"
   },

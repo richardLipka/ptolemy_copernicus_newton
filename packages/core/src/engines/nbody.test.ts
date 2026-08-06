@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import type { BodyId } from '../bodies';
-import { apparentLongitude, toSpherical } from '../coordinates';
-import { J2000, calendarFromJd, jdFromCalendar } from '../time';
-import { angleDiffDeg, length, sub } from '../vec';
-import { keplerianPositions } from './keplerian';
-import { NBodySimulation, toHeliocentric } from './nbody';
-import type { PositionSet } from './types';
+import type { BodyId } from '../bodies.js';
+import { apparentLongitude, toSpherical } from '../coordinates.js';
+import { J2000, calendarFromJd, jdFromCalendar } from '../time.js';
+import { angleDiffDeg, length, sub } from '../vec.js';
+import { keplerianPositions } from './keplerian.js';
+import { NBodySimulation, toHeliocentric } from './nbody.js';
+import type { PositionSet } from './types.js';
 
 const RANGE_YEARS = [1600, 1700, 1800, 1900, 2100, 2200, 2300, 2400];
 

@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
-import { circularPositions } from './engines/circular';
-import { keplerianPositions } from './engines/keplerian';
-import { NBodySimulation } from './engines/nbody';
-import { ptolemaicEpicyclicPositions } from './engines/ptolemaic';
-import type { EngineId, PositionSet } from './engines/types';
+import { circularPositions } from './engines/circular.js';
+import { keplerianPositions } from './engines/keplerian.js';
+import { NBodySimulation } from './engines/nbody.js';
+import { ptolemaicEpicyclicPositions } from './engines/ptolemaic.js';
+import type { EngineId, PositionSet } from './engines/types.js';
 import {
   compareAcrossModels,
   findConjunctions,
   findOppositions,
   findStations,
-} from './events';
-import { calendarFromJd, jdFromCalendar } from './time';
+} from './events.js';
+import { calendarFromJd, jdFromCalendar } from './time.js';
 
 const dateOf = (jd: number): string => {
   const c = calendarFromJd(jd);

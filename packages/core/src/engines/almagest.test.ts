@@ -20,12 +20,12 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { BodyId } from '../bodies';
-import { apparentLongitude } from '../coordinates';
-import { jdFromCalendar } from '../time';
-import { angleDiffDeg } from '../vec';
-import { keplerianPositions } from './keplerian';
-import { almagestTablePositions, ptolemaicEpicyclicPositions } from './ptolemaic';
+import type { BodyId } from '../bodies.js';
+import { apparentLongitude } from '../coordinates.js';
+import { jdFromCalendar } from '../time.js';
+import { angleDiffDeg } from '../vec.js';
+import { keplerianPositions } from './keplerian.js';
+import { almagestTablePositions, ptolemaicEpicyclicPositions } from './ptolemaic.js';
 
 type Ephemeris = (jd: number) => ReturnType<typeof keplerianPositions>;
 

@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { apparentLongitude } from '../coordinates';
-import { jdFromCalendar } from '../time';
-import { angleDiffDeg } from '../vec';
-import { keplerianPositions } from './keplerian';
-import { vsop87Positions } from './vsop87';
+import { apparentLongitude } from '../coordinates.js';
+import { jdFromCalendar } from '../time.js';
+import { angleDiffDeg } from '../vec.js';
+import { keplerianPositions } from './keplerian.js';
+import { vsop87Positions } from './vsop87.js';
 import {
   ptolemaicEpicyclicPositions,
   ptolemaicReframePositions,
-} from './ptolemaic';
+} from './ptolemaic.js';
 
 const SAMPLE_JDS = [
   jdFromCalendar(1600, 1, 1),

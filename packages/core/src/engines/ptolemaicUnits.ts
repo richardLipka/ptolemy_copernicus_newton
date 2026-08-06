@@ -21,8 +21,8 @@
  * nineteen times too small.
  */
 
-import { BODIES, type BodyId } from '../bodies';
-import { ptolemaicGeometryFor } from './ptolemaic';
+import { BODIES, type BodyId } from '../bodies.js';
+import { ptolemaicGeometryFor } from './ptolemaic.js';
 
 /** Ptolemy's divisor. Every Almagest parameter is in sixtieths of a deferent. */
 export const DEFERENT_PARTS = 60;

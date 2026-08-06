@@ -17,11 +17,11 @@
  * and `illumination.test.ts` for the other.
  */
 
-import type { BodyId } from './bodies';
-import { BODIES } from './bodies';
-import type { PositionSet } from './engines/types';
-import { angleDiffDeg, dot, length, sub } from './vec';
-import { apparentLongitude } from './coordinates';
+import type { BodyId } from './bodies.js';
+import { BODIES } from './bodies.js';
+import type { PositionSet } from './engines/types.js';
+import { angleDiffDeg, dot, length, sub } from './vec.js';
+import { apparentLongitude } from './coordinates.js';
 
 export interface Illumination {
   /** Sun-body-observer angle, degrees. Zero is full, 180 is new. */

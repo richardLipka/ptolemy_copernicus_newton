@@ -1,7 +1,7 @@
-import type { BodyId } from '../bodies';
-import type { ConstructionSource } from '../construction';
-import type { DynamicsSource } from '../dynamics';
-import type { Vec3 } from '../vec';
+import type { BodyId } from '../bodies.js';
+import type { ConstructionSource } from '../construction.js';
+import type { DynamicsSource } from '../dynamics.js';
+import type { Vec3 } from '../vec.js';
 
 /**
  * Positions of every modelled body at one instant, in the ecliptic plane,

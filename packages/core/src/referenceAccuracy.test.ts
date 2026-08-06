@@ -18,12 +18,12 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { keplerianPositions } from './engines/keplerian';
-import { nbodyEngine } from './engines/nbody';
-import type { PositionSet } from './engines/types';
-import { vsop87Positions } from './engines/vsop87';
-import { findConjunctions, findOppositions } from './events';
-import { jdFromCalendar } from './time';
+import { keplerianPositions } from './engines/keplerian.js';
+import { nbodyEngine } from './engines/nbody.js';
+import type { PositionSet } from './engines/types.js';
+import { vsop87Positions } from './engines/vsop87.js';
+import { findConjunctions, findOppositions } from './events.js';
+import { jdFromCalendar } from './time.js';
 
 type Ephemeris = (jd: number) => PositionSet;
 

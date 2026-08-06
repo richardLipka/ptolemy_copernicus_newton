@@ -1,0 +1,25 @@
+{
+  /*
+   * Emit for consumers outside this repository.
+   *
+   * Per-file output, not a bundle. That is deliberate: the package's whole
+   * shape is that each engine and each data module can be imported on its own,
+   * and bundling would collapse the subpaths into one file and take the
+   * tree-shaking with it.
+   *
+   * Tests are excluded, and `types` is cleared so the published declarations do
+   * not drag vitest's globals into a consumer's compilation.
+   */
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "types": []
+  },
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts"]
+}

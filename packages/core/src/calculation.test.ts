@@ -9,15 +9,15 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { calculationsFor } from './calculation';
-import { apparentLongitude } from './coordinates';
-import { copernicanPositions } from './engines/copernican';
-import { keplerianPositions, solveKeplerTraced } from './engines/keplerian';
-import { nbodyEngine } from './engines/nbody';
-import { ptolemaicEpicyclicPositions } from './engines/ptolemaic';
-import type { EngineId } from './engines/types';
-import { jdFromCalendar } from './time';
-import { normalizeDeg } from './vec';
+import { calculationsFor } from './calculation.js';
+import { apparentLongitude } from './coordinates.js';
+import { copernicanPositions } from './engines/copernican.js';
+import { keplerianPositions, solveKeplerTraced } from './engines/keplerian.js';
+import { nbodyEngine } from './engines/nbody.js';
+import { ptolemaicEpicyclicPositions } from './engines/ptolemaic.js';
+import type { EngineId } from './engines/types.js';
+import { jdFromCalendar } from './time.js';
+import { normalizeDeg } from './vec.js';
 
 const JD = jdFromCalendar(1602, 3, 3);
 

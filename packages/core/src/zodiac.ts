@@ -13,8 +13,8 @@
  * separate by a third of a sign.
  */
 
-import { normalizeDeg } from './vec';
-import { centuriesSinceJ2000 } from './time';
+import { normalizeDeg } from './vec.js';
+import { centuriesSinceJ2000 } from './time.js';
 
 export type ZodiacScheme = 'signs' | 'constellations';
 
