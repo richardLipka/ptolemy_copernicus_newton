@@ -60,6 +60,7 @@ import { centuriesSinceJ2000 } from '../time';
 import { DEG, add, sub, vec3, type Vec3 } from '../vec';
 import { elementsAt, meanAnomalyAt, orbitalPlaneToEcliptic } from './keplerian';
 import type { Engine, PositionSet } from './types';
+import { addSatellites } from '../satellites';
 
 /**
  * How Copernicus divided the eccentricity between deferent and epicyclet.
@@ -180,6 +181,7 @@ export function copernicanPositions(jd: number): Map<BodyId, Vec3> {
   const earth = positions.get('earth')!;
   positions.set('moon', add(earth, copernicanMoonGeocentricAt(jd)));
 
+  addSatellites(jd, positions);
   return positions;
 }
 

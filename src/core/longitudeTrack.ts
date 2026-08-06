@@ -83,12 +83,12 @@ export interface LongitudeTrack {
 /**
  * Period of a body about its own primary, days.
  *
- * The Moon is the only such body on this branch and its period is not in
- * `bodies.ts`, which carries heliocentric elements. Kept as a named function so
- * the branch that adds the Galileans has one place to extend.
+ * The Galileans and Titan carry their own, since the whole point of them is the
+ * Laplace resonance between those periods. The Moon's is not in `bodies.ts`,
+ * which otherwise holds heliocentric elements only, so it is named here.
  */
-function satellitePeriodDays(_id: BodyId): number {
-  return SIDEREAL_MONTH;
+function satellitePeriodDays(id: BodyId): number {
+  return BODIES[id].satellite?.periodDays ?? SIDEREAL_MONTH;
 }
 
 /** Orbital period about the Sun, days, or null where the body has no orbit. */

@@ -493,6 +493,136 @@ Two honesty notes that the tests carry as comments:
   advantage on those planets appears only once perturbation is added, which is
   Newton's territory.
 
+### 12.3b The moons, and why they sit outside every model
+
+The four Galileans and Titan are drawn **identically under all four models**,
+and that is not laziness. No pre-1610 model contains them: Ptolemy had never
+heard of them and Copernicus died sixty-seven years before anyone saw one. What
+changes when the model changes is where *Jupiter* is; the moons ride along.
+
+Which is the point Galileo made. Four bodies plainly going round something that
+is not the Earth was the first observation the geocentric system had no answer
+to, and selecting Jupiter in Ptolemy mode puts that contradiction on screen.
+
+**Precision is not claimed.** The mean longitudes are approximate, so the
+configuration on a given date is not to be trusted. The *periods* are accurate,
+because the two demonstrations rest only on them and both are asserted in
+`satellites.test.ts`:
+
+- **Kepler's third law holds inside the Jovian system.** `a³/P²` comes to
+  2.397, 2.396, 2.396, 2.396 ×10¹⁶ km³/day² across the four Galileans —
+  constant to four figures, with a constant of its own about a thousandth of the
+  Sun's, because the constant is set by the mass at the centre.
+- **The Laplace resonance**, 1:2:4, and not merely as a ratio: the test checks
+  the relation between the mean motions, `n_Io − 3·n_Europa + 2·n_Ganymede ≈ 0`,
+  which a coincidence of ratios would not satisfy.
+
+#### How they are drawn
+
+Four rules, all about keeping a system of four legible rather than about
+accuracy:
+
+- **Orbits like any other body.** A moon's trail is logged and projected exactly
+  as a planet's is. Its *marker*, its *trail* and its *orbit circle* are computed
+  in three different places, so all three go through the same exaggeration —
+  `satelliteView.test.ts` asserts that every sampled point of the drawn circle
+  sits at the marker's own radius, and that the trail keeps to it too. Get one of
+  them wrong and the moon sits off its own orbit.
+- **The harness is the whole family.** Selecting Jupiter draws all four Galilean
+  orbits; selecting Io draws its siblings as well. A single circle says nothing
+  about a system whose entire interest is the relation between its members — the
+  1:2:4 spacing is only visible with all of them present.
+- **Sight-lines only for a selected moon.** Five more rays converging on the
+  observer, from bodies sitting a pixel or two from their planet, would put five
+  near-identical lines and five pips on one spot of the ring, exactly where the
+  planet's own reading belongs.
+- **Names only when the family is selected *and* the map is magnified**
+  (`SATELLITE_LABEL_ZOOM = 3`), and an off-screen moon earns an edge pointer
+  (§13.3c) on the same family test — zoom deep enough to throw Jupiter off the
+  map and it takes its moons with it, all on one bearing, so five stacked
+  chevrons would only repeat what Jupiter's already says. When the Jovian system
+  *is* the selection they are the point of the exercise.
+  At the fitted view the four Galileans share a few
+  pixels, so the labels would overlap each other and Jupiter's.
+
+The harness comes from `satelliteHarness()` in `core/satelliteHarness.ts` rather
+than from an engine, because **no engine supplies one** — the moons are not
+derived by any model here, and Newton's engine exposes no `construction` at all.
+
+What it draws is a counterfactual, not a historical claim: neither Ptolemy nor
+Copernicus wrote a word about the Galileans, and one of them was dead sixty-seven
+years before anyone saw one. The question it answers is *given this orbit, what
+would each model have drawn?* — from one set of elements in `bodies.ts`,
+described five ways:
+
+| mode | machinery |
+|---|---|
+| circular, reframe | one circle centred on the planet |
+| Ptolemaic | eccentric circle, centre at *ae*/2, equant at *ae*, apsidal line |
+| Copernican | eccentric at 3/2·*ae* carrying an epicyclet of 1/2·*ae* |
+| Kepler | ellipse, both foci marked, apsidal line, radius vector |
+| Newton | the same conic, one focus, radius only — derived, not described |
+
+The uneven result is the lesson, and `satelliteHarness.test.ts` measures it.
+Over a revolution the plain circle's radial error reaches *ae*; displacing the
+centre to *ae*/2 **halves it**, one extra number for half the error. That the
+eccentric is still wrong by O(e) radially is the device's known limitation
+rather than a defect here — the bisected eccentricity was built to get
+*directions* right, which is why the geocentric system survived as long as it
+did on longitude alone. Kepler's ellipse is exact, and the test holds it to the
+definition: the distances to the two foci sum to 2a at every sampled point, to
+nine places.
+
+A caveat for the eye rather than the arithmetic. These orbits are nearly
+circular — Io at e = 0.0041, Titan the most eccentric at 0.029 — so the
+eccentric offsets and the epicyclet run to a fraction of a percent of the
+deferent and will not be *visible* at most magnifications even though they are
+drawn. What separates the models on screen is the apparatus: an equant dot, a
+second focus, an apsidal line, a radius instead of an arm. Titan shows the
+offsets best.
+
+One consequence of "orbits are logged, never pre-computed" is worth knowing: at
+high time rates a frame-rate log cannot resolve Io's 1.77-day orbit, and the
+trail degenerates into a polygon. That is honest rather than broken — at 20
+days/s you genuinely are not sampling Io — and it comes right at ordinary rates.
+
+#### They are not in the integrator
+
+`GRAVITATING_BODY_IDS` is deliberately **not** `BODY_IDS`. The n-body run steps
+a quarter of a day, which gives Io — going round in 1.77 days — **seven steps
+per orbit**, and an orbit sampled seven times does not close. Resolving it would
+need a step fifteen times finer and, with fourteen bodies instead of nine,
+would turn a 370 ms seek to 1602 into something near fifteen seconds.
+
+So they are two-body riders on their integrated primary. That is not a dodge
+around the arithmetic but **Newton's own treatment**: *Principia* Book III takes
+Jupiter's moons as a two-body problem, and that is how he weighed Jupiter.
+
+#### Drawing them at all
+
+Projected honestly they are hopeless — at compressed scale Io sits 0.0125% of
+the map radius from Jupiter, which on a 600px map is four hundredths of a pixel,
+and Callisto manages a sixth of one. They get the same exaggeration the Moon
+does, **linear in the true distance**, which is what keeps the system legible as
+a system: the Galileans span 4.5:1 from Io to Callisto and a linear scaling
+preserves both their order and their spacing. Measured on screen at moderate
+zoom: 45, 66, 119 and 197 px from Jupiter, a 4.4:1 spread.
+
+**On the compressed scale only**, on the same reasoning as §13.3b. When the
+moons were first drawn the exaggeration was unconditional, which left the
+honest view carrying a satellite system inflated four hundred times — precisely
+the lie the true-scale toggle exists to switch off. `satelliteDrawnRadius()`
+now takes the scale mode and hands true scale straight to `projectRadius`. Drawn
+honestly Io sits 0.000161 of the map radius from Jupiter; the deep zoom of
+§13.3c is what makes the family separable again, and at 1000x it measures 27 px
+for Io and 121 px for Callisto. That pairing — an honest projection plus enough
+magnification to read it — is the whole reason the zoom ceiling was raised.
+
+They are also excluded from event scanning. Io and Europa conjoin every couple
+of days, and including them would bury every genuine planetary event under a
+drift of moon-on-moon conjunctions nobody in any century thought worth
+tabulating.
+
 ### 12.4 Deliberate simplifications
 
 - **Ptolemy's lunar crank is not implemented.** The engine uses the simple
@@ -1373,6 +1503,11 @@ selection off — which is what a single click does anyway.
 The hint is a panel note rather than a `title` on each chip, matching how the
 app explains its other controls and keeping it under the same explanations
 toggle.
+
+On this branch the shortcut has real families to frame, which is what it was
+written for: Jupiter lands at 6.32x framing Callisto and Saturn at 10.97x
+framing Titan, against Earth's 12.18x for the Moon. Mars takes the fixed
+fallback, and so does Io — nothing orbits a moon.
 
 ### 13.3g The longitude strip: what an observer actually records
 

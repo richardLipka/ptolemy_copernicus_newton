@@ -9,12 +9,13 @@
  * nudging the result back towards the reference ephemeris.
  */
 
-import { BODIES, BODY_IDS, type BodyId } from '../bodies';
+import { BODIES, GRAVITATING_BODY_IDS, type BodyId } from '../bodies';
 import { dynamicsOf, type Dynamics, type StateVectors } from '../dynamics';
 import { J2000, MAX_JD, MIN_JD } from '../time';
 import { ZERO, add, scale, sub, vec3, type Vec3 } from '../vec';
 import { keplerianStates } from './keplerian';
 import type { Engine, PositionSet, StateVector } from './types';
+import { addSatellites } from '../satellites';
 
 /**
  * Integration step, days. The Moon sets this: it laps its orbit ~10,700 times
@@ -106,7 +107,7 @@ function correctedSeedStates(
  * objects per body per step dominates everything else.
  */
 export class NBodySimulation {
-  private readonly count = BODY_IDS.length;
+  private readonly count = GRAVITATING_BODY_IDS.length;
   private readonly gm: Float64Array;
   private readonly stepDays: number;
 
@@ -128,7 +129,7 @@ export class NBodySimulation {
     this.speedCorrection = speedCorrection;
     this.gm = new Float64Array(this.count);
     for (let i = 0; i < this.count; i++) {
-      this.gm[i] = BODIES[BODY_IDS[i]!].gm;
+      this.gm[i] = BODIES[GRAVITATING_BODY_IDS[i]!].gm;
     }
 
     this.positions = new Float64Array(this.count * 3);
@@ -153,7 +154,7 @@ export class NBodySimulation {
     let vx = 0, vy = 0, vz = 0;
 
     for (let i = 0; i < this.count; i++) {
-      const state = states.get(BODY_IDS[i]!) as StateVector;
+      const state = states.get(GRAVITATING_BODY_IDS[i]!) as StateVector;
       const mass = this.gm[i]!;
       totalMass += mass;
       cx += mass * state.position.x;
@@ -168,7 +169,7 @@ export class NBodySimulation {
     vx /= totalMass; vy /= totalMass; vz /= totalMass;
 
     for (let i = 0; i < this.count; i++) {
-      const state = states.get(BODY_IDS[i]!) as StateVector;
+      const state = states.get(GRAVITATING_BODY_IDS[i]!) as StateVector;
       const base = i * 3;
       this.positions[base] = state.position.x - cx;
       this.positions[base + 1] = state.position.y - cy;
@@ -300,10 +301,23 @@ export class NBodySimulation {
     for (let i = 0; i < this.count; i++) {
       const base = i * 3;
       result.set(
-        BODY_IDS[i]!,
+        GRAVITATING_BODY_IDS[i]!,
         vec3(this.positions[base]!, this.positions[base + 1]!, this.positions[base + 2]!),
       );
     }
+
+    /*
+     * The moons are hung on afterwards rather than integrated, because a
+     * quarter-day step gives Io seven of them per orbit and an orbit sampled
+     * seven times does not close. Resolving it would need a step fifteen times
+     * finer and, with fourteen bodies instead of nine, would turn a 370 ms seek
+     * into something near fifteen seconds.
+     *
+     * This is not a dodge around the arithmetic. It is Newton's own treatment:
+     * Principia Book III takes Jupiter's moons as a two-body problem, and that
+     * is how he weighed Jupiter.
+     */
+    addSatellites(jd, result);
     return result;
   }
 
@@ -322,7 +336,7 @@ export class NBodySimulation {
     const velocities = new Map<BodyId, Vec3>();
     for (let i = 0; i < this.count; i++) {
       const base = i * 3;
-      const id = BODY_IDS[i]!;
+      const id = GRAVITATING_BODY_IDS[i]!;
       positions.set(
         id,
         vec3(this.positions[base]!, this.positions[base + 1]!, this.positions[base + 2]!),

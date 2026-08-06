@@ -87,6 +87,38 @@ describe('focusViewFor', () => {
     }
   });
 
+  it('frames the Galilean system when focusing Jupiter', () => {
+    /*
+     * The case this branch adds. Callisto is the outermost of the four, so it is
+     * what sets the framing — and because the zoom is read off the projection,
+     * the same call serves the exaggerated compressed view and the honest one.
+     */
+    for (const scaleMode of ['compressed', 'true'] as ScaleMode[]) {
+      const state = stateWith(scaleMode);
+      const zoom = focusViewFor(state, 'jupiter').zoom;
+      expect(reachOf(state, 'jupiter', 'callisto') * zoom, scaleMode).toBeCloseTo(0.35, 6);
+      // Every moon of the family lands inside the frame, none of them on the rim.
+      for (const moon of ['io', 'europa', 'ganymede', 'callisto'] as BodyId[]) {
+        expect(reachOf(state, 'jupiter', moon) * zoom, `${moon}/${scaleMode}`).toBeLessThanOrEqual(
+          0.35 + 1e-9,
+        );
+      }
+    }
+  });
+
+  it('frames Titan when focusing Saturn', () => {
+    const state = stateWith('compressed');
+    const zoom = focusViewFor(state, 'saturn').zoom;
+    expect(reachOf(state, 'saturn', 'titan') * zoom).toBeCloseTo(0.35, 6);
+  });
+
+  it('needs far more magnification for the Galileans at true scale', () => {
+    // Honest, they sit hard against Jupiter; exaggerated, they are a system.
+    const compressed = focusViewFor(stateWith('compressed'), 'jupiter').zoom;
+    const trueScale = focusViewFor(stateWith('true'), 'jupiter').zoom;
+    expect(trueScale / compressed).toBeGreaterThan(20);
+  });
+
   it('falls back to a fixed magnification for a body with no moons', () => {
     const state = stateWith('compressed');
     for (const id of ['venus', 'mercury', 'mars'] as BodyId[]) {

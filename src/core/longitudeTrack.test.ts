@@ -104,8 +104,22 @@ describe('trackWindowDays', () => {
     expect(trackWindowDays('earth', 'moon')).toBe(45);
   });
 
+  it('gives a Galilean its own period seen from Jupiter', () => {
+    /*
+     * The case this branch adds. Io goes round Jupiter in 1.77 days, so the
+     * window is set by the floor rather than by the period — which is right: a
+     * strip 2 days wide would be unreadable, and 45 days shows Io round some
+     * twenty-five times, with the resonance against Europa plain in the beat.
+     */
+    expect(trackWindowDays('jupiter', 'io')).toBe(45);
+    expect(trackWindowDays('saturn', 'titan')).toBe(45);
+  });
+
   it('stays inside sane bounds for every pairing', () => {
-    const ids: BodyId[] = ['sun', 'mercury', 'venus', 'earth', 'moon', 'mars', 'jupiter', 'saturn'];
+    const ids: BodyId[] = [
+      'sun', 'mercury', 'venus', 'earth', 'moon', 'mars', 'jupiter', 'saturn',
+      'io', 'europa', 'ganymede', 'callisto', 'titan',
+    ];
     for (const observer of ids) {
       for (const target of ids) {
         const days = trackWindowDays(observer, target);
