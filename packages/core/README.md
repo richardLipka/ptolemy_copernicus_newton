@@ -85,14 +85,19 @@ and the identical geometry runs on it:
 ```ts
 import {
   ALMAGEST_PARAMETERS,
+  clonePtolemaicParameters,
   createPtolemaicEngine,
 } from '@orrery/core/engines/ptolemaic';
 
-const mine = structuredClone(ALMAGEST_PARAMETERS);
+const mine = clonePtolemaicParameters(ALMAGEST_PARAMETERS);
 mine.planets.mars!.epicycleRadius = 41;      // my fit, not his
 
 const engine = createPtolemaicEngine(mine);   // a normal Engine
 ```
+
+Use `clonePtolemaicParameters` rather than `structuredClone`: the historical sets
+are shared objects that the default engines also hold, and this package compiles
+without the DOM lib, so a consumer doing the same cannot see that global.
 
 `createPtolemaicEngine` and `createCopernicanEngine` return ordinary `Engine`
 values, so a fitted set can be handed to everything that consumes one — the

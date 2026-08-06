@@ -55,8 +55,9 @@ const CHECKPOINT_INTERVAL_DAYS = 365.25 * 5;
  * These factors are the classical fix — differential correction of the initial
  * conditions against observation, which is how real orbit determination works.
  * They were found by nulling the secular longitude drift measured symmetrically
- * either side of the epoch; `calibrateSeed` in the test suite regenerates them
- * and guards them against regression.
+ * either side of the epoch. `calibrateSeed` in `calibrate.ts` regenerates them;
+ * it is a maintenance tool run by hand, not part of the suite, so these values
+ * are guarded by the accuracy tests rather than by re-deriving them.
  */
 const SEED_SPEED_CORRECTION: Partial<Record<BodyId, number>> = {
   mercury: 6.255441566527657e-8,

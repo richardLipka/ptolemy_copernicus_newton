@@ -129,6 +129,28 @@ export const ALMAGEST_PARAMETERS: PtolemaicParameters = {
 };
 
 /**
+ * A copy safe to edit.
+ *
+ * A fit works by taking a starting set and moving one number, and doing that to
+ * `ALMAGEST_PARAMETERS` directly would corrupt the historical constants for
+ * every other consumer in the process — including the default engine, which
+ * holds the same object. `structuredClone` would serve, but it is a host global
+ * that this package cannot see: core compiles without the DOM lib, deliberately,
+ * so a consumer doing the same gets a type error for reaching at it.
+ */
+export function clonePtolemaicParameters(params: PtolemaicParameters): PtolemaicParameters {
+  const planets: Partial<Record<BodyId, AlmagestModel>> = {};
+  for (const [id, model] of Object.entries(params.planets) as [BodyId, AlmagestModel][]) {
+    planets[id] = { ...model };
+  }
+  return {
+    planets,
+    sun: { ...params.sun },
+    moon: { ...params.moon },
+  };
+}
+
+/**
  * Deferent radii from Ptolemy's nested spheres.
  *
  * The Almagest fixes only the *ratio* r/R for each planet; the absolute size of
