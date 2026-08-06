@@ -47,6 +47,21 @@ const WINDOW_SHARE = 1.15;
 const MIN_WINDOW = 45;
 const MAX_WINDOW = 2200;
 
+/**
+ * Most cycles worth crowding onto one strip.
+ *
+ * The 45-day floor was set with the Moon in mind, whose cycle is 27 days, and it
+ * is far too generous for anything quicker: Io laps Jupiter every 1.77 days, so
+ * the floor alone gave it **twenty-five** orbits in one strip — a sawtooth so
+ * dense it read as hatching, with a tenth of its segments discarded at the seam.
+ *
+ * A ceiling in cycles rather than in days is what the floor was always reaching
+ * for. It leaves every planet untouched, because none of them comes close to
+ * four cycles in the window they already get, and it leaves the Moon on its 45
+ * days for the same reason.
+ */
+const MAX_CYCLES_SHOWN = 4;
+
 export interface TrackPoint {
   jd: number;
   /** Apparent ecliptic longitude, degrees in [0, 360). */
@@ -143,8 +158,12 @@ export function trackCycleDays(observer: BodyId, target: BodyId): number {
  * the question of why Saturn reads 435 days when its synodic period is 378.
  */
 export function trackWindowDays(observer: BodyId, target: BodyId): number {
-  const wanted = trackCycleDays(observer, target) * WINDOW_SHARE;
-  return Math.min(MAX_WINDOW, Math.max(MIN_WINDOW, wanted));
+  const cycle = trackCycleDays(observer, target);
+  const wanted = cycle * WINDOW_SHARE;
+  const bounded = Math.min(MAX_WINDOW, Math.max(MIN_WINDOW, wanted));
+  // The floor may not buy more than a few cycles: past that the curve stops
+  // being a shape and becomes a texture.
+  return Math.min(bounded, cycle * MAX_CYCLES_SHOWN);
 }
 
 /**

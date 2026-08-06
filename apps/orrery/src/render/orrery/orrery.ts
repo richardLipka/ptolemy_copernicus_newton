@@ -20,6 +20,8 @@ import {
   projectRadius,
   projectTrail,
   ringIntercept,
+  type BodyView,
+  type OrreryView,
   type Point,
 } from '../../state/selectors';
 import { CONSTELLATION_FIGURES } from './constellations';
@@ -32,12 +34,44 @@ const RING_OUTER = 1.26;
 const RING_FIGURES = 1.16;
 
 /**
- * Magnification at which a moon's name becomes readable.
+ * How far a moon must be drawn from its planet before its name is worth
+ * printing, as a fraction of the map radius.
  *
- * Below this the four Galileans share a few pixels and their labels would sit on
- * top of one another and of Jupiter's.
+ * This was a magnification threshold — `zoom >= 3` — and that was wrong in a way
+ * only measurement showed. Zoom says nothing on its own about how far apart two
+ * bodies land: at 6x on the compressed scale Io sits 12 px from Jupiter, and at
+ * the same 6x on the true scale it sits **0.2 px** away, where five labels stack
+ * into an unreadable smudge. The question is not how far the map is magnified
+ * but whether the drawn separation has room for a word, so that is what is
+ * asked. The same defect was fixed once already in `satelliteDrawnRadius`, which
+ * had to learn about the scale mode; this gate was missed at the time.
  */
-const SATELLITE_LABEL_ZOOM = 3;
+const SATELLITE_LABEL_SEPARATION = 0.05;
+
+/**
+ * Is there room to print a satellite's name beside it?
+ *
+ * A point's distance times the zoom is its share of the map radius — the same
+ * quantity `focusViewFor` frames against — so this is a real on-screen distance
+ * rather than a proxy for one. Measured at 6x with Jupiter selected: 0.059 of
+ * the map radius on the compressed scale, 0.001 on the true one.
+ */
+export function labelHasRoom(
+  point: Point,
+  primary: Point | null,
+  zoom: number,
+): boolean {
+  if (!primary) return true;
+  const separation = Math.hypot(point.x - primary.x, point.y - primary.y);
+  return separation * zoom >= SATELLITE_LABEL_SEPARATION;
+}
+
+/** The same question asked of a rendered view. */
+function hasRoomForLabel(body: BodyView, view: OrreryView, zoom: number): boolean {
+  const parent = BODIES[body.id].parent;
+  const primary = parent ? view.bodies.find((other) => other.id === parent) : undefined;
+  return labelHasRoom(body.point, primary?.point ?? null, zoom);
+}
 
 /** Headroom for a concentric ring and its labels. Matches layout.css. */
 const BASE_RING_EXTENT = 1.46;
@@ -790,7 +824,7 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
       const inFamily = family !== null && BODIES[body.id].parent === family;
       if (satellite) {
         parts.label.style.display =
-          inFamily && state.zoom >= SATELLITE_LABEL_ZOOM ? '' : 'none';
+          inFamily && hasRoomForLabel(body, view, state.zoom) ? '' : 'none';
       }
       if (parts.marker.getAttribute('aria-label') !== name) {
         parts.marker.setAttribute('aria-label', name);

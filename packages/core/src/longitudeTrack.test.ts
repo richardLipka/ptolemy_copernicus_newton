@@ -104,15 +104,46 @@ describe('trackWindowDays', () => {
     expect(trackWindowDays('earth', 'moon')).toBe(45);
   });
 
-  it('gives a Galilean its own period seen from Jupiter', () => {
+  it('does not crowd a fast moon’s cycles onto one strip', () => {
     /*
-     * The case this branch adds. Io goes round Jupiter in 1.77 days, so the
-     * window is set by the floor rather than by the period — which is right: a
-     * strip 2 days wide would be unreadable, and 45 days shows Io round some
-     * twenty-five times, with the resonance against Europa plain in the beat.
+     * This test used to assert 45 days for Io and call it right, on the grounds
+     * that the extra width showed "the resonance against Europa plain in the
+     * beat". Two things were wrong with that.
+     *
+     * The strip plots **one body at a time**, so no beat against Europa can
+     * appear on it; the resonance is demonstrated in `satellites.test.ts`, from
+     * the mean motions, and not here. And what 45 days actually produced was
+     * twenty-five orbits at 9.4 samples each, with a tenth of the segments
+     * discarded at the 0°/360° seam — a sawtooth dense enough to render as
+     * hatching rather than as a curve.
+     *
+     * The floor was set with the Moon in mind, whose cycle is 27 days. A ceiling
+     * in cycles is what it was always reaching for.
      */
-    expect(trackWindowDays('jupiter', 'io')).toBe(45);
-    expect(trackWindowDays('saturn', 'titan')).toBe(45);
+    for (const [observer, target] of [
+      ['jupiter', 'io'],
+      ['jupiter', 'europa'],
+      ['jupiter', 'ganymede'],
+      ['saturn', 'titan'],
+    ] as const) {
+      const cycles =
+        trackWindowDays(observer, target) / trackCycleDays(observer, target);
+      expect(cycles, `${observer}->${target}`).toBeGreaterThanOrEqual(1);
+      expect(cycles, `${observer}->${target}`).toBeLessThanOrEqual(4);
+    }
+
+    // Io's own numbers, the case that prompted the change.
+    expect(trackWindowDays('jupiter', 'io')).toBeCloseTo(7.08, 1);
+  });
+
+  it('leaves every planet and the Moon exactly as they were', () => {
+    // The ceiling must be inert where the floor was already doing the right
+    // thing, or it has quietly changed the view it was meant to leave alone.
+    for (const id of ['mercury', 'venus', 'mars', 'jupiter', 'saturn', 'sun'] as BodyId[]) {
+      const cycle = trackCycleDays('earth', id);
+      expect(trackWindowDays('earth', id), id).toBeCloseTo(cycle * WINDOW_SHARE, 6);
+    }
+    expect(trackWindowDays('earth', 'moon')).toBe(45);
   });
 
   it('stays inside sane bounds for every pairing', () => {
@@ -123,9 +154,15 @@ describe('trackWindowDays', () => {
     for (const observer of ids) {
       for (const target of ids) {
         const days = trackWindowDays(observer, target);
+        const cycle = trackCycleDays(observer, target);
         expect(Number.isFinite(days), `${observer}->${target}`).toBe(true);
-        expect(days, `${observer}->${target}`).toBeGreaterThanOrEqual(45);
         expect(days, `${observer}->${target}`).toBeLessThanOrEqual(2200);
+        // At least one whole cycle, so a strip always frames the thing it is
+        // drawn to show; the 45-day floor applies except where it would buy
+        // more cycles than a reader can take in.
+        expect(days, `${observer}->${target}`).toBeGreaterThanOrEqual(
+          Math.min(45, cycle),
+        );
       }
     }
   });
