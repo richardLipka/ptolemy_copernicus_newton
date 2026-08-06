@@ -209,13 +209,40 @@ Frame origin and observation point are independent. Copernicus centres the Sun
 but you still observe from Earth, and that gap between where things are and
 where they appear is the whole subject.
 
+The repository is an npm workspace with the calculation split out as a package,
+so other projects can depend on the models without the app around them:
+
 ```
-src/core/      engines, coordinates, events, zodiac — pure, no DOM, unit-tested
-src/state/     store and derived view data
-src/render/    the instrument and the panels
-src/ui/        controls
-src/i18n/      Czech and English
+packages/core/       @orrery/core — bodies, engines, coordinates, events,
+                     zodiac. No DOM, no framework, no runtime dependencies;
+                     compiled without the DOM lib so the boundary is a
+                     compile error rather than a convention.
+apps/orrery/
+  src/state/         store and derived view data
+  src/render/        the instrument and the panels
+  src/ui/            controls
+  src/i18n/          Czech and English
 ```
+
+`npm install` at the root wires the two together; `npm run dev`, `npm test` and
+`npm run build` all work from there.
+
+### Using the models elsewhere
+
+Every module is importable on its own, which matters because the engines are
+meant to be used separately:
+
+```ts
+import { BODIES, jdFromCalendar } from '@orrery/core';
+import { keplerianPositions } from '@orrery/core/engines/keplerian';
+import { ptolemaicGeometryFor } from '@orrery/core/engines/ptolemaic';
+```
+
+Reaching for one engine costs one engine. A bundle that imports only Kepler
+comes to 13 kB and contains no trace of the VSOP87 tables, the equant or the
+n-body integrator; importing `@orrery/core/engines/registry`, which carries all
+eight, comes to 168 kB. The package sets `sideEffects: false`, so a bundler
+drops whatever is not reached.
 
 Graphics are **CSS only** — no `<canvas>`, no WebGL. Bodies, orbit paths, sight
 lines and epicycles are DOM elements positioned by custom properties, styled as
