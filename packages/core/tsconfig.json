@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    /*
+     * No DOM.
+     *
+     * This package is meant to be consumed by things that are not this app — a
+     * parameter-fitting tool, a notebook, a server-side ephemeris check — so it
+     * must not reach for `document`, `window` or `localStorage`. Leaving DOM out
+     * of `lib` turns that from a rule someone has to remember into a compile
+     * error, which is the only kind of boundary that holds.
+     */
+    "lib": ["ES2022"]
+  },
+  "include": ["src"]
+}
