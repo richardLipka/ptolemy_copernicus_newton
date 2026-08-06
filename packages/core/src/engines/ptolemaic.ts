@@ -32,7 +32,7 @@ import { centuriesSinceJ2000, jdFromCalendar } from '../time';
 import { DEG, add, scale, sub, vec3, type Vec3 } from '../vec';
 import { elementsAt } from './keplerian';
 import { vsop87Positions } from './vsop87';
-import type { Engine, PositionSet } from './types';
+import type { Engine, EngineId, PositionSet } from './types';
 import { addSatellites } from '../satellites';
 
 // --- Sub-mode 1: Earth-centred reframe ----------------------------------
@@ -58,11 +58,11 @@ export const ptolemaicReframeEngine: Engine = {
 // --- Sub-mode 2: authentic epicyclic construction ------------------------
 
 /**
- * Almagest parameters. Distances are in Ptolemy's own units of a deferent
- * radius of 60; he had no absolute scale, so the engine anchors each orbit as
- * described in `deferentRadiusAu`.
+ * One planet's deferent-and-epicycle geometry. Distances are in Ptolemy's own
+ * units of a deferent radius of 60; he had no absolute scale, so the engine
+ * anchors each orbit through the nested spheres below.
  */
-interface AlmagestModel {
+export interface AlmagestModel {
   /** Tropical longitude of the apogee at the Almagest epoch, degrees. */
   apogee: number;
   /** Earth's offset from the deferent centre, in units of R = 60. */
@@ -70,6 +70,29 @@ interface AlmagestModel {
   /** Epicycle radius, in units of R = 60. */
   epicycleRadius: number;
   kind: 'superior' | 'inferior';
+}
+
+/**
+ * Every number the construction needs, as data rather than as constants baked
+ * into the engine.
+ *
+ * The separation this makes possible is the point. Ptolemy's own values are one
+ * instance — `ALMAGEST_PARAMETERS` below — and a set fitted to observations is
+ * another, and both run through identical geometry. A tool that reconstructs the
+ * circles from a table of longitudes can therefore draw its answer with the same
+ * renderer that draws Ptolemy's, and the two can be laid over each other.
+ *
+ * `MeanMotionSource` already worked this way, because the engine needed two sets
+ * of tables; this extends the same treatment to the geometry, which is the half
+ * a reconstruction actually solves for.
+ */
+export interface PtolemaicParameters {
+  /** Per-planet geometry. A body absent here is not modelled. */
+  planets: Partial<Record<BodyId, AlmagestModel>>;
+  /** The solar eccentric: an offset circle, no equant. */
+  sun: { apogee: number; eccentricity: number };
+  /** The simple Hipparchan lunar model. */
+  moon: { epicycleRadius: number; deferentKm: number };
 }
 
 /**
@@ -86,23 +109,24 @@ interface AlmagestModel {
  */
 const APOGEE_PRECESSION_TO_J2000 = 26.0;
 
-const ALMAGEST: Partial<Record<BodyId, AlmagestModel>> = {
-  mercury: { apogee: 190.0, eccentricity: 3.0, epicycleRadius: 22.5, kind: 'inferior' },
-  venus: { apogee: 55.0, eccentricity: 1.25, epicycleRadius: 43.17, kind: 'inferior' },
-  mars: { apogee: 115.5, eccentricity: 6.0, epicycleRadius: 39.5, kind: 'superior' },
-  jupiter: { apogee: 161.0, eccentricity: 2.75, epicycleRadius: 11.5, kind: 'superior' },
-  saturn: { apogee: 233.0, eccentricity: 3.4167, epicycleRadius: 6.5, kind: 'superior' },
+/**
+ * Ptolemy's own values, checked against Toomer's translation.
+ *
+ * The solar figures are his 65;30 and 2;30, the lunar epicycle his 5;15. The
+ * crank he later added to fit the quadratures is not implemented — see
+ * CLAUDE.md §12.4.
+ */
+export const ALMAGEST_PARAMETERS: PtolemaicParameters = {
+  planets: {
+    mercury: { apogee: 190.0, eccentricity: 3.0, epicycleRadius: 22.5, kind: 'inferior' },
+    venus: { apogee: 55.0, eccentricity: 1.25, epicycleRadius: 43.17, kind: 'inferior' },
+    mars: { apogee: 115.5, eccentricity: 6.0, epicycleRadius: 39.5, kind: 'superior' },
+    jupiter: { apogee: 161.0, eccentricity: 2.75, epicycleRadius: 11.5, kind: 'superior' },
+    saturn: { apogee: 233.0, eccentricity: 3.4167, epicycleRadius: 6.5, kind: 'superior' },
+  },
+  sun: { apogee: 65.5, eccentricity: 2.5 },
+  moon: { epicycleRadius: 5.25, deferentKm: 385_000.56 },
 };
-
-/** Ptolemy's solar model: an eccentric circle, no equant. */
-const SOLAR_APOGEE = 65.5;
-const SOLAR_ECCENTRICITY = 2.5;
-
-/** Ptolemy's simple (Hipparchan) lunar model: concentric deferent, epicycle
- *  of radius 5;15. The crank that Ptolemy later added to fit the quadratures
- *  is not implemented — see CLAUDE.md §12.4. */
-const LUNAR_EPICYCLE_RADIUS = 5.25;
-const LUNAR_DEFERENT_KM = 385_000.56;
 
 /**
  * Deferent radii from Ptolemy's nested spheres.
@@ -131,7 +155,7 @@ const LUNAR_DEFERENT_KM = 385_000.56;
  * which is the whole point of the app, and costs only the Moon's shell, whose
  * distance is already exaggerated for display.
  */
-function nestedDeferentRadii(): Partial<Record<BodyId, number>> {
+function nestedDeferentRadii(params: PtolemaicParameters): Partial<Record<BodyId, number>> {
   const radii: Partial<Record<BodyId, number>> = {};
 
   /*
@@ -143,22 +167,26 @@ function nestedDeferentRadii(): Partial<Record<BodyId, number>> {
    * overlap — leaving Mars nearer than the Sun on some days, which is precisely
    * what the nesting is supposed to forbid.
    */
-  const halfThickness = (id: BodyId): number =>
-    (ALMAGEST[id]!.epicycleRadius + ALMAGEST[id]!.eccentricity) / 60;
+  const halfThickness = (model: AlmagestModel): number =>
+    (model.epicycleRadius + model.eccentricity) / 60;
 
   // Inward from the Sun's inner surface: Venus, then Mercury below it.
-  let boundary = 1 - SOLAR_ECCENTRICITY / 60;
+  let boundary = 1 - params.sun.eccentricity / 60;
   for (const id of ['venus', 'mercury'] as BodyId[]) {
-    const half = halfThickness(id);
+    const model = params.planets[id];
+    if (!model) continue;
+    const half = halfThickness(model);
     const deferent = boundary / (1 + half);
     radii[id] = deferent;
     boundary = deferent * (1 - half);
   }
 
   // Outward from the Sun's outer surface: Mars, Jupiter, Saturn.
-  boundary = 1 + SOLAR_ECCENTRICITY / 60;
+  boundary = 1 + params.sun.eccentricity / 60;
   for (const id of ['mars', 'jupiter', 'saturn'] as BodyId[]) {
-    const half = halfThickness(id);
+    const model = params.planets[id];
+    if (!model) continue;
+    const half = halfThickness(model);
     const deferent = boundary / (1 - half);
     radii[id] = deferent;
     boundary = deferent * (1 + half);
@@ -167,7 +195,25 @@ function nestedDeferentRadii(): Partial<Record<BodyId, number>> {
   return radii;
 }
 
-const NESTED_DEFERENT = nestedDeferentRadii();
+/**
+ * The chain is derived per parameter set, and cached against it.
+ *
+ * Deriving it matters: the shells are built out of the epicycle radii and
+ * eccentricities, so a fitted set that puts Mars's epicycle somewhere new gets
+ * the shell spacing that follows from *its* numbers rather than inheriting
+ * Ptolemy's. Caching matters because the engine asks for this on every body on
+ * every frame, and the answer only ever changes when the parameters do.
+ */
+const deferentChains = new WeakMap<PtolemaicParameters, Partial<Record<BodyId, number>>>();
+
+function nestedDeferentFor(params: PtolemaicParameters): Partial<Record<BodyId, number>> {
+  let chain = deferentChains.get(params);
+  if (!chain) {
+    chain = nestedDeferentRadii(params);
+    deferentChains.set(params, chain);
+  }
+  return chain;
+}
 
 /* --- where the mean motions come from ---------------------------------- */
 
@@ -390,10 +436,14 @@ export interface PtolemaicGeometry {
 }
 
 /** Ptolemy's Sun: uniform motion on a circle whose centre is offset from Earth. */
-function ptolemaicSunGeometry(jd: number, motions: MeanMotionSource): PtolemaicGeometry {
+function ptolemaicSunGeometry(
+  jd: number,
+  motions: MeanMotionSource,
+  params: PtolemaicParameters,
+): PtolemaicGeometry {
   const radius = 1;
-  const eccentricity = (SOLAR_ECCENTRICITY / 60) * radius;
-  const apogee = apogeeInJ2000Frame(SOLAR_APOGEE, motions);
+  const eccentricity = (params.sun.eccentricity / 60) * radius;
+  const apogee = apogeeInJ2000Frame(params.sun.apogee, motions);
   const anomaly = motions.solarLongitude(jd) - apogee;
 
   const centre = scale(unitAtLongitude(apogee), eccentricity);
@@ -415,13 +465,14 @@ function ptolemaicPlanetGeometry(
   id: BodyId,
   model: AlmagestModel,
   motions: MeanMotionSource,
+  params: PtolemaicParameters,
 ): PtolemaicGeometry {
   const apogee = apogeeInJ2000Frame(model.apogee, motions);
 
   // Ptolemy fixed only the ratio r/R; the scale comes from his nested spheres.
   // Scaling all three together leaves the direction from Earth untouched, so
   // this changes the model's distances without touching a single longitude.
-  const deferentRadius = NESTED_DEFERENT[id]!;
+  const deferentRadius = nestedDeferentFor(params)[id]!;
   const epicycleRadius = deferentRadius * (model.epicycleRadius / 60);
   const eccentricity = deferentRadius * (model.eccentricity / 60);
 
@@ -453,11 +504,15 @@ function ptolemaicPlanetGeometry(
 }
 
 /** Ptolemy's simple lunar model: a concentric deferent with a retrograde epicycle. */
-function ptolemaicMoonGeometry(jd: number, motions: MeanMotionSource): PtolemaicGeometry {
+function ptolemaicMoonGeometry(
+  jd: number,
+  motions: MeanMotionSource,
+  params: PtolemaicParameters,
+): PtolemaicGeometry {
   const { longitude, anomaly } = motions.lunar(jd);
 
-  const deferentRadius = LUNAR_DEFERENT_KM / AU_IN_KM;
-  const epicycleRadius = deferentRadius * (LUNAR_EPICYCLE_RADIUS / 60);
+  const deferentRadius = params.moon.deferentKm / AU_IN_KM;
+  const epicycleRadius = deferentRadius * (params.moon.epicycleRadius / 60);
 
   const centre = scale(unitAtLongitude(longitude), deferentRadius);
   // The Moon runs backwards round its epicycle, sitting nearest Earth at
@@ -481,21 +536,23 @@ export function ptolemaicGeometryFor(
   jd: number,
   id: BodyId,
   motions: MeanMotionSource = MODERN_MOTIONS,
+  params: PtolemaicParameters = ALMAGEST_PARAMETERS,
 ): PtolemaicGeometry | null {
   if (id === 'earth') return null;
-  if (id === 'sun') return ptolemaicSunGeometry(jd, motions);
-  if (id === 'moon') return ptolemaicMoonGeometry(jd, motions);
+  if (id === 'sun') return ptolemaicSunGeometry(jd, motions, params);
+  if (id === 'moon') return ptolemaicMoonGeometry(jd, motions, params);
 
-  const model = ALMAGEST[id];
-  return model ? ptolemaicPlanetGeometry(jd, id, model, motions) : null;
+  const model = params.planets[id];
+  return model ? ptolemaicPlanetGeometry(jd, id, model, motions, params) : null;
 }
 
 export function ptolemaicConstruction(
   jd: number,
   id: BodyId,
   motions: MeanMotionSource = MODERN_MOTIONS,
+  params: PtolemaicParameters = ALMAGEST_PARAMETERS,
 ): Construction | null {
-  const geometry = ptolemaicGeometryFor(jd, id, motions);
+  const geometry = ptolemaicGeometryFor(jd, id, motions, params);
   if (!geometry) return null;
 
   const construction: Construction = {
@@ -556,14 +613,15 @@ export function ptolemaicConstruction(
 export function ptolemaicEpicyclicPositions(
   jd: number,
   motions: MeanMotionSource = MODERN_MOTIONS,
+  params: PtolemaicParameters = ALMAGEST_PARAMETERS,
 ): Map<BodyId, Vec3> {
   const positions = new Map<BodyId, Vec3>();
   positions.set('earth', vec3(0, 0, 0));
-  positions.set('sun', ptolemaicSunGeometry(jd, motions).position);
-  positions.set('moon', ptolemaicMoonGeometry(jd, motions).position);
+  positions.set('sun', ptolemaicSunGeometry(jd, motions, params).position);
+  positions.set('moon', ptolemaicMoonGeometry(jd, motions, params).position);
 
-  for (const [id, model] of Object.entries(ALMAGEST) as [BodyId, AlmagestModel][]) {
-    positions.set(id, ptolemaicPlanetGeometry(jd, id, model, motions).position);
+  for (const [id, model] of Object.entries(params.planets) as [BodyId, AlmagestModel][]) {
+    positions.set(id, ptolemaicPlanetGeometry(jd, id, model, motions, params).position);
   }
 
   // Ptolemy's system has nothing whatever to say about these — which is the
@@ -598,3 +656,34 @@ export const ptolemaicEpicyclicEngine: Engine = {
   positionsAt: (jd: number): PositionSet => ptolemaicEpicyclicPositions(jd),
   construction: ptolemaicConstruction,
 };
+
+/**
+ * An engine from an arbitrary parameter set.
+ *
+ * This is what a reconstruction needs. Everything downstream of an `Engine` —
+ * the apparent-longitude track, the event scanner, the construction harness,
+ * the model comparison — takes one and asks it questions, so a set of
+ * parameters fitted to observations can be fed to all of it without any of it
+ * knowing where the numbers came from. A student's Mars and Ptolemy's Mars are
+ * then the same kind of object, and can be drawn on the same axes.
+ *
+ * The `id` stays `ptolemaic-epicyclic` by default because that is what the
+ * construction *is*; pass a different one only if something downstream keys off
+ * it and needs to tell two sets apart.
+ */
+export function createPtolemaicEngine(
+  params: PtolemaicParameters,
+  motions: MeanMotionSource = MODERN_MOTIONS,
+  id: EngineId = 'ptolemaic-epicyclic',
+): Engine {
+  return {
+    id,
+    positionsAt: (jd: number): PositionSet => ptolemaicEpicyclicPositions(jd, motions, params),
+    construction: (jd: number, bodyId: BodyId): Construction | null =>
+      ptolemaicConstruction(jd, bodyId, motions, params),
+  };
+}
+
+/** The mean-motion tables, exposed so a reconstruction can choose between them. */
+export { MODERN_MOTIONS, ALMAGEST_MOTIONS };
+export type { MeanMotionSource };

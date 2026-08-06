@@ -59,17 +59,42 @@ import type { Construction } from '../construction';
 import { centuriesSinceJ2000 } from '../time';
 import { DEG, add, sub, vec3, type Vec3 } from '../vec';
 import { elementsAt, meanAnomalyAt, orbitalPlaneToEcliptic } from './keplerian';
-import type { Engine, PositionSet } from './types';
+import type { Engine, EngineId, PositionSet } from './types';
 import { addSatellites } from '../satellites';
 
 /**
- * How Copernicus divided the eccentricity between deferent and epicyclet.
+ * Everything the construction needs, as data.
  *
- * See the module note: these are the values that make the construction match an
- * ellipse to first order, and they are his.
+ * Two kinds of thing are open here, and a reconstruction moves both. The
+ * *shares* are how Copernicus divided the eccentricity between deferent and
+ * epicyclet — his 3/2 and 1/2, the values that make the construction match an
+ * ellipse to first order. The *orbits* are what a student actually solves for:
+ * Copernicus's own method gets a planet's distance from greatest elongation for
+ * an inferior planet, or from a pair of observations a synodic period apart for
+ * a superior one, and the answer is an orbit to substitute here.
  */
-const DEFERENT_SHARE = 1.5;
-const EPICYCLET_SHARE = 0.5;
+export interface CopernicanParameters {
+  /** Eccentric offset as a multiple of *ae*. */
+  deferentShare: number;
+  /** Epicyclet radius as a multiple of *ae*. */
+  epicycletShare: number;
+  /**
+   * Orbits to use in place of the body table's. Absent bodies keep theirs, so a
+   * reconstruction can replace one planet and leave the rest of the system
+   * standing — which is how the fitting is actually done, one body at a time.
+   */
+  orbits?: Partial<Record<BodyId, OrbitalModel>>;
+}
+
+/** Copernicus's own division, from *De revolutionibus*. */
+export const COPERNICAN_PARAMETERS: CopernicanParameters = {
+  deferentShare: 1.5,
+  epicycletShare: 0.5,
+};
+
+/** The orbit a parameter set puts on a body: its own, or the table's. */
+const orbitFor = (id: BodyId, params: CopernicanParameters): OrbitalModel | undefined =>
+  params.orbits?.[id] ?? BODIES[id].orbit;
 
 /** The pieces of the construction, in the orbital plane. */
 interface PlaneGeometry {
@@ -90,12 +115,16 @@ interface PlaneGeometry {
  * Lay out the deferent, the epicyclet and the planet, in the orbital plane with
  * perihelion along +x.
  */
-function planeGeometry(el: KeplerianElements, meanAnomalyDeg: number): PlaneGeometry {
+function planeGeometry(
+  el: KeplerianElements,
+  meanAnomalyDeg: number,
+  params: CopernicanParameters = COPERNICAN_PARAMETERS,
+): PlaneGeometry {
   const { a, e } = el;
   const m = meanAnomalyDeg * DEG;
 
-  const offset = DEFERENT_SHARE * a * e;
-  const epicyclet = EPICYCLET_SHARE * a * e;
+  const offset = params.deferentShare * a * e;
+  const epicyclet = params.epicycletShare * a * e;
 
   // Toward aphelion, which is the −x direction when perihelion is +x.
   const centreX = -offset;
@@ -120,9 +149,13 @@ function planeGeometry(el: KeplerianElements, meanAnomalyDeg: number): PlaneGeom
 }
 
 /** Heliocentric position under the Copernican construction. */
-export function copernicanHeliocentricAt(jd: number, model: OrbitalModel): Vec3 {
+export function copernicanHeliocentricAt(
+  jd: number,
+  model: OrbitalModel,
+  params: CopernicanParameters = COPERNICAN_PARAMETERS,
+): Vec3 {
   const el = elementsAt(jd, model);
-  const geometry = planeGeometry(el, meanAnomalyAt(jd, model));
+  const geometry = planeGeometry(el, meanAnomalyAt(jd, model), params);
   return orbitalPlaneToEcliptic(geometry.x, geometry.y, el);
 }
 
@@ -168,12 +201,15 @@ export function copernicanMoonGeocentricAt(jd: number): Vec3 {
 
 // --- engine -------------------------------------------------------------
 
-export function copernicanPositions(jd: number): Map<BodyId, Vec3> {
+export function copernicanPositions(
+  jd: number,
+  params: CopernicanParameters = COPERNICAN_PARAMETERS,
+): Map<BodyId, Vec3> {
   const positions = new Map<BodyId, Vec3>();
   positions.set('sun', vec3(0, 0, 0));
 
   for (const id of ORBITING_BODY_IDS) {
-    positions.set(id, copernicanHeliocentricAt(jd, BODIES[id].orbit!));
+    positions.set(id, copernicanHeliocentricAt(jd, orbitFor(id, params)!, params));
   }
 
   // No barycentre correction: Copernicus had no reason to make one, and the
@@ -195,23 +231,27 @@ export function copernicanPositions(jd: number): Map<BodyId, Vec3> {
  * in accuracy. That, rather than any gain in precision, is the case
  * *De revolutionibus* actually makes.
  */
-export function copernicanConstruction(jd: number, id: BodyId): Construction | null {
+export function copernicanConstruction(
+  jd: number,
+  id: BodyId,
+  params: CopernicanParameters = COPERNICAN_PARAMETERS,
+): Construction | null {
   if (id === 'sun') return null;
 
   const isMoon = id === 'moon';
-  const model = BODIES[id].orbit;
+  const model = orbitFor(id, params);
   if (!isMoon && !model) return null;
 
   const { el, meanAnomaly } = isMoon
     ? lunarElements(jd)
     : { el: elementsAt(jd, model!), meanAnomaly: meanAnomalyAt(jd, model!) };
 
-  const geometry = planeGeometry(el, meanAnomaly);
+  const geometry = planeGeometry(el, meanAnomaly, params);
   const toEcliptic = (x: number, y: number): Vec3 => orbitalPlaneToEcliptic(x, y, el);
 
   // The Moon's construction hangs off Earth rather than off the Sun.
   const anchor = isMoon
-    ? copernicanHeliocentricAt(jd, BODIES.earth.orbit!)
+    ? copernicanHeliocentricAt(jd, orbitFor('earth', params)!, params)
     : vec3(0, 0, 0);
   const about = (point: Vec3): Vec3 => add(anchor, point);
 
@@ -252,3 +292,24 @@ export const copernicanEngine: Engine = {
   positionsAt: (jd: number): PositionSet => copernicanPositions(jd),
   construction: copernicanConstruction,
 };
+
+/**
+ * An engine from an arbitrary parameter set — the Copernican counterpart to
+ * `createPtolemaicEngine`.
+ *
+ * Substituting one fitted orbit and leaving the rest alone is the useful case:
+ * it puts a student's Mars beside the received one in the same system, running
+ * through the same construction, so the difference on the screen is the
+ * difference in the numbers and nothing else.
+ */
+export function createCopernicanEngine(
+  params: CopernicanParameters,
+  id: EngineId = 'copernican',
+): Engine {
+  return {
+    id,
+    positionsAt: (jd: number): PositionSet => copernicanPositions(jd, params),
+    construction: (jd: number, bodyId: BodyId): Construction | null =>
+      copernicanConstruction(jd, bodyId, params),
+  };
+}

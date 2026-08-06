@@ -32,9 +32,13 @@ import type { EngineId } from './engines/types';
 import { J2000 } from './time';
 import { DEG, add, vec3, type Vec3 } from './vec';
 
-/** Copernicus's split of the eccentricity. Matches `engines/copernican.ts`. */
-const DEFERENT_SHARE = 1.5;
-const EPICYCLET_SHARE = 0.5;
+/*
+ * Copernicus's split of the eccentricity, taken from the engine that owns it
+ * rather than copied. The two were duplicate literals until the parameters were
+ * made data; a fitted set that moved the shares would have moved the planets
+ * and left the moons drawn to Copernicus's own numbers.
+ */
+import { COPERNICAN_PARAMETERS } from './engines/copernican';
 
 /**
  * Map a point in the orbital plane — pericentre along +x — into the frame the
@@ -167,8 +171,8 @@ export function satelliteHarness(
      */
     case 'copernican': {
       const m = meanAnomalyDeg(jd, orbit) * DEG;
-      const offset = DEFERENT_SHARE * a * e;
-      const epicyclet = EPICYCLET_SHARE * a * e;
+      const offset = COPERNICAN_PARAMETERS.deferentShare * a * e;
+      const epicyclet = COPERNICAN_PARAMETERS.epicycletShare * a * e;
 
       const centreX = -offset;
       const epicycleX = centreX + a * Math.cos(m);
