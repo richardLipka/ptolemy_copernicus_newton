@@ -77,8 +77,10 @@ eight in at once.
 
 The historical values are one instance, not the only one. Ptolemy's apogees,
 eccentricities and epicycle radii live in `ALMAGEST_PARAMETERS`; Copernicus's
-3/2 and 1/2 in `COPERNICAN_PARAMETERS`. Pass a different set and the identical
-geometry runs on it:
+3/2 and 1/2 in `COPERNICAN_PARAMETERS`; Kepler's in `KEPLERIAN_PARAMETERS`,
+which is empty because his construction has no free device — the ellipse is the
+whole of it, so what a reconstruction fits is the orbit. Pass a different set
+and the identical geometry runs on it:
 
 ```ts
 import {

@@ -31,6 +31,12 @@ import {
   createCopernicanEngine,
   type CopernicanParameters,
 } from './copernican';
+import {
+  KEPLERIAN_PARAMETERS,
+  createKeplerianEngine,
+  keplerianPositions,
+  type KeplerianParameters,
+} from './keplerian';
 import { vsop87Positions } from './vsop87';
 
 const JD = jdFromCalendar(2026, 8, 6);
@@ -199,6 +205,44 @@ describe('an engine can be built from a parameter set', () => {
     expect(engine.id).toBe('copernican');
     const mars = engine.positionsAt(JD).get('mars')!;
     expect(Number.isFinite(mars.x)).toBe(true);
+  });
+
+  it('builds a Keplerian engine from fitted elements', () => {
+    /*
+     * Kepler has no free device to fit — the ellipse is the whole construction —
+     * so what a reconstruction solves for is the orbit itself. That is his own
+     * method: the Mars triangulation, pairs of observations one Martian year
+     * apart, from which the orbit falls out point by point.
+     */
+    const fitted: KeplerianParameters = {
+      orbits: {
+        mars: {
+          ...BODIES.mars.orbit!,
+          epoch: { ...BODIES.mars.orbit!.epoch, e: 0.12 },
+        },
+      },
+    };
+    const engine = createKeplerianEngine(fitted);
+    expect(engine.id).toBe('keplerian');
+
+    const before = keplerianPositions(JD).get('mars')!;
+    const after = engine.positionsAt(JD).get('mars')!;
+    expect(Math.hypot(after.x - before.x, after.y - before.y)).toBeGreaterThan(0.01);
+
+    // And the rest of the system is untouched, as for the other two.
+    expect(engine.positionsAt(JD).get('venus')!.x).toBeCloseTo(
+      keplerianPositions(JD).get('venus')!.x,
+      15,
+    );
+  });
+
+  it('leaves the Keplerian defaults exactly as they were', () => {
+    const implicit = keplerianPositions(JD);
+    const explicit = keplerianPositions(JD, KEPLERIAN_PARAMETERS);
+    for (const [id, position] of implicit) {
+      expect(position.x, `${id}.x`).toBeCloseTo(explicit.get(id)!.x, 15);
+      expect(position.y, `${id}.y`).toBeCloseTo(explicit.get(id)!.y, 15);
+    }
   });
 });
 

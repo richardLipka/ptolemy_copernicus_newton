@@ -39,7 +39,7 @@ import {
   vec3,
   type Vec3,
 } from '../vec';
-import type { Engine, PositionSet, StateVector } from './types';
+import type { Engine, EngineId, PositionSet, StateVector } from './types';
 import { addSatellites } from '../satellites';
 
 /** Resolve mean elements to a given date by applying secular rates. */
@@ -159,11 +159,37 @@ export function positionFromElements(
 
 /** Position of a body's Keplerian orbit centre-of-motion at a date. For Earth
  *  this is the Earth–Moon barycentre, not Earth itself. */
-export function heliocentricAt(jd: number, id: BodyId): Vec3 {
-  const model = BODIES[id].orbit;
+export function heliocentricAt(
+  jd: number,
+  id: BodyId,
+  params: KeplerianParameters = KEPLERIAN_PARAMETERS,
+): Vec3 {
+  const model = orbitFor(id, params);
   if (!model) throw new Error(`Body "${id}" has no Keplerian orbit`);
   return positionFromElements(elementsAt(jd, model), meanAnomalyAt(jd, model));
 }
+
+/**
+ * What a Keplerian reconstruction solves for: the elements themselves.
+ *
+ * There is no equivalent of Ptolemy's epicycle ratio or Copernicus's shares
+ * here, because Kepler's construction has no free device — the ellipse is the
+ * whole of it. What is open is the orbit, and that is exactly what his own
+ * method finds: the Mars triangulation, pairs of observations one Martian year
+ * apart, from which the orbit falls out point by point.
+ *
+ * Absent bodies keep the table's orbit, so a reconstruction can replace the one
+ * planet it has fitted and leave the rest of the system standing.
+ */
+export interface KeplerianParameters {
+  orbits?: Partial<Record<BodyId, OrbitalModel>>;
+}
+
+/** The published elements, unmodified. */
+export const KEPLERIAN_PARAMETERS: KeplerianParameters = {};
+
+const orbitFor = (id: BodyId, params: KeplerianParameters): OrbitalModel | undefined =>
+  params.orbits?.[id] ?? BODIES[id].orbit;
 
 // --- Lunar theory -------------------------------------------------------
 
@@ -321,12 +347,15 @@ export function earthPositionAt(jd: number): Vec3 {
   );
 }
 
-export function keplerianPositions(jd: number): Map<BodyId, Vec3> {
+export function keplerianPositions(
+  jd: number,
+  params: KeplerianParameters = KEPLERIAN_PARAMETERS,
+): Map<BodyId, Vec3> {
   const positions = new Map<BodyId, Vec3>();
   positions.set('sun', vec3(0, 0, 0));
 
   for (const id of ORBITING_BODY_IDS) {
-    positions.set(id, heliocentricAt(jd, id));
+    positions.set(id, heliocentricAt(jd, id, params));
   }
 
   // Published elements track the Earth–Moon barycentre; shift to Earth itself.
@@ -398,13 +427,17 @@ export function keplerianStates(jd: number): Map<BodyId, StateVector> {
  * which the first law alone cannot show: run the clock and watch it move
  * quickly at perihelion and slowly at aphelion.
  */
-export function keplerianConstruction(jd: number, id: BodyId): Construction | null {
+export function keplerianConstruction(
+  jd: number,
+  id: BodyId,
+  params: KeplerianParameters = KEPLERIAN_PARAMETERS,
+): Construction | null {
   // The Sun is the focus everything else is drawn about, so it has no orbit of
   // its own here.
   if (id === 'sun') return null;
   if (id === 'moon') return moonOsculatingConstruction(jd);
 
-  const model = BODIES[id].orbit;
+  const model = orbitFor(id, params);
   if (!model) return null;
 
   const el = elementsAt(jd, model);
@@ -542,4 +575,20 @@ export const keplerianEngine: Engine = {
   positionsAt: (jd: number): PositionSet => keplerianPositions(jd),
   construction: keplerianConstruction,
 };
+
+/**
+ * An engine from fitted elements — the Keplerian counterpart to
+ * `createPtolemaicEngine` and `createCopernicanEngine`.
+ */
+export function createKeplerianEngine(
+  params: KeplerianParameters,
+  id: EngineId = 'keplerian',
+): Engine {
+  return {
+    id,
+    positionsAt: (jd: number): PositionSet => keplerianPositions(jd, params),
+    construction: (jd: number, bodyId: BodyId): Construction | null =>
+      keplerianConstruction(jd, bodyId, params),
+  };
+}
 
