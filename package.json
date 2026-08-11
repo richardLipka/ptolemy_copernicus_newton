@@ -1,7 +1,7 @@
 {
   "name": "ptolemy-copernicus-newton",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.6.0",
   "type": "module",
   "description": "Interactive 2D orrery comparing the Ptolemaic, Copernican and Newtonian models of the solar system.",
   "license": "MIT",

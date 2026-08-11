@@ -22,9 +22,7 @@ and runs from any web server or straight off disk.
 
 Czech and English · four looks · [Architecture notes](CLAUDE.md) · MIT licensed
 
-> A live demo can be published by enabling GitHub Pages for this repository
-> (Settings → Pages → Source → "GitHub Actions"); the workflow is already in
-> place and will deploy on the next push to `main`.
+**[Try it live →](https://richardlipka.github.io/ptolemy_copernicus_newton/)**
 
 ---
 
@@ -109,19 +107,23 @@ quietly regress.
   geometry, so the same switch draws vectors instead of circles: velocity, the
   net force, and every other body's gravitational pull, coloured by which body
   pulls, with exact magnitudes in newtons listed alongside. Select **Earth** and
-  the Sun is 99.5% of the pull — which is why treating an orbit as a two-body
-  ellipse works at all. Then select the **Moon**: the Sun pulls it more than
-  twice as hard as Earth does (69.5% against 30.5%), and it orbits Earth anyway,
-  because the two are falling toward the Sun together.
+  the Sun is 99.4% of the pull — which is why treating an orbit as a two-body
+  ellipse works at all. Then select the **Moon**: the Sun pulls it about twice as
+  hard as Earth does — near 69% against 31%, with the ratio breathing between 1.9
+  and 2.5 across a year — and it orbits Earth anyway, because the two are falling
+  toward the Sun together.
 - **Compare two models at once.** The ghost overlay draws a second model faintly
-  beside the active one, so Copernicus's 13° error on Mars is a visible gap
-  rather than a number.
+  beside the active one, so Ptolemy's 2.8° at Mars is a visible gap rather than a
+  number — and the bare-circle sub-mode's 13.5°, which is what heliocentrism
+  looks like with the eccentrics taken out, is an unmissable one.
 - **Watch the light.** On the map every body's lit hemisphere faces the Sun.
   Select one and the panel shows its phase *as seen from the observation point*,
   with a proper elliptical terminator — and what each of the four models
-  predicts for it. Select **Mercury**: Newton, Copernicus and Ptolemy disagree
-  by around twenty percentage points, because its eccentricity of 0.21 defeats a
-  circle and an epicycle alike. On Venus they agree within four.
+  predicts for it. The heliocentric three agree closely: indistinguishable on
+  Venus, within two percentage points on Mercury. Ptolemy is the outlier, and not
+  by a little — his Venus never passes 44% lit and his Mercury never passes 8%,
+  where the sky takes both to full. That gap is the phases of Venus, and it is
+  the one place in the app where a model is not merely inaccurate but refuted.
 - **Read the sky.** Sight-lines run from the observation point out to a zodiac
   ring, showing where each body *appears* as distinct from where it *is*. The
   ring switches between the twelve equal signs and the real IAU constellations,
@@ -158,7 +160,13 @@ switches language and theme. Your choice of both is remembered.
 
 Every look is a block of CSS custom properties and nothing else, so the body
 colours stay comparable between them and adding a fifth means adding one file.
-Text contrast was measured, not eyeballed: 10:1 or better in all four.
+
+Text contrast is measured rather than eyeballed, and the measurement is not
+uniformly flattering: headings run 9:1 to 16:1 across the four themes and control
+labels 6:1 to 13:1, but the muted small type is weaker — panel titles and the
+credit line sit at 3.1:1 on Parchment, below the 4.5:1 that type that size wants.
+That is the low-contrast engraving the theme is imitating working against
+legibility rather than for it, and it is the next thing to fix in the palette.
 
 ## Sharing a setup
 
@@ -186,13 +194,13 @@ npm install && npm run dev
 Other commands:
 
 ```bash
-npm test          # 185 tests, mostly of the orbital mathematics
+npm test          # ~400 tests, mostly of the orbital mathematics
 npm run typecheck # strict TypeScript, no emit
-npm run build     # static output in dist/
+npm run build     # static output in apps/orrery/dist/
 ```
 
-The build writes relative asset paths, so `dist/` can be dropped into any
-subdirectory (`/~user/orrery/`) without configuration. It makes no network
+The build writes relative asset paths, so `apps/orrery/dist/` can be dropped into
+any subdirectory (`/~user/orrery/`) without configuration. It makes no network
 requests at runtime and works offline once loaded.
 
 ## How it is built

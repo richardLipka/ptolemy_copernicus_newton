@@ -78,6 +78,46 @@ describe('phases of Venus', () => {
     expect(range.min).toBeLessThan(0.02);
   });
 
+  /**
+   * The ceilings the README quotes, pinned to the arithmetic that produces them.
+   *
+   * Venus reaches 43.9% and Mercury 7.9% under Ptolemy, against a true 100% for
+   * both. Mercury's is the tighter squeeze because its epicycle is the smaller
+   * share of its deferent, so it never swings far enough from the Earth–Sun line
+   * to show much of its lit face. Bounds are asserted rather than the figures
+   * themselves; a number in prose needs a range around it to stay true.
+   */
+  it('holds Ptolemy’s inner planets under their quoted ceilings', () => {
+    const ceilings: Record<'venus' | 'mercury', [number, number]> = {
+      venus: [0.42, 0.45],
+      mercury: [0.06, 0.09],
+    };
+
+    const start = jdFromCalendar(2024, 1, 1);
+    for (const [body, [low, high]] of Object.entries(ceilings) as [
+      'venus' | 'mercury',
+      [number, number],
+    ][]) {
+      let max = 0;
+      let truth = 0;
+      for (let jd = start; jd < start + 2000; jd += 1) {
+        max = Math.max(
+          max,
+          illuminationOf(ptolemaicEpicyclicPositions(jd), 'earth', body).illuminatedFraction,
+        );
+        truth = Math.max(
+          truth,
+          illuminationOf(keplerianPositions(jd), 'earth', body).illuminatedFraction,
+        );
+      }
+
+      expect(max, `${body} lower`).toBeGreaterThan(low);
+      expect(max, `${body} upper`).toBeLessThan(high);
+      // And the sky takes both all the way round, which is the contradiction.
+      expect(truth, `${body} truth`).toBeGreaterThan(0.99);
+    }
+  });
+
   it('keeps Venus inside the Sun’s sphere at all times', () => {
     const start = jdFromCalendar(2024, 1, 1);
     for (let d = 0; d < 900; d += 1) {

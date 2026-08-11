@@ -236,6 +236,53 @@
     text-decoration-color: currentColor;
   }
 
+  /*
+   * The institutional marks. Inline SVG filled with `currentColor`, so they
+   * take the credit line's own ink and stay legible on parchment and on black
+   * alike — the artwork the university ships is flat white and would vanish on
+   * two of the four themes.
+   *
+   * Held a little below full opacity: an imprint, not a sponsor's banner.
+   */
+  .credit__marks {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.7rem;
+    margin-top: 0.4rem;
+  }
+
+  /*
+   * Not dimmed with `opacity`. The muted ink already reads as an imprint, and
+   * dimming on top of it took the parchment theme to about 2.2:1 against its
+   * background — under the 3:1 that a graphic carrying meaning needs. Measured
+   * at full opacity the four themes give 3.1, 5.3, 4.8 and 5.5.
+   */
+  .credit__mark {
+    display: block;
+    /* No rule under a picture. */
+    text-decoration: none;
+    transition: color 120ms ease;
+  }
+
+  .credit__mark:hover {
+    color: var(--accent-bright);
+  }
+
+  .credit__mark svg {
+    display: block;
+    /* The mark's own width/height attributes are overridden; the viewBox keeps
+       the aspect ratio, so setting height alone is enough. */
+    height: 1.35rem;
+    width: auto;
+  }
+
+  /* The department wordmark is two lines of type in a 3.2:1 box, so at the same
+     height as the faculty emblem it reads as a smudge. Given a little more. */
+  .credit__mark--wordmark svg {
+    height: 1.7rem;
+  }
+
   /* --- fields and controls ---------------------------------------------- */
 
   .field {

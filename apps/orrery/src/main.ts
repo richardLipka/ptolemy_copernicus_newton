@@ -16,6 +16,9 @@ import './render/theme/theme-lcars.css';
 import './render/theme/shell.css';
 import './render/theme/layout.css';
 
+import favMark from './assets/fav.svg?raw';
+import kivMark from './assets/kiv.svg?raw';
+
 import { createOrrery } from './render/orrery/orrery';
 import { renderTrackStrip } from './render/track/trackStrip';
 import {
@@ -98,10 +101,43 @@ contactLink.href = 'mailto:lipka@fav.zcu.cz';
 credit.append(contactLink, ' · ');
 
 const homeLink = el('a', undefined, 'home.zcu.cz/~lipka');
-homeLink.href = 'http://home.zcu.cz/~lipka';
+homeLink.href = 'https://home.zcu.cz/~lipka/';
 homeLink.target = '_blank';
 homeLink.rel = 'noopener noreferrer';
 credit.appendChild(homeLink);
+
+/*
+ * The two institutional marks, inlined rather than linked as <img>.
+ *
+ * Both ship from kiv.zcu.cz as flat white artwork, meant for the dark header
+ * they sit in there. This app has four themes, two of them light, so a white
+ * mark would be invisible on parchment. Inlining the SVG lets every fill be
+ * `currentColor`, and the mark then takes the footer's own ink in whichever
+ * theme is running — one asset, four looks, no recolouring code.
+ */
+const marks = el('div', 'credit__marks');
+for (const [markup, href, label, extra] of [
+  [favMark, 'https://www.fav.zcu.cz/', 'Fakulta aplikovaných věd ZČU', ''],
+  [
+    kivMark,
+    'https://www.kiv.zcu.cz/',
+    'Katedra informatiky a výpočetní techniky',
+    ' credit__mark--wordmark',
+  ],
+] as const) {
+  const link = el('a', `credit__mark${extra}`);
+  link.href = href;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.title = label;
+  link.setAttribute('aria-label', label);
+  link.innerHTML = markup;
+  // The mark is decorative once the link carries the name.
+  link.firstElementChild?.setAttribute('aria-hidden', 'true');
+  link.firstElementChild?.setAttribute('focusable', 'false');
+  marks.appendChild(link);
+}
+credit.appendChild(marks);
 dockBottomRight.appendChild(credit);
 
 /** Wrapper the narrow-viewport rules turn into a stacked column. */

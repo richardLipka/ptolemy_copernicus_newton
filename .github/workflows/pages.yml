@@ -1,8 +1,9 @@
 # Publishes the built app to GitHub Pages.
 #
-# Requires Pages to be enabled once, by hand: Settings -> Pages -> Source ->
-# "GitHub Actions". Until then this workflow will fail on the deploy step; the
-# app itself is unaffected and still builds under CI.
+# Pages is enabled for this repository with "GitHub Actions" as the source, so
+# no manual step is needed. `configure-pages` carries `enablement: true` as a
+# belt-and-braces measure for a fork or a fresh clone, where it would otherwise
+# fail on a repository that has never had Pages turned on.
 name: Deploy to Pages
 
 on:
@@ -27,9 +28,9 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -38,9 +39,15 @@ jobs:
       - run: npm run build
 
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      # The app is a workspace, so the build lands in the app's own directory
+      # rather than at the repository root. This path moved with the split to
+      # npm workspaces and the deploy uploaded nothing until it was corrected.
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: apps/orrery/dist
 
       - id: deployment
         uses: actions/deploy-pages@v4

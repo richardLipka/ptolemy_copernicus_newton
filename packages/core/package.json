@@ -1,6 +1,6 @@
 {
   "name": "@orrery/core",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "type": "module",
   "description": "Solar-system model data and the four historical engines — Ptolemaic, Copernican, Keplerian and Newtonian — as a dependency. No DOM, no framework, no runtime dependencies.",
   "license": "MIT",

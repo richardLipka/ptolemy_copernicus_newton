@@ -92,10 +92,60 @@ describe('forces on Earth', () => {
     expect(angle).toBeLessThan(1);
   });
 
+  /**
+   * The README quotes a figure here, and a quoted figure rots. It once read
+   * 99.5%, which is the *year's maximum* rather than a typical value: the
+   * Moon's share swings with its distance, so the Sun's runs 99.33–99.51 across
+   * 2026 and sits at 99.44 in the middle. Bounds, not a point.
+   */
+  it('leaves the Sun at 99.4% of the pull on Earth, give or take a tenth', () => {
+    const share = dynamics().pulls[0]!.share * 100;
+    expect(share).toBeGreaterThan(99.3);
+    expect(share).toBeLessThan(99.55);
+  });
+
   it('orbits at about 29.8 km/s', () => {
     // Earth's mean orbital speed. The n-body frame is the system barycentre, so
     // this is barycentric rather than heliocentric, but the difference is tiny.
     expect(dynamics().speedKmPerSecond).toBeCloseTo(29.8, 0);
+  });
+});
+
+/**
+ * The Moon is the case worth quoting, and the easiest to quote wrongly.
+ *
+ * The Sun outpulls the Earth here — the Moon orbits the Earth anyway, because
+ * the pair fall toward the Sun together — but by how much is not a constant.
+ * The Moon's distance from Earth varies by a tenth over a month, and the pull
+ * goes as the square, so the ratio breathes between about 1.85 and 2.55. The
+ * README once said "more than twice as hard", which is false at perigee, and
+ * gave 69.5%/30.5% for what is really a 65–72% band.
+ */
+describe('forces on the Moon', () => {
+  const shares = (jd: number) => {
+    const pulls = nbodyDynamics(jd, 'moon')!.pulls;
+    const sun = pulls.find((pull) => pull.source === 'sun')!;
+    const earth = pulls.find((pull) => pull.source === 'earth')!;
+    return { sun: sun.share * 100, ratio: sun.newtons / earth.newtons };
+  };
+
+  it('is pulled harder by the Sun than by the Earth, all month long', () => {
+    for (let day = 0; day < 30; day++) {
+      expect(shares(JD + day).ratio, `day ${day}`).toBeGreaterThan(1);
+    }
+  });
+
+  it('keeps that ratio inside 1.8–2.6, so "twice" is an average and not a floor', () => {
+    const ratios = Array.from({ length: 365 }, (_, day) => shares(JD + day).ratio);
+    expect(Math.min(...ratios)).toBeGreaterThan(1.8);
+    expect(Math.min(...ratios)).toBeLessThan(2);
+    expect(Math.max(...ratios)).toBeLessThan(2.6);
+  });
+
+  it('puts the Sun near 69% of the total pull, within a band of a few points', () => {
+    const sunShares = Array.from({ length: 365 }, (_, day) => shares(JD + day).sun);
+    expect(Math.min(...sunShares)).toBeGreaterThan(64);
+    expect(Math.max(...sunShares)).toBeLessThan(72);
   });
 });
 

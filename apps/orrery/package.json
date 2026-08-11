@@ -1,7 +1,7 @@
 {
   "name": "@orrery/app",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.6.0",
   "type": "module",
   "description": "The teaching orrery: four world-systems running the same sky, side by side.",
   "license": "MIT",
