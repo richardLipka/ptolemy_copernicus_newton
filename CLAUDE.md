@@ -1300,6 +1300,58 @@ twice the centre's offset, arms joining the right points — because the harness
 is a second derivation of the same geometry and could otherwise drift into a
 diagram of nothing.
 
+#### The harness answers when you point at it
+
+A legend beside the map can name the parts; it cannot say what any of them is
+*worth*. Hovering a circle, an arm, a marker or a force vector raises a card
+giving what that part is, in the terms of the model actually running, and its
+figures for the date on screen — `render/orrery/harnessHint.ts` for the card,
+`harnessNotes.ts` for the wording, `state/harnessMeasures.ts` for the numbers.
+
+Four things about it are deliberate.
+
+**The numbers are measured from the construction the app draws**, through
+`selectors.rawConstruction`, and never from the projected figure. The compressed
+scale distorts every distance on screen, and reporting those distortions back as
+Ptolemy's parameters would be worse than reporting nothing. The same call gives
+the geometry a half-day either side, which is where the rates come from: the
+equant's whole content is that one rate is uniform and the other is not, and no
+still picture can show it. Anything with a short known period — the Galileans —
+is sampled against its own period instead of a day, or Io's 203 degrees a day
+aliases to −157 and the note claims a retrograde moon.
+
+**Ptolemy is quoted in parts of 60**, on exactly the reasoning in
+§12.6 and `engines/ptolemaicUnits.ts`, with the Almagest's sexagesimal beside the
+decimal for the fixed parameters: 39;30, 6;0, 12;0. A moon keeps kilometres even
+in his mode, because parts of its own orbit is a unit nobody has used and parts
+of its planet's deferent makes the whole Jovian system a rounding error.
+
+**A period is withheld from his constructions.** His deferent radii are not
+dynamical quantities, and Kepler's third law applied to one would answer a
+question the model does not contain.
+
+**The wording is chosen by role *and* by family** — `constructionFamilyOf`, moved
+into `core/construction.ts` when the notes needed it — because a circle marked
+`deferent` carries an epicycle round the Earth for Ptolemy and is Copernicus's
+eccentric about the Sun. Satellites get their own variant where the general
+wording would put words in someone's mouth, and the two foci get opposite ones,
+told apart by their index in the construction since they are drawn identically.
+
+The teaching payload is the epicycle's note. For a superior planet Ptolemy's
+r/R is exactly 1/a in astronomical units, and for an inferior one it is a
+itself, so the card reads out the distance from the Sun his ratio implies
+against the true one: Mars 1.519 against 1.524, Venus 0.7195 against 0.7233. He
+had all five distances written down and no way of knowing what they were.
+
+Only the markers are focusable; putting seventy-two chords of a circle in the
+tab order would be worse than useless. Each part carries an invisible hit pad,
+since a hairline is thinner than the pointer that has to catch it.
+`state/harnessMeasures.test.ts` pins the Almagest figures and the equant's two
+rates, and `render/orrery/harnessNotes.test.ts` walks every part every engine
+draws and insists on a real wording for all of it in both languages — `t` falls
+back to English silently, so the dictionaries are checked as data rather than
+through it.
+
 ### 13.3b The Moon is only exaggerated at compressed scale
 
 `moonDrawnRadius()` takes the scale mode, and at **true scale it returns the

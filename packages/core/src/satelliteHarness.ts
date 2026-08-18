@@ -26,7 +26,7 @@
  */
 
 import { BODIES, type BodyId } from './bodies.js';
-import type { Construction } from './construction.js';
+import { constructionFamilyOf, type Construction } from './construction.js';
 import type { SatelliteOrbit } from './bodies.js';
 import type { EngineId } from './engines/types.js';
 import { J2000 } from './time.js';
@@ -74,22 +74,6 @@ function meanAnomalyDeg(jd: number, orbit: SatelliteOrbit): number {
 }
 
 /**
- * Which family of machinery an engine draws with.
- *
- * `ptolemaic-reframe` is grouped with the plain circle deliberately: it is
- * modern positions in geocentric dress and exposes no construction of its own
- * for the planets either, so inventing an equant for it would be a fiction about
- * a mode whose whole point is that it has no machinery.
- */
-function familyOf(engineId: EngineId): 'ptolemaic' | 'copernican' | 'kepler' | 'newton' | 'circle' {
-  if (engineId === 'ptolemaic-epicyclic' || engineId === 'ptolemaic-almagest') return 'ptolemaic';
-  if (engineId === 'copernican') return 'copernican';
-  if (engineId === 'keplerian') return 'kepler';
-  if (engineId === 'nbody') return 'newton';
-  return 'circle';
-}
-
-/**
  * The selected model's machinery for one satellite, about `primary`.
  *
  * `body` is the satellite's actual drawn position, passed in rather than
@@ -114,7 +98,7 @@ export function satelliteHarness(
     to: about(-a * (1 + e), 0),
   });
 
-  switch (familyOf(engineId)) {
+  switch (constructionFamilyOf(engineId)) {
     /*
      * One circle, centred on the planet, and the arm carrying the moon round it.
      *

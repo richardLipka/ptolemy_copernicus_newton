@@ -15,6 +15,7 @@
  */
 
 import type { BodyId } from './bodies.js';
+import type { EngineId } from './engines/types.js';
 import type { Vec3 } from './vec.js';
 
 export type ConstructionRole =
@@ -94,3 +95,33 @@ export interface Construction {
 /** Engines that draw a body by construction rather than by formula. */
 export type ConstructionSource = (jd: number, bodyId: BodyId) => Construction | null;
 
+/**
+ * Which family of machinery an engine draws with.
+ *
+ * A consumer that wants to *say* something about a construction — label it,
+ * explain it, choose the word "deferent" over "orbit" — needs to know whose
+ * machinery it is looking at, and the roles alone will not tell it: a circle
+ * marked `deferent` means one thing carrying an epicycle round the Earth and
+ * quite another as Copernicus's eccentric about the Sun.
+ *
+ * `ptolemaic-reframe` is grouped with the plain circle deliberately: it is
+ * modern positions in geocentric dress and exposes no construction of its own
+ * for the planets either, so inventing an equant for it would be a fiction about
+ * a mode whose whole point is that it has no machinery.
+ */
+export type ConstructionFamily =
+  | 'ptolemaic'
+  | 'copernican'
+  | 'kepler'
+  | 'newton'
+  | 'circle';
+
+export function constructionFamilyOf(engineId: EngineId): ConstructionFamily {
+  if (engineId === 'ptolemaic-epicyclic' || engineId === 'ptolemaic-almagest') {
+    return 'ptolemaic';
+  }
+  if (engineId === 'copernican') return 'copernican';
+  if (engineId === 'keplerian') return 'kepler';
+  if (engineId === 'nbody') return 'newton';
+  return 'circle';
+}

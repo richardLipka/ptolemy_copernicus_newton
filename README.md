@@ -103,6 +103,15 @@ quietly regress.
   **equant** — the off-centre point about which the epicycle's centre sweeps
   equal angles in equal time. It is the cleverest device in the *Almagest* and
   it is invisible in the finished orbit.
+- **Ask any part of it what it is.** Hover a circle, an arm, a marker or a force
+  vector and a card says what that part does in the model that is running, with
+  its figures for the date on screen — in Ptolemy's own parts of 60, sexagesimal
+  beside the decimal, exactly as the *Almagest* states them. Hover the equant and
+  the two rates are there together: 0.524°/day uniform about it, 0.639°/day about
+  the Earth, which is the whole reason it exists. Hover Mars's epicycle and its
+  r/R of 39;30 to 60 is read out as the distance from the Sun it implies —
+  **1.519 AU against a true 1.524** — a figure Ptolemy wrote down for all five
+  planets without any way of knowing what he had.
 - **See Newton's machinery too.** He places a body by force rather than by
   geometry, so the same switch draws vectors instead of circles: velocity, the
   net force, and every other body's gravitational pull, coloured by which body

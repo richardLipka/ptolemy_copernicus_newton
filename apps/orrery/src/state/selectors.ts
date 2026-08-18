@@ -580,33 +580,46 @@ function satelliteConstruction(
   return satelliteHarness(jd, bodyId, engineId, primary, body);
 }
 
+/**
+ * The machinery as the engine states it, before any projection.
+ *
+ * Drawing is only one of the things to be done with it. A reader hovering over
+ * the equant wants to know how far off centre it sits, and that question has to
+ * be answered from the same geometry the line on screen came from — measuring
+ * the *projected* figure would report the compressed scale's distortion as if it
+ * were Ptolemy's. See `harnessMeasures.ts`, which is the other caller.
+ *
+ * `jd` is separate from the state's own date so a rate can be had by asking
+ * twice. Everything else about the construction is fixed by the state.
+ */
+export function rawConstruction(
+  state: State,
+  bodyId: BodyId,
+  jd: number = state.julianDate,
+): { construction: Construction; positions: PositionSet } | null {
+  const engine = ENGINES[state.engineId];
+  const positions = engine.positionsAt(jd);
+
+  // Satellites come first: they have geometry worth drawing in every model,
+  // including the ones whose engine exposes no construction at all.
+  const construction = BODIES[bodyId].satellite
+    ? satelliteConstruction(bodyId, state.engineId, jd, positions)
+    : (engine.construction?.(jd, bodyId) ?? null);
+
+  return construction ? { construction, positions } : null;
+}
+
 export function buildConstruction(
   state: State,
   bodyId: BodyId,
 ): ProjectedConstruction | null {
-  const engine = ENGINES[state.engineId];
+  const raw = rawConstruction(state, bodyId);
+  if (!raw) return null;
 
-  // Satellites come first: they have geometry worth drawing in every model,
-  // including the ones whose engine exposes no construction at all.
-  if (BODIES[bodyId].satellite) {
-    const positions = engine.positionsAt(state.julianDate);
-    const construction = satelliteConstruction(
-      bodyId,
-      state.engineId,
-      state.julianDate,
-      positions,
-    );
-    if (!construction) return null;
-    return projectConstruction(construction, constructionProjector(state, bodyId, positions));
-  }
-
-  if (!engine.construction) return null;
-
-  const construction = engine.construction(state.julianDate, bodyId);
-  if (!construction) return null;
-
-  const positions = engine.positionsAt(state.julianDate);
-  return projectConstruction(construction, constructionProjector(state, bodyId, positions));
+  return projectConstruction(
+    raw.construction,
+    constructionProjector(state, bodyId, raw.positions),
+  );
 }
 
 /**

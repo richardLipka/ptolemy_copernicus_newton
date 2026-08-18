@@ -355,6 +355,13 @@ export function renderControls(container: HTMLElement, store: Store): void {
       el('p', 'note', !state.selectedBody ? t('view.constructionHint') : t(legend)),
     );
 
+    // The legend names the parts; the map itself will describe any one of them,
+    // with its figures for the date on screen. Worth saying once — a reader who
+    // does not know the notes are there will never go looking for them.
+    if (state.selectedBody) {
+      harnessPanel.appendChild(el('p', 'note', t('harness.hoverNote')));
+    }
+
     // Under the compressed scale a circle not centred on the frame origin does
     // not project to a circle, which rather undercuts "circles upon circles".
     // Say so, and point at the toggle that fixes it.

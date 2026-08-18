@@ -25,6 +25,7 @@ import {
   type Point,
 } from '../../state/selectors';
 import { CONSTELLATION_FIGURES } from './constellations';
+import { createHarnessHint } from './harnessHint';
 import { edgePointerFor } from './offscreen';
 import { chooseScaleBar } from './scalebar';
 
@@ -169,6 +170,8 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
    * would grow along with the map it is trying to measure, which is the one
    * thing a scale bar must not do.
    */
+  const harnessHint = createHarnessHint(container, harnessLayer, store);
+
   const scalebar = div('scalebar');
   const scalebarLine = div('scalebar__line');
   const scalebarLabel = div('scalebar__label');
@@ -435,7 +438,7 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
     let usedSegments = 0;
     let usedMarkers = 0;
 
-    const takeSegment = (role: string): HTMLDivElement => {
+    const takeSegment = (role: string, body: BodyId): HTMLDivElement => {
       let element = harnessSegments[usedSegments];
       if (!element) {
         element = div('harness__segment');
@@ -443,6 +446,9 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
         harnessLayer.appendChild(element);
       }
       element.dataset.role = role;
+      // Whose machinery this is, for the hover note: with a satellite family on
+      // screen there are five constructions in this layer at once.
+      element.dataset.body = body;
       element.style.display = '';
       usedSegments++;
       return element;
@@ -480,22 +486,29 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
           // A curve straddling the frame origin projects to one that sweeps
           // right across the map; skip the wrap rather than draw a chord.
           if (Math.hypot(to.x - from.x, to.y - from.y) > 0.6) continue;
-          setSegment(takeSegment(curve.role), from, to);
+          setSegment(takeSegment(curve.role, harnessBody), from, to);
         }
       }
 
       for (const arm of construction.arms) {
-        setSegment(takeSegment(arm.role), arm.from, arm.to);
+        setSegment(takeSegment(arm.role, harnessBody), arm.from, arm.to);
       }
 
-      for (const marker of construction.markers) {
+      for (const [index, marker] of construction.markers.entries()) {
         let element = harnessMarkers[usedMarkers];
         if (!element) {
           element = div('harness__marker');
           harnessMarkers.push(element);
           harnessLayer.appendChild(element);
+          // The landmarks are reachable by keyboard; the circles are not. See
+          // harnessHint.ts for why the line is drawn there.
+          element.tabIndex = 0;
         }
         element.dataset.role = marker.role;
+        element.dataset.body = harnessBody;
+        // Its place in the construction, which is the only thing telling the
+        // occupied focus from the empty one — they are drawn identically.
+        element.dataset.index = String(index);
         element.style.display = '';
         setPoint(element, marker.at);
         usedMarkers++;
@@ -511,13 +524,11 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
 
     // Newton's machinery is vectors rather than circles, drawn in the same layer
     // under the same switch: force is how this model places a body.
-    const vectors =
-      state.showConstruction && state.selectedBody
-        ? buildDynamicsView(state, state.selectedBody)
-        : null;
+    const vectorBody = state.showConstruction ? state.selectedBody : null;
+    const vectors = vectorBody ? buildDynamicsView(state, vectorBody) : null;
 
     let usedVectors = 0;
-    if (vectors) {
+    if (vectors && vectorBody) {
       for (const vector of vectors) {
         let shaft = vectorShafts[usedVectors];
         let head = vectorHeads[usedVectors];
@@ -531,6 +542,7 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
 
         for (const element of [shaft, head]) {
           element.dataset.role = vector.role;
+          element.dataset.body = vectorBody;
           if (vector.source) element.dataset.source = vector.source;
           else delete element.dataset.source;
           element.style.display = '';
@@ -782,6 +794,9 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
 
     updateTrails();
     updateHarness();
+    // After the harness, so a note describing a part reads the geometry the
+    // frame has just drawn rather than the previous one.
+    harnessHint.refresh();
 
     // Where the Sun is drawn. The map is a plan view, so a body's lit side is
     // simply the half facing the Sun, and the terminator is a straight line

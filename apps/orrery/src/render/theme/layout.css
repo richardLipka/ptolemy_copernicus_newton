@@ -345,6 +345,167 @@
   display: none;
 }
 
+/*
+ * The machinery answers for itself when pointed at. See harnessHint.ts.
+ *
+ * Every part is a hairline, and a hairline is not something a mouse can be
+ * asked to hit: at half a pixel the target is thinner than the pointer's own
+ * tip. Each piece therefore carries an invisible pad — eleven pixels across a
+ * segment, nineteen across a marker — which is what the pointer actually
+ * catches. The pads overlap where lines cross, and that is fine: the topmost
+ * element wins, and both parts are worth reading.
+ */
+.harness__segment,
+.harness__marker,
+.vector__shaft {
+  pointer-events: auto;
+  cursor: help;
+}
+
+/* The arrowhead is a border triangle with no box of its own to hit. */
+.vector__head {
+  pointer-events: none;
+}
+
+.harness__segment::before,
+.vector__shaft::before {
+  content: '';
+  position: absolute;
+  inset: -5px 0;
+}
+
+.harness__marker::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+}
+
+/*
+ * The whole part lights up, not the piece under the pointer.
+ *
+ * A circle is seventy-two separate segments, so brightening the one being
+ * touched would light a five-degree arc and leave the reader looking for the
+ * rest of the thing the card is describing.
+ */
+.harness[data-hover='deferent'] .harness__segment[data-role='deferent'],
+.harness[data-hover='epicycle'] .harness__segment[data-role='epicycle'],
+.harness[data-hover='orbit'] .harness__segment[data-role='orbit'],
+.harness[data-hover='apsidal'] .harness__segment[data-role='apsidal'],
+.harness[data-hover='deferent-arm'] .harness__segment[data-role='deferent-arm'],
+.harness[data-hover='epicycle-arm'] .harness__segment[data-role='epicycle-arm'],
+.harness[data-hover='radius'] .harness__segment[data-role='radius'],
+.harness[data-hover='centre'] .harness__marker[data-role='centre'],
+.harness[data-hover='focus'] .harness__marker[data-role='focus'],
+.harness[data-hover='equant'] .harness__marker[data-role='equant'],
+.harness[data-hover='velocity'] .vector__shaft[data-role='velocity'],
+.harness[data-hover='velocity'] .vector__head[data-role='velocity'],
+.harness[data-hover='net-force'] .vector__shaft[data-role='net-force'],
+.harness[data-hover='net-force'] .vector__head[data-role='net-force'],
+.harness[data-hover='gravity'] .vector__shaft[data-role='gravity'],
+.harness[data-hover='gravity'] .vector__head[data-role='gravity'] {
+  opacity: 1;
+  filter: drop-shadow(0 0 3px var(--accent-bright));
+}
+
+/* The markers are focusable, so they need a focus ring the map can carry. */
+.harness__marker:focus-visible {
+  outline: var(--line-medium) solid var(--accent-bright);
+  outline-offset: 3px;
+}
+
+/* --- the hover note ------------------------------------------------------ */
+
+/*
+ * A card outside the instrument, so the pan-and-zoom transform never reaches
+ * it: a note about the map must not be dragged along with the map, and its
+ * type must not grow when the map is magnified.
+ */
+.harness-hint {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 6;
+  width: min(21rem, calc(100% - 2rem));
+  padding: 0.6rem 0.7rem;
+  pointer-events: none;
+  border: var(--line-fine) solid var(--panel-edge);
+  border-radius: var(--panel-radius);
+  background: var(--panel-surface);
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: blur(var(--panel-blur));
+  color: var(--text);
+  font-family: var(--face-text);
+  font-size: var(--size-body);
+}
+
+.harness-hint__title {
+  font-family: var(--face-display);
+  font-size: var(--size-heading);
+  color: var(--text-strong);
+}
+
+/*
+ * Set in the ordinary ink rather than the muted one, here and on the labels
+ * below.
+ *
+ * A panel title can afford `--text-muted`, which measures 3.1:1 on Parchment:
+ * it names a panel the reader can already see. These name figures, at label
+ * size, and small type that carries meaning wants 4.5:1. The hierarchy is
+ * carried by the faces and the letterspacing instead, which costs nothing.
+ */
+.harness-hint__subject {
+  font-size: var(--size-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 0.4rem;
+  padding-bottom: 0.35rem;
+  border-bottom: var(--line-hairline) solid var(--accent-dark);
+}
+
+.harness-hint__body {
+  margin: 0;
+  font-size: var(--size-label);
+  line-height: 1.45;
+}
+
+.harness-hint__values {
+  margin-top: 0.45rem;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.harness-hint__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  font-size: var(--size-label);
+}
+
+.harness-hint__label {
+  color: var(--text);
+}
+
+/*
+ * The figures are the point of the card, so they are set in the numeric face
+ * and given the strong ink — the same treatment the info panel's readouts get.
+ */
+.harness-hint__value {
+  font-family: var(--face-numeric);
+  color: var(--text-strong);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* A touch pointer has no hover, and a finger over the card cannot read it. */
+@media (hover: none) {
+  .harness-hint {
+    display: none !important;
+  }
+}
+
 /* --- sight-lines -------------------------------------------------------- */
 
 /*

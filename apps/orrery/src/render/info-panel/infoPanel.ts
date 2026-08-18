@@ -25,43 +25,12 @@ import {
 import { inDeferentParts } from '@orrery/core/engines/ptolemaicUnits';
 import type { EngineId } from '@orrery/core/engines/types';
 import { illuminationOf, phaseName } from '@orrery/core/illumination';
-import { t, bodyName, formatNumber } from '../../i18n/i18n';
+import { t, bodyName, formatExponent, formatNumber, formatShare } from '../../i18n/i18n';
 import { angleDiffDeg } from '@orrery/core/vec';
 import { ENGINES } from '@orrery/core/engines/registry';
 import type { Store } from '../../state/store';
 import { buildView } from '../../state/selectors';
 import { el, panel, readout } from '../../ui/dom';
-
-/**
- * Force magnitudes as a mantissa and a power of ten.
- *
- * They span twelve orders of magnitude between the Sun's grip and Saturn's, so
- * fixed-point notation is unreadable and locale grouping is beside the point.
- */
-function formatExponent(value: number): string {
-  if (value === 0) return '0';
-  const exponent = Math.floor(Math.log10(Math.abs(value)));
-  const mantissa = value / 10 ** exponent;
-  return `${formatNumber(mantissa, 2)}·10${superscript(exponent)}`;
-}
-
-const SUPERSCRIPTS = '⁰¹²³⁴⁵⁶⁷⁸⁹';
-
-const superscript = (exponent: number): string =>
-  (exponent < 0 ? '⁻' : '') +
-  Math.abs(exponent)
-    .toString()
-    .split('')
-    .map((digit) => SUPERSCRIPTS[Number(digit)])
-    .join('');
-
-/** A pull's share of the total, with room for the very small ones. */
-function formatShare(share: number): string {
-  const percent = share * 100;
-  if (percent >= 1) return `${formatNumber(percent, 1)} %`;
-  if (percent >= 0.001) return `${formatNumber(percent, 3)} %`;
-  return '< 0,001 %';
-}
 
 /** One engine per model, for the side-by-side phase figures. */
 const PHASE_COMPARISON_ENGINES: readonly EngineId[] = [
