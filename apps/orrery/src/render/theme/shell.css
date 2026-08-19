@@ -92,6 +92,35 @@
     text-align: center;
   }
 
+  /*
+   * The band of sky, along the bottom of the stage.
+   *
+   * Opposite the longitude strip and inset the same way, because the two are
+   * the same kind of thing: a second view of this instant spanning the width
+   * the map spans, rather than a control. The map's field is lifted to make
+   * room, exactly as it is pushed down for the strip above.
+   */
+  .sky-host {
+    position: absolute;
+    bottom: var(--dock-gap);
+    left: calc(var(--dock-width) + var(--dock-gap) * 2);
+    right: calc(var(--dock-width) + var(--dock-gap) * 2);
+    z-index: 2;
+    overflow: hidden;
+    border: var(--line-fine) solid var(--panel-edge);
+    border-radius: var(--panel-radius);
+    background: var(--panel-surface);
+    box-shadow: var(--panel-shadow);
+  }
+
+  .sky-host[hidden] {
+    display: none;
+  }
+
+  #app[data-sky='on'] .stage__field {
+    bottom: calc(var(--dock-gap) * 2 + var(--sky-height) + 1.6rem);
+  }
+
   /* --- docks ------------------------------------------------------------- */
 
   .dock {

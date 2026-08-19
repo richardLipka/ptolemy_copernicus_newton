@@ -46,6 +46,33 @@
     --dock-gap: clamp(0.5rem, 1.1vw, 1rem);
     --dock-width: clamp(13rem, 20vw, 18.5rem);
 
+    /*
+     * Height of the band of sky.
+     *
+     * Grows with the window rather than being fixed, because the band is drawn
+     * to one scale in both directions: the width sets how many pixels a degree
+     * is worth, so a fixed height on a wide screen would leave the band a
+     * couple of degrees of latitude and cut off the Moon. Bounded at both ends
+     * — it is a slip along the bottom of the stage, not a second map.
+     */
+    --sky-height: clamp(6.5rem, 15vw, 13rem);
+
+    /*
+     * The band's own colours, derived rather than declared per theme.
+     *
+     * A star takes the theme's strongest ink and the ground is the theme's own
+     * surface, darkened. That is not a compromise: on Parchment it produces an
+     * engraved chart, dark stars on paper, which is exactly what a
+     * seventeenth-century observer's sky looked like *on the page*; on Nocturne
+     * the same two rules produce lamplight stars on a black sky. Neither look
+     * needed a decision, and a fifth theme will not need one either.
+     */
+    --sky-ground: color-mix(in srgb, var(--surface) 88%, var(--shadow-solid));
+    --sky-daylight: color-mix(in srgb, var(--surface) 66%, var(--accent-bright));
+    --sky-star: var(--text-strong);
+    --sky-star-name: var(--text);
+    --sky-body-name: var(--text-strong);
+
     /* --- fallbacks ---------------------------------------------------------
      * A theme is expected to override all of these. They are set here so a
      * missing token degrades to something legible rather than to nothing.

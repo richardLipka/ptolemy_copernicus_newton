@@ -414,6 +414,199 @@
   outline-offset: 3px;
 }
 
+/* --- the band of sky ----------------------------------------------------- */
+
+/*
+ * A patch of the ecliptic, drawn to one scale in both directions.
+ *
+ * Everything inside is placed in degrees — `--dlon` east of the centre and
+ * `--dlat` north of the ecliptic — multiplied by `--sky-scale`, the number of
+ * pixels a degree is worth. The band's own width sets that scale, so the
+ * longitudes it spans are chosen and the latitudes follow, which is what keeps
+ * a separation on screen equal to a separation in the sky.
+ */
+.sky {
+  --sky-scale: 20;
+
+  position: relative;
+  height: var(--sky-height);
+  overflow: hidden;
+  background: var(--sky-ground);
+}
+
+.sky__layer {
+  position: absolute;
+  inset: 0;
+}
+
+/* Every mark hangs from the middle of the band, which is the ecliptic. */
+.sky__star,
+.sky__body,
+.sky__star-name,
+.sky__body-name {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(
+    calc(var(--dlon) * var(--sky-scale) * 1px),
+    calc(var(--dlat) * var(--sky-scale) * -1px)
+  );
+}
+
+/*
+ * The ecliptic itself: the line the planets keep to, and the reason a band this
+ * shallow can hold them at all.
+ */
+.sky__ecliptic {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: var(--line-hairline);
+  transform: translateY(calc(var(--dlat) * var(--sky-scale) * -1px));
+  background: var(--accent-dark);
+  opacity: 0.5;
+}
+
+.sky__star {
+  width: calc(var(--size) * 1px);
+  height: calc(var(--size) * 1px);
+  margin: calc(var(--size) * -0.5px);
+  border-radius: 50%;
+  background: var(--sky-star);
+}
+
+.sky__star-name,
+.sky__body-name {
+  transform: translate(
+      calc(var(--dlon) * var(--sky-scale) * 1px),
+      calc(var(--dlat) * var(--sky-scale) * -1px)
+    )
+    translateX(-50%);
+  white-space: nowrap;
+  font-size: var(--size-label);
+  pointer-events: none;
+}
+
+/* Star names sit below their star, body names above, so the two never fight. */
+.sky__star-name {
+  margin-top: 0.4rem;
+  font-family: var(--face-text);
+  font-style: italic;
+  color: var(--sky-star-name);
+}
+
+.sky__body-name {
+  margin-top: -1.3rem;
+  font-family: var(--face-display);
+  color: var(--sky-body-name);
+}
+
+/*
+ * A body is the info panel's phase disc at a smaller size: a shadowed ground,
+ * the lit hemisphere, and a terminator ellipse across it whose width is the
+ * cosine of the phase angle.
+ *
+ * Not the map's technique, which draws exactly half of every body lit because a
+ * plan view sees the terminator edge-on. Here the observer is looking at the
+ * thing, so the fraction is the entire content.
+ */
+.sky__body {
+  width: calc(var(--size) * 1px);
+  height: calc(var(--size) * 1px);
+  margin: calc(var(--size) * -0.5px);
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--shadow-solid);
+}
+
+.sky__half {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  background: var(--tint);
+}
+
+.sky__body[data-side='right'] .sky__half {
+  right: 0;
+}
+
+.sky__body[data-side='left'] .sky__half {
+  left: 0;
+}
+
+.sky__terminator {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 100%;
+  width: calc(var(--lit-width) * 100%);
+  transform: translateX(-50%);
+  border-radius: 50%;
+}
+
+.sky__body[data-shape='gibbous'] .sky__terminator {
+  background: var(--tint);
+}
+
+.sky__body[data-shape='crescent'] .sky__terminator {
+  background: var(--shadow-solid);
+}
+
+/* The body being looked at, which is otherwise just another disc. */
+.sky__body--target {
+  outline: var(--line-fine) solid var(--accent-bright);
+  outline-offset: 2.5px;
+}
+
+/* Where one sign gives way to the next, named as the ring names them. */
+.sky__division {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 100%;
+  border-left: var(--line-hairline) dashed var(--accent-dark);
+  opacity: 0.55;
+  transform: translateX(calc(var(--dlon) * var(--sky-scale) * 1px));
+}
+
+.sky__division-name {
+  position: absolute;
+  top: 0.2rem;
+  left: 0.35rem;
+  font-family: var(--face-display);
+  font-size: var(--size-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+/*
+ * A field within a dozen degrees of the Sun is one nobody could observe: that
+ * patch of sky is above the horizon only while the Sun is. The wash says so at
+ * a glance, and the caption says so in words, because a wash on its own reads
+ * as decoration.
+ */
+.sky[data-daylight='on'] {
+  background: var(--sky-daylight);
+}
+
+.sky[data-empty='on'] .sky__ecliptic {
+  opacity: 0.15;
+}
+
+.sky__caption {
+  padding: 0.35rem 0.6rem;
+  border-top: var(--line-hairline) solid var(--accent-dark);
+  background: var(--panel-surface);
+  font-family: var(--face-text);
+  font-size: var(--size-label);
+  color: var(--text);
+  text-align: center;
+}
+
 /* --- the hover note ------------------------------------------------------ */
 
 /*

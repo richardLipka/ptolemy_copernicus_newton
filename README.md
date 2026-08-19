@@ -121,6 +121,17 @@ quietly regress.
   hard as Earth does — near 69% against 31%, with the ratio breathing between 1.9
   and 2.5 across a year — and it orbits Earth anyway, because the two are falling
   toward the Sun together.
+- **Look at the sky itself.** Open the band along the bottom and it shows the
+  patch of sky the selected body is in, as seen from the observation point:
+  the bright stars within 35° of the ecliptic at their catalogued places, every
+  body that falls in the field, the sign boundaries, and the ecliptic itself.
+  Both axes are to one scale, so a separation on screen is the separation in the
+  sky — narrow the field to 4° and watch a conjunction actually open. It is the
+  view every pre-telescopic observation was made in, and it makes two things
+  visible that no map can: **Ptolemy's planets sit exactly on the ecliptic**,
+  because his model here has longitudes and no latitude theory at all; and
+  **Venus keeps her phase**, never passing half under Ptolemy and filling under
+  the other three.
 - **Compare two models at once.** The ghost overlay draws a second model faintly
   beside the active one, so Ptolemy's 2.8° at Mars is a visible gap rather than a
   number — and the bare-circle sub-mode's 13.5°, which is what heliocentrism

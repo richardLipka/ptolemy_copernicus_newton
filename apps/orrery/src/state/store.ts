@@ -135,6 +135,23 @@ export interface State {
    * reader meeting the app for the first time should meet the map.
    */
   showTrack: boolean;
+  /**
+   * The band of sky around the selected body, along the bottom of the stage.
+   *
+   * Off by default like the strip above it, and for the same reason: it answers
+   * the observer's question rather than the model's, and belongs to a reader
+   * who has already got their bearings on the map.
+   */
+  showSky: boolean;
+  /**
+   * How wide that band is, degrees of longitude.
+   *
+   * Three steps rather than a slider. Forty degrees is more than a constellation
+   * and is where a planet's progress against the stars reads; twelve is a good
+   * look at a close pairing; four is what it takes to see a conjunction actually
+   * separate, since the closest of them are a fifth of a degree apart.
+   */
+  skyField: number;
   locale: Locale;
   theme: ThemeId;
   /** The calculation and demonstrations overlay, opened on demand. */
@@ -184,6 +201,8 @@ export class Store {
       showStarFigures: true,
       showConstruction: true,
       showTrack: false,
+      showSky: false,
+      skyField: 40,
       locale: getLocale(),
       theme: readStoredTheme(),
       showCalculation: false,
@@ -384,9 +403,16 @@ export class Store {
       | 'showSightLines'
       | 'showStarFigures'
       | 'showConstruction'
-      | 'showTrack',
+      | 'showTrack'
+      | 'showSky',
   ): void {
     this.patch({ [key]: !this.state[key] } as Partial<State>);
+  }
+
+  /** Widen or narrow the band of sky. See `skyField`. */
+  setSkyField(skyField: number): void {
+    if (skyField === this.state.skyField) return;
+    this.patch({ skyField });
   }
 
   setCalculationOpen(showCalculation: boolean): void {

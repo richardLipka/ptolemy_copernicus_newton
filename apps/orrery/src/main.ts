@@ -20,6 +20,7 @@ import favMark from './assets/fav.svg?raw';
 import kivMark from './assets/kiv.svg?raw';
 
 import { createOrrery } from './render/orrery/orrery';
+import { createSkyStrip } from './render/sky/skyStrip';
 import { renderTrackStrip } from './render/track/trackStrip';
 import {
   buildLongitudeTrack,
@@ -186,7 +187,19 @@ trackHost.className = 'track-host';
 trackHost.hidden = true;
 root.appendChild(trackHost);
 
+/*
+ * The band of sky sits opposite it, along the bottom, for the same reason: it
+ * is a second view of this instant rather than a control. The two answer
+ * different questions — the strip above is a record over time, this is the sky
+ * at one moment — and either can be on without the other.
+ */
+const skyHost = document.createElement('div');
+skyHost.className = 'sky-host';
+skyHost.hidden = true;
+root.appendChild(skyHost);
+
 const orrery = createOrrery(field, store);
+const skyStrip = createSkyStrip(skyHost, store);
 
 /** Handed back by the time dock so the clock can update without a rebuild. */
 let dateInput: HTMLInputElement | null = null;
@@ -242,6 +255,12 @@ function controlsSignature(): string {
     state.showSightLines,
     state.showStarFigures,
     state.showConstruction,
+    // The two strips as well. Their buttons carry a pressed state like every
+    // other toggle, and the band's field selector only exists while the band
+    // does — neither can redraw if the signature cannot see them change.
+    state.showTrack,
+    state.showSky,
+    state.skyField,
     state.selectedBody,
     state.locale,
     state.theme,
@@ -370,6 +389,17 @@ function render(): void {
 
   orrery.update();
   renderTrack();
+
+  /*
+   * The band is updated every frame rather than on a signature, unlike the
+   * strip above it. It has to be: what it is for is running the clock and
+   * watching a planet creep against the fixed stars and then turn back on
+   * itself, and a signature coarse enough to be worth having would lose exactly
+   * that. It updates about forty elements in place, which is affordable.
+   */
+  skyHost.hidden = !state.showSky;
+  app.dataset.sky = state.showSky ? 'on' : 'off';
+  if (state.showSky) skyStrip.update();
 
   const reading = formatDateTime(dateFromJd(state.julianDate));
   if (clockReadout && clockReadout.textContent !== reading) {

@@ -275,6 +275,7 @@ export function renderControls(container: HTMLElement, store: Store): void {
   toggles.append(
     toggleButton(t('view.orbits'), state.showOrbits, () => store.toggle('showOrbits')),
     toggleButton(t('view.track'), state.showTrack, () => store.toggle('showTrack')),
+    toggleButton(t('view.sky'), state.showSky, () => store.toggle('showSky')),
     toggleButton(t('view.sightlines'), state.showSightLines, () =>
       store.toggle('showSightLines'),
     ),
@@ -368,6 +369,36 @@ export function renderControls(container: HTMLElement, store: Store): void {
     if (store.engine.construction && state.selectedBody && state.scaleMode === 'compressed') {
       harnessPanel.appendChild(el('p', 'note', t('view.constructionScaleWarning')));
     }
+  }
+
+  /*
+   * How wide a band to show, offered only while there is one.
+   *
+   * Three steps rather than a slider, because they answer three different
+   * questions: forty degrees is more than a whole constellation and is where a
+   * planet's progress against the stars reads; twelve is a good look at a close
+   * pairing; four is what it takes to watch a conjunction actually separate,
+   * the closest of them being a fifth of a degree apart.
+   */
+  if (state.showSky) {
+    const fields = el('div', 'field');
+    fields.appendChild(el('label', 'field__label', t('sky.field')));
+
+    const choices = el('div', 'button-row');
+    for (const width of [40, 12, 4]) {
+      const button = el('button', undefined, t(`sky.field.${width}`));
+      button.type = 'button';
+      button.setAttribute('aria-pressed', String(state.skyField === width));
+      button.addEventListener('click', () => store.setSkyField(width));
+      choices.appendChild(button);
+    }
+    fields.appendChild(choices);
+    harnessPanel.appendChild(fields);
+
+    // Shown or hidden by the explanations switch, which the CSS handles for
+    // every `.note` in the app — no panel decides that for itself.
+    harnessPanel.appendChild(el('p', 'note', t('sky.note')));
+    harnessPanel.appendChild(el('p', 'note', t('sky.starsNote')));
   }
 
   container.appendChild(harnessPanel);

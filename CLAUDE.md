@@ -1644,6 +1644,83 @@ than 21, which is the app's whole thesis in one number.
 rate computed by a different method, and requires the stations to alternate in
 direction and the Sun never to go backwards as seen from the Earth.
 
+### 13.3h The band of sky: what the observer would be looking at
+
+The map answers *where are the planets*. The band along the bottom of the stage
+answers the question anyone before 1610 could actually put to the sky — *look
+that way, and what is there?* — and the two are not the same question. Nobody
+ever saw a deferent. What they saw was Mars a degree from Antares, written down
+against a star, night after night, and every model in this app exists to account
+for a notebook of exactly that.
+
+`state/skyView.ts` builds it, `render/sky/skyStrip.ts` draws it, and
+`core/stars.ts` supplies the only fixed points in the app.
+
+**The stars are real, and they had to be.** `render/orrery/constellations.ts`
+carries a warning at the top saying its figures are decorative, approximate and
+not to be computed against; drawing a planet a degree from one of those and
+calling it an observation would be precisely the failure that warning exists to
+prevent. So the band has its own catalogue: the brightest stars within about 35
+degrees of the ecliptic, given as **catalogued J2000 right ascension and
+declination** so any entry can be checked against any atlas, converted to the
+ecliptic frame by `equatorialToEcliptic`. Eight of them are pinned in the tests
+against published ecliptic positions, spread right round the zodiac, because a
+sign error or a wrong obliquity cannot survive all eight. Sirius is left out —
+at nearly forty degrees south of the ecliptic, no planet is ever seen near it.
+
+**No precession is applied to them, and applying any would be a bug.** The
+catalogue is in the fixed J2000 ecliptic, which is the frame every position in
+the app is already in, so stars and planets are directly comparable as they
+stand. Precession enters only where longitudes are *named* in tropical signs,
+and the sign boundaries drawn across the band carry the same offset, with the
+same sign, that the ring and the longitude strip apply.
+
+**It is a chart, not a window.** Longitude runs to the right and ecliptic
+latitude upward. The app models no horizon, no hour and no place on the
+observing planet, and without those, "left" and "right" in the sky are not
+defined — they invert between hemispheres. Inventing them would be the one
+dishonest thing this view could do. What the coordinates do support is angular
+separation, and that is what the band is built to show.
+
+**Drawn to one scale in both directions.** Marks carry their position in
+degrees; a single `--sky-scale`, measured from the band's own width, says what a
+degree is worth in pixels. So a separation on screen is a separation in the sky.
+The consequence is that the latitudes on show follow from the height rather than
+being chosen — on a wide window a forty-degree field leaves only a few degrees
+of latitude — which is why the caption states both spans instead of only the
+one that was asked for.
+
+**Centred on the body, not on the ecliptic.** The band is shallow and a body can
+be a long way off the ecliptic — the Moon reaches five degrees, Mercury seven —
+so a band centred on the ecliptic can leave the very body it was opened to look
+at outside itself. The ecliptic is still drawn, just no longer down the middle.
+
+Three things it says that the map cannot:
+
+- **Ptolemy's planets all lie exactly on the ecliptic**, because the engine
+  implements his longitudes and not his latitudes — the Almagest builds latitude
+  as a separate apparatus of tilted circles. The band is where a reader notices,
+  so `flatLatitudes` says so in the caption rather than leaving it as a puzzle.
+- **Venus keeps her phase here**, drawn with the info panel's own technique.
+  Under Ptolemy she never passes half; under the other three she fills. That is
+  Galileo's argument, in the one kind of view that could ever have carried it.
+- **A field within a dozen degrees of the Sun is one nobody could observe.** The
+  wash and the caption both say so. It is a fact about the observation rather
+  than about the model, and it is why Copernicus is said never to have seen
+  Mercury.
+
+`angularSeparation` uses `atan2` of the cross and dot products rather than
+`acos` of the dot alone. The textbook formula loses all its precision exactly
+where this view is most interesting: for two directions a thousandth of a degree
+apart the cosine differs from 1 by less than a double can carry, and `acos`
+returns noise. A conjunction is two bodies a fifth of a degree apart and the
+narrow field exists to watch one open.
+
+The band updates every frame rather than on a signature, unlike the longitude
+strip above it, because what it is *for* is running the clock and watching a
+planet creep against fixed stars and then turn back on itself. It updates about
+forty pooled elements in place to afford that.
+
 ### 13.4 Sight-lines are two segments, and why they bend
 
 A sight-line runs **observer → body → zodiac ring**, as two segments rather than
