@@ -215,8 +215,10 @@ function frameFor(state: State, bodyId: BodyId): Frame | null {
   return { construction, positions, family, centreBody, origin, satellite, scale, toUnit };
 }
 
+type Pivot = (construction: Construction, origin: Vec3) => Vec3 | null;
+
 /**
- * How fast a line turns about a point, degrees per day.
+ * How fast a line turns about each of several points, degrees per day.
  *
  * Taken by asking the engine for the same construction a half-day either side
  * rather than by differentiating anything here: the engine is what knows how its
@@ -224,35 +226,56 @@ function frameFor(state: State, bodyId: BodyId): Frame | null {
  * without either looking wrong.
  *
  * The equant is the reason this exists. Its whole content is that one rate is
- * constant while the other is not, and no still picture can show that.
+ * constant while the other is not, and no still picture can show that. It is
+ * also the reason several pivots are answered at once: the two rates it needs
+ * are the same line measured about two points, so they come from one pair of
+ * samples rather than two — the constructions either side are rebuilt once,
+ * not twice, and under Newton rebuilding one runs the integrator.
  */
-function turnRate(
+function turnRates(
   state: State,
   bodyId: BodyId,
-  pivot: (construction: Construction, origin: Vec3) => Vec3 | null,
   tip: (construction: Construction) => Vec3 | null,
-): number | null {
+  pivots: Pivot[],
+): (number | null)[] {
   const step = rateStepDays(bodyId);
   const half = step / 2;
   const centreBody = harnessCentre(state, bodyId);
 
-  const sample = (jd: number): number | null => {
+  const sample = (jd: number): (number | null)[] | null => {
     const raw = rawConstruction(state, bodyId, jd);
     if (!raw) return null;
     const origin = raw.positions.get(centreBody);
     if (!origin) return null;
-    const from = pivot(raw.construction, origin);
     const to = tip(raw.construction);
-    if (!from || !to) return null;
-    return lonOf(sub(to, from));
+    if (!to) return null;
+
+    return pivots.map((pivot) => {
+      const from = pivot(raw.construction, origin);
+      return from ? lonOf(sub(to, from)) : null;
+    });
   };
 
   const before = sample(state.julianDate - half);
   const after = sample(state.julianDate + half);
-  if (before === null || after === null) return null;
+  if (!before || !after) return pivots.map(() => null);
 
-  return angleDiffDeg(after, before) / step;
+  return pivots.map((_, i) => {
+    const from = before[i];
+    const to = after[i];
+    return from === null || from === undefined || to === null || to === undefined
+      ? null
+      : angleDiffDeg(to, from) / step;
+  });
 }
+
+/** One line about one point — the common case. */
+const turnRate = (
+  state: State,
+  bodyId: BodyId,
+  pivot: Pivot,
+  tip: (construction: Construction) => Vec3 | null,
+): number | null => turnRates(state, bodyId, tip, [pivot])[0] ?? null;
 
 /** The far end of an arm: what the pivot is carrying round. */
 const armTip =
@@ -461,17 +484,14 @@ export function measureHarnessPart(
       distance('offset', length(sub(equant, origin)), true);
 
       // The equant's entire content, in two numbers that differ: the arm turns
-      // at one rate about this point and at another about the Earth.
-      rate(
-        'uniformRate',
-        turnRate(
-          state,
-          bodyId,
-          (candidate) => markersOf(candidate, 'equant')[0] ?? null,
-          armTip('deferent-arm'),
-        ),
-      );
-      rate('apparentRate', turnRate(state, bodyId, (_, from) => from, armTip('deferent-arm')));
+      // at one rate about this point and at another about the Earth. One line
+      // measured about two points, so both come from the same pair of samples.
+      const [uniform, apparent] = turnRates(state, bodyId, armTip('deferent-arm'), [
+        (candidate) => markersOf(candidate, 'equant')[0] ?? null,
+        (_, from) => from,
+      ]);
+      rate('uniformRate', uniform ?? null);
+      rate('apparentRate', apparent ?? null);
       break;
     }
 

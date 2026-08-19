@@ -598,11 +598,21 @@ export function rawConstruction(
   jd: number = state.julianDate,
 ): { construction: Construction; positions: PositionSet } | null {
   const engine = ENGINES[state.engineId];
-  const positions = engine.positionsAt(jd);
 
-  // Satellites come first: they have geometry worth drawing in every model,
-  // including the ones whose engine exposes no construction at all.
-  const construction = BODIES[bodyId].satellite
+  /*
+   * Satellites come first: they have geometry worth drawing in every model,
+   * including the ones whose engine exposes no construction at all.
+   *
+   * The engine is asked for positions only once it is known that something will
+   * be drawn with them. Evaluating one is not free — under Newton it runs the
+   * integrator — and the two engines with no construction would otherwise pay
+   * for a full position set on every frame to be handed a null.
+   */
+  const satellite = BODIES[bodyId].satellite !== undefined;
+  if (!satellite && !engine.construction) return null;
+
+  const positions = engine.positionsAt(jd);
+  const construction = satellite
     ? satelliteConstruction(bodyId, state.engineId, jd, positions)
     : (engine.construction?.(jd, bodyId) ?? null);
 

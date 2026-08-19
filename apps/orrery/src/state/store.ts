@@ -540,10 +540,13 @@ export class Store {
    * the background — and the record stays continuous either way.
    */
   private recordTrail(): void {
-    this.trails.record(
-      this.clock.julianDate,
-      ENGINES[this.state.engineId].positionsAt(this.clock.julianDate),
-    );
+    const jd = this.clock.julianDate;
+    // Ask before computing. This runs on every tick, and evaluating an engine
+    // to hand the log a sample it will discard is the most expensive thing the
+    // clock could do sixty times a second.
+    if (!this.trails.wants(jd)) return;
+
+    this.trails.record(jd, ENGINES[this.state.engineId].positionsAt(jd));
   }
 
   jumpToDate(date: Date): void {

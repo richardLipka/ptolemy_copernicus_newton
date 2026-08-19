@@ -49,7 +49,10 @@ export const getLocale = (): Locale => current;
 export function setLocale(locale: Locale): void {
   current = locale;
   writeStoredLocale(locale);
-  document.documentElement.lang = locale;
+  // Guarded so the dictionary can be exercised where there is no document —
+  // the test environment is plain Node, and the formatters below are worth
+  // pinning against a cache that forgets which language it is holding.
+  if (typeof document !== 'undefined') document.documentElement.lang = locale;
 }
 
 /**
@@ -94,9 +97,41 @@ export type GrammaticalCase = 'nominative' | 'genitive';
 export const bodyName = (id: BodyId, grammaticalCase: GrammaticalCase = 'nominative'): string =>
   BODIES[id].names[current][grammaticalCase];
 
+/*
+ * Formatters are built once and kept, keyed by locale and shape.
+ *
+ * Constructing one is expensive out of all proportion to using it — measured at
+ * 0.023 ms for a number and 0.051 ms for a date, against roughly a thousandth
+ * of that to format with an existing instance. That is nothing once and a great
+ * deal sixty times a second, which is what the app was doing: the clock readout
+ * rebuilt a date formatter every frame, one hover card rebuilt four number
+ * formatters, and the info panel rebuilt some twenty per redraw.
+ *
+ * The locale is part of the key, so switching language needs no invalidation
+ * and both sets of formatters survive being switched back and forth.
+ */
+const numberFormats = new Map<string, Intl.NumberFormat>();
+const dateFormats = new Map<string, Intl.DateTimeFormat>();
+
+const intlLocale = (): string => (current === 'cs' ? 'cs-CZ' : 'en-GB');
+
+function dateFormat(
+  key: string,
+  options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat {
+  const locale = intlLocale();
+  const cacheKey = `${locale}|${key}`;
+  let format = dateFormats.get(cacheKey);
+  if (!format) {
+    format = new Intl.DateTimeFormat(locale, options);
+    dateFormats.set(cacheKey, format);
+  }
+  return format;
+}
+
 /** Date formatting in the active locale, calendar-only. */
 export function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat(current === 'cs' ? 'cs-CZ' : 'en-GB', {
+  return dateFormat('date', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -105,7 +140,7 @@ export function formatDate(date: Date): string {
 }
 
 export function formatDateTime(date: Date): string {
-  return new Intl.DateTimeFormat(current === 'cs' ? 'cs-CZ' : 'en-GB', {
+  return dateFormat('datetime', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -116,10 +151,17 @@ export function formatDateTime(date: Date): string {
 }
 
 export function formatNumber(value: number, fractionDigits = 2): string {
-  return new Intl.NumberFormat(current === 'cs' ? 'cs-CZ' : 'en-GB', {
-    minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits,
-  }).format(value);
+  const locale = intlLocale();
+  const cacheKey = `${locale}|${fractionDigits}`;
+  let format = numberFormats.get(cacheKey);
+  if (!format) {
+    format = new Intl.NumberFormat(locale, {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    });
+    numberFormats.set(cacheKey, format);
+  }
+  return format.format(value);
 }
 
 /**

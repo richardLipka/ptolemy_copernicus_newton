@@ -75,6 +75,20 @@ export class TrailLog {
   }
 
   /**
+   * Would a snapshot at this date be kept?
+   *
+   * Asked before one is taken, because taking one means evaluating the engine
+   * for every body — and at sixty frames a second against a spacing of a
+   * quarter-day, all but one frame in fifteen would have that work thrown
+   * straight back out. The condition is `record`'s own, so the two cannot
+   * disagree about what the log wants.
+   */
+  wants(jd: number): boolean {
+    const last = this.samples[this.samples.length - 1];
+    return !last || Math.abs(jd - last.jd) >= this.minStepDays;
+  }
+
+  /**
    * Offer a snapshot. Kept only if the clock has moved far enough since the
    * last one, so the log's resolution does not depend on the frame rate.
    *
@@ -84,8 +98,7 @@ export class TrailLog {
    * clock by a week.
    */
   record(jd: number, positions: PositionSet): void {
-    const last = this.samples[this.samples.length - 1];
-    if (last && Math.abs(jd - last.jd) < this.minStepDays) return;
+    if (!this.wants(jd)) return;
 
     this.samples.push({ jd, positions });
     if (this.samples.length > this.capacity) this.decimate();

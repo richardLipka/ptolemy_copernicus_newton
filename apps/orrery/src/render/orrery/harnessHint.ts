@@ -88,13 +88,42 @@ export function createHarnessHint(
   let target: Target | null = null;
   let shown: HarnessNote | null = null;
   let pointer: { x: number; y: number } | null = null;
-  // Measured once per content change rather than per pointer move: the card's
-  // size only changes when its text does, and reading it back is a layout flush.
+
+  /*
+   * Both boxes are observed rather than read back.
+   *
+   * Placing the card needs the stage's rectangle and the card's own size, and
+   * asking the DOM for either forces a synchronous layout. That is affordable
+   * when the pointer moves and unaffordable where this code actually runs: the
+   * card is refreshed from `update()` on every frame the clock is running, so a
+   * `getBoundingClientRect` there is sixty forced layouts a second in the
+   * middle of the render loop, for numbers that change only when the window
+   * resizes or a row is added.
+   *
+   * A ResizeObserver delivers both asynchronously and off the frame path. The
+   * stage's position is taken with it, since in this layout the stage only ever
+   * moves when it also resizes.
+   */
+  let bounds = { left: 0, top: 0, width: 0, height: 0 };
   let size = { width: 0, height: 0 };
+
+  const measureContainer = (): void => {
+    const box = container.getBoundingClientRect();
+    bounds = { left: box.left, top: box.top, width: box.width, height: box.height };
+  };
+  measureContainer();
+
+  new ResizeObserver(measureContainer).observe(container);
+  new ResizeObserver(() => {
+    size = { width: card.offsetWidth, height: card.offsetHeight };
+    // Placed again with the size just learnt: the first card of a session is
+    // positioned before anything has ever measured it, and near the right edge
+    // of the stage it is the flip that depends on knowing how wide it is.
+    if (target) place();
+  }).observe(card);
 
   function place(): void {
     if (!pointer) return;
-    const bounds = container.getBoundingClientRect();
 
     let x = pointer.x - bounds.left + OFFSET;
     let y = pointer.y - bounds.top + OFFSET;
@@ -157,7 +186,6 @@ export function createHarnessHint(
     }
 
     shown = note;
-    size = { width: card.offsetWidth, height: card.offsetHeight };
   }
 
   function show(next: Target): void {
@@ -176,14 +204,17 @@ export function createHarnessHint(
     card.style.display = '';
     layer.dataset.hover = next.role;
     write(note);
-    place();
   }
 
   layer.addEventListener('pointerover', (event: PointerEvent) => {
     pointer = { x: event.clientX, y: event.clientY };
     const next = targetFrom(event.target);
-    if (next) show(next);
-    else hide();
+    if (next) {
+      show(next);
+      place();
+    } else {
+      hide();
+    }
   });
 
   layer.addEventListener('pointermove', (event: PointerEvent) => {
@@ -193,8 +224,8 @@ export function createHarnessHint(
       hide();
       return;
     }
-    if (sameTarget(target, next)) place();
-    else show(next);
+    if (!sameTarget(target, next)) show(next);
+    place();
   });
 
   layer.addEventListener('pointerout', (event: PointerEvent) => {
@@ -223,6 +254,7 @@ export function createHarnessHint(
     const box = next.element.getBoundingClientRect();
     pointer = { x: box.left + box.width / 2, y: box.bottom };
     show(next);
+    place();
   });
   layer.addEventListener('focusout', hide);
 
