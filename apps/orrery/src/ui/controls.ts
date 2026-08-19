@@ -374,11 +374,12 @@ export function renderControls(container: HTMLElement, store: Store): void {
   /*
    * How wide a band to show, offered only while there is one.
    *
-   * Three steps rather than a slider, because they answer three different
+   * Three jumps beside a continuous zoom, because they answer three different
    * questions: forty degrees is more than a whole constellation and is where a
    * planet's progress against the stars reads; twelve is a good look at a close
    * pairing; four is what it takes to watch a conjunction actually separate,
-   * the closest of them being a fifth of a degree apart.
+   * the closest of them being a fifth of a degree apart. Anything between comes
+   * from the wheel over the band itself.
    */
   if (state.showSky) {
     const fields = el('div', 'field');
@@ -397,6 +398,7 @@ export function renderControls(container: HTMLElement, store: Store): void {
 
     // Shown or hidden by the explanations switch, which the CSS handles for
     // every `.note` in the app — no panel decides that for itself.
+    harnessPanel.appendChild(el('p', 'note', t('sky.zoomNote')));
     harnessPanel.appendChild(el('p', 'note', t('sky.note')));
     harnessPanel.appendChild(el('p', 'note', t('sky.starsNote')));
   }

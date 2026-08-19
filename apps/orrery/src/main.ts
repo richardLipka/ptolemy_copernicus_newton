@@ -470,6 +470,24 @@ function render(): void {
 // --- zoom ----------------------------------------------------------------
 
 /**
+ * What the map's own gestures apply to.
+ *
+ * The wheel, the double-click and the drag are all bound to the whole app
+ * rather than to the instrument, because the instrument's box is smaller than
+ * the area its drawing covers once magnified and binding to it would leave dead
+ * zones. The cost is that everything else on the stage has to be excluded by
+ * hand, and anything added later is included by default until someone
+ * remembers — which is how both strips came to zoom and pan the map when the
+ * pointer was over them. They are second views of this instant with gestures of
+ * their own; the band's wheel is its field, and the strip is not a thing the
+ * map's zoom means anything about.
+ */
+const MAP_GESTURE_EXCLUDED = '.dock, .overlay, .sky-host, .track-host';
+
+const overTheMap = (target: EventTarget | null): boolean =>
+  !(target as Element | null)?.closest(MAP_GESTURE_EXCLUDED);
+
+/**
  * How sharply the wheel bites. Applied to an exponential, so a notch multiplies
  * rather than adds and zooming feels the same at every magnification.
  */
@@ -482,16 +500,13 @@ const DELTA_TO_PIXELS = [1, 16, 400];
 const KEY_ZOOM_STEP = 1.5;
 
 /**
- * Wheel zoom, listened for on the whole app rather than the instrument.
- *
- * The instrument's box is smaller than the area its drawing covers once
- * magnified, so binding to it would leave dead zones. Events originating inside
- * a dock are left alone, or the panels could not be scrolled.
+ * Wheel zoom for the map. See `overTheMap` for what it deliberately misses:
+ * a dock has panels to scroll, and the band of sky zooms itself.
  */
 root.addEventListener(
   'wheel',
   (event: WheelEvent) => {
-    if ((event.target as Element | null)?.closest('.dock')) return;
+    if (!overTheMap(event.target)) return;
     event.preventDefault();
     const pixels = event.deltaY * (DELTA_TO_PIXELS[event.deltaMode] ?? 1);
     store.zoomBy(Math.exp(-pixels * ZOOM_SENSITIVITY));
@@ -504,7 +519,7 @@ root.addEventListener(
  * nor a pan offers an obvious way back to the fitted view.
  */
 root.addEventListener('dblclick', (event: MouseEvent) => {
-  if ((event.target as Element | null)?.closest('.dock')) return;
+  if (!overTheMap(event.target)) return;
   store.resetZoom();
 });
 
@@ -529,7 +544,7 @@ const instrumentEl = (): HTMLElement | null => root.querySelector('.instrument')
 root.addEventListener('pointerdown', (event: PointerEvent) => {
   // Docks scroll, overlays are read; neither should move the map underneath.
   const target = event.target as Element | null;
-  if (target?.closest('.dock') || target?.closest('.overlay')) return;
+  if (!overTheMap(target)) return;
   if (event.button !== 0) return;
 
   dragPointer = event.pointerId;

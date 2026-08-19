@@ -83,6 +83,20 @@ export const MIN_ZOOM = 0.4;
 export const MAX_ZOOM = 20;
 export const MAX_ZOOM_TRUE_SCALE = 1000;
 
+/**
+ * How wide the band of sky may be, degrees.
+ *
+ * The floor is set by the closest thing worth looking at: the tightest
+ * conjunctions bring two planets within a fifth of a degree, and a field has to
+ * be narrower still for one to visibly open. The ceiling is where a band stops
+ * being a patch of sky and becomes a bad map — a third of the ecliptic at once,
+ * by which point the fixed stars in view are mostly outside the latitudes the
+ * band can show.
+ */
+export const MIN_SKY_FIELD = 0.2;
+export const MAX_SKY_FIELD = 120;
+export const DEFAULT_SKY_FIELD = 40;
+
 export const maxZoomFor = (scaleMode: ScaleMode): number =>
   scaleMode === 'true' ? MAX_ZOOM_TRUE_SCALE : MAX_ZOOM;
 
@@ -144,12 +158,15 @@ export interface State {
    */
   showSky: boolean;
   /**
-   * How wide that band is, degrees of longitude.
+   * How wide that band is, degrees of longitude — the band's own zoom.
    *
-   * Three steps rather than a slider. Forty degrees is more than a constellation
-   * and is where a planet's progress against the stars reads; twelve is a good
-   * look at a close pairing; four is what it takes to see a conjunction actually
-   * separate, since the closest of them are a fifth of a degree apart.
+   * Continuous, from a fifth of a degree to a third of the sky, with three
+   * presets as jumps: forty degrees is more than a constellation and is where a
+   * planet's progress against the stars reads; twelve is a good look at a close
+   * pairing; four is what it takes to watch a conjunction actually separate,
+   * the closest of them being a fifth of a degree apart.
+   *
+   * Emphatically not `zoom`, which magnifies the map. See `zoomSkyBy`.
    */
   skyField: number;
   locale: Locale;
@@ -202,7 +219,7 @@ export class Store {
       showConstruction: true,
       showTrack: false,
       showSky: false,
-      skyField: 40,
+      skyField: DEFAULT_SKY_FIELD,
       locale: getLocale(),
       theme: readStoredTheme(),
       showCalculation: false,
@@ -411,8 +428,29 @@ export class Store {
 
   /** Widen or narrow the band of sky. See `skyField`. */
   setSkyField(skyField: number): void {
-    if (skyField === this.state.skyField) return;
-    this.patch({ skyField });
+    const clamped = Math.min(MAX_SKY_FIELD, Math.max(MIN_SKY_FIELD, skyField));
+    if (clamped === this.state.skyField) return;
+    this.patch({ skyField: clamped });
+  }
+
+  /**
+   * The band's own zoom, which is not the map's.
+   *
+   * They are different quantities about different things: the map's zoom
+   * magnifies a plan of the solar system, the band's decides how much sky is in
+   * view. Tying them would be meaningless — there is no magnification of a plan
+   * that corresponds to forty degrees of ecliptic — so the band keeps its own,
+   * and the wheel over the band moves this one alone.
+   *
+   * A factor above one widens the field, which is zooming *out*.
+   */
+  zoomSkyBy(factor: number): void {
+    this.setSkyField(this.state.skyField * factor);
+  }
+
+  /** Back to the opening field — the way out of a zoom, as the map has one. */
+  resetSkyField(): void {
+    this.setSkyField(DEFAULT_SKY_FIELD);
   }
 
   setCalculationOpen(showCalculation: boolean): void {

@@ -69,6 +69,25 @@ export const starSize = (magnitude: number): number =>
 /** Below this separation from the Sun the field is a daylight one. */
 const DAYLIGHT_DEG = 12;
 
+/**
+ * How sharply the wheel bites on the field, and the pixel equivalents for
+ * wheels that report lines or pages.
+ *
+ * The same shape as the map's zoom — an exponential, so a notch multiplies
+ * rather than adds and the gesture feels the same at four degrees as at a
+ * hundred — and deliberately the same sensitivity, so the two zooms feel like
+ * one instrument even though they move different things.
+ */
+const FIELD_SENSITIVITY = 0.0016;
+const WHEEL_PIXELS = [1, 16, 400];
+
+/**
+ * A field runs from a fifth of a degree to a hundred and twenty, so the number
+ * of decimals worth printing is not fixed.
+ */
+const formatDegrees = (degrees: number): string =>
+  formatNumber(degrees, degrees < 1 ? 2 : degrees < 10 ? 1 : 0);
+
 /** A name is only printed beside a star this bright or better. */
 const STAR_LABEL_MAGNITUDE = 2.7;
 
@@ -114,6 +133,37 @@ export function createSkyStrip(host: HTMLElement, store: Store): SkyStrip {
     latitudeSpan = height / scale;
   };
   new ResizeObserver(fitScale).observe(band);
+
+  /*
+   * The band's own zoom.
+   *
+   * Separate from the map's in every sense: a different quantity, a different
+   * range, and a different piece of state. What the wheel means here is how much
+   * sky to show, and there is no magnification of a plan of the solar system
+   * that corresponds to it.
+   *
+   * Bound to the band rather than filtered out of the app-wide handler so the
+   * two can never both fire. `preventDefault` stops the page scrolling under
+   * the gesture; the map's handler is on an ancestor and never sees it.
+   */
+  band.addEventListener(
+    'wheel',
+    (event: WheelEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const pixels = event.deltaY * (WHEEL_PIXELS[event.deltaMode] ?? 1);
+      // Wheel down widens the field, which is zooming out — the same direction
+      // the map takes, on a quantity that runs the other way.
+      store.zoomSkyBy(Math.exp(pixels * FIELD_SENSITIVITY));
+    },
+    { passive: false },
+  );
+
+  // The way back, as double-clicking the map is the way back from a pan.
+  band.addEventListener('dblclick', (event: MouseEvent) => {
+    event.stopPropagation();
+    store.resetSkyField();
+  });
 
   interface StarParts {
     mark: HTMLDivElement;
@@ -286,10 +336,10 @@ export function createSkyStrip(host: HTMLElement, store: Store): SkyStrip {
       t('sky.caption', {
         body: bodyName(view.target),
         observer: bodyName(view.observer, 'genitive'),
-        field: formatNumber(view.field, 0),
+        field: formatDegrees(view.field),
         // Stated rather than implied: on a wide window this is a couple of
         // degrees, and a reader is owed the reason the Moon left the band.
-        height: formatNumber(latitudeSpan, 1),
+        height: formatDegrees(latitudeSpan),
       }),
     ];
     if (target) {

@@ -126,7 +126,9 @@ quietly regress.
   the bright stars within 35° of the ecliptic at their catalogued places, every
   body that falls in the field, the sign boundaries, and the ecliptic itself.
   Both axes are to one scale, so a separation on screen is the separation in the
-  sky — narrow the field to 4° and watch a conjunction actually open. It is the
+  sky — scroll over the band to zoom it down to a fifth of a degree and watch a
+  conjunction actually open. That zoom is the band's own: the map's
+  magnification stays exactly where you left it. It is the
   view every pre-telescopic observation was made in, and it makes two things
   visible that no map can: **Ptolemy's planets sit exactly on the ecliptic**,
   because his model here has longitudes and no latitude theory at all; and

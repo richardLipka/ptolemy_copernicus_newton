@@ -135,6 +135,7 @@
   "sky.field.12": "12°",
   "sky.field.4": "4°",
   "sky.note": "Mapa zvířetníkového pásu, nikoli pohled z okna: délka roste doprava, ekliptikální šířka nahoru a obojí ve stejném měřítku — úhlová vzdálenost na obrazovce je tedy úhlovou vzdáleností na obloze. Aplikace nemodeluje obzor ani denní dobu, a proto to ani nepředstírá.",
+  "sky.zoomNote": "Kolečkem myši nad pásem se zorné pole rozšiřuje a zužuje, dvojklik je vrátí na 40°. Je to vlastní přiblížení pásu: se zvětšením mapy nemá nic společného a to zůstává, kde jste je nechali.",
   "sky.starsNote": "Hvězdy jsou ty nejjasnější do 35° od ekliptiky, na svých katalogových polohách J2000 — orientační body, vůči nimž se měřila každá poloha před vynálezem dalekohledu. Spusťte čas a sledujte, jak se planeta mezi nimi posouvá a jak se obrací nazpět.",
   "body.sun": "Slunce",
   "body.mercury": "Merkur",

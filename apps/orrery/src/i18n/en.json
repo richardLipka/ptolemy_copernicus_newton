@@ -135,6 +135,7 @@
   "sky.field.12": "12°",
   "sky.field.4": "4°",
   "sky.note": "A chart of the zodiac band, not a view through a window: longitude runs to the right, ecliptic latitude upward, and both to the same scale — so a separation on screen is the separation in the sky. The app models no horizon and no hour, which is exactly why it does not pretend to.",
+  "sky.zoomNote": "The wheel over the band widens or narrows the field, and a double-click puts it back to 40°. This is the band's own zoom: it has nothing to do with the map's magnification, which stays where you left it.",
   "sky.starsNote": "The stars are the brightest within 35° of the ecliptic, at their catalogued J2000 places — the landmarks every pre-telescopic position was measured against. Run the clock and watch the planet move against them, and turn back on itself.",
   "body.sun": "Sun",
   "body.mercury": "Mercury",

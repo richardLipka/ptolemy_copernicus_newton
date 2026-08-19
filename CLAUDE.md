@@ -1709,6 +1709,23 @@ Three things it says that the map cannot:
   than about the model, and it is why Copernicus is said never to have seen
   Mercury.
 
+**The band zooms on its own, and that is the point.** `skyField` is continuous
+from a fifth of a degree to a hundred and twenty, driven by the wheel over the
+band with three presets as jumps and a double-click back to forty. It is
+emphatically not `zoom`, which magnifies the map: they are quantities about
+different things, and no magnification of a plan of the solar system
+corresponds to forty degrees of ecliptic.
+
+Keeping them apart needed a change in `main.ts` rather than a new listener
+alone. The wheel, the double-click and the drag are bound to the whole app —
+the instrument's box is smaller than the area its drawing covers once
+magnified, so binding to it would leave dead zones — and everything else on the
+stage has to be excluded by hand. Only `.dock` and `.overlay` ever were, so both
+strips zoomed and panned the map whenever the pointer was over them, the
+longitude strip included since the day it was added. `MAP_GESTURE_EXCLUDED`
+now names all four, and `store.test.ts` pins the two zooms as independent in
+both directions, because this is the kind of coupling that comes back.
+
 `angularSeparation` uses `atan2` of the cross and dot products rather than
 `acos` of the dot alone. The textbook formula loses all its precision exactly
 where this view is most interesting: for two directions a thousandth of a degree

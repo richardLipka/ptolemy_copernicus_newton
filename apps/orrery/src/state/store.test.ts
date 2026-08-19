@@ -12,7 +12,15 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { MAX_JD, MIN_JD, jdFromCalendar } from '@orrery/core/time';
 import { projectRadius } from './selectors';
-import { MAX_ZOOM, MAX_ZOOM_TRUE_SCALE, MIN_ZOOM, Store } from './store';
+import {
+  DEFAULT_SKY_FIELD,
+  MAX_SKY_FIELD,
+  MAX_ZOOM,
+  MAX_ZOOM_TRUE_SCALE,
+  MIN_SKY_FIELD,
+  MIN_ZOOM,
+  Store,
+} from './store';
 
 /** The Moon's mean distance, in AU. Mirrors the figure in selectors.ts. */
 const MOON_MEAN_DISTANCE_AU = 0.00257;
@@ -292,5 +300,65 @@ describe('zoom limits', () => {
       store.setZoom(0.001);
       expect(store.get().zoom).toBe(MIN_ZOOM);
     }
+  });
+});
+
+/**
+ * The band of sky has a zoom of its own, and the point of it is that it is not
+ * the map's.
+ *
+ * They are quantities about different things — one magnifies a plan of the
+ * solar system, the other decides how much sky is in view — and there is no
+ * magnification of the plan that corresponds to forty degrees of ecliptic. The
+ * app-wide wheel handler included the band by default until it was told not to,
+ * so this is the kind of coupling that comes back if nothing watches for it.
+ */
+describe('the band of sky zooms on its own', () => {
+  it('leaves the map alone when the band zooms', () => {
+    store.setZoom(3);
+    const zoom = store.get().zoom;
+
+    store.zoomSkyBy(0.5);
+    store.zoomSkyBy(0.5);
+
+    expect(store.get().skyField).toBeCloseTo(DEFAULT_SKY_FIELD / 4, 9);
+    expect(store.get().zoom).toBe(zoom);
+  });
+
+  it('leaves the band alone when the map zooms', () => {
+    store.setSkyField(6);
+
+    store.zoomBy(4);
+    store.resetZoom();
+
+    expect(store.get().skyField).toBe(6);
+  });
+
+  it('holds the field between what is worth looking at and what is still sky', () => {
+    store.setSkyField(MIN_SKY_FIELD / 10);
+    expect(store.get().skyField).toBe(MIN_SKY_FIELD);
+
+    store.setSkyField(MAX_SKY_FIELD * 10);
+    expect(store.get().skyField).toBe(MAX_SKY_FIELD);
+
+    // And zooming cannot walk past either end.
+    for (let i = 0; i < 40; i++) store.zoomSkyBy(0.5);
+    expect(store.get().skyField).toBe(MIN_SKY_FIELD);
+  });
+
+  it('goes back to the opening field, and only that', () => {
+    store.setZoom(2.5);
+    store.setSkyField(0.5);
+
+    store.resetSkyField();
+
+    expect(store.get().skyField).toBe(DEFAULT_SKY_FIELD);
+    expect(store.get().zoom).toBe(2.5);
+  });
+
+  it('survives a model switch like every other view setting', () => {
+    store.setSkyField(12);
+    store.setMode('newton');
+    expect(store.get().skyField).toBe(12);
   });
 });
