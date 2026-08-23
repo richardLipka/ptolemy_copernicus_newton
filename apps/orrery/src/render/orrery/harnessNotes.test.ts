@@ -164,9 +164,15 @@ describe('the harness explains itself', () => {
 
     for (const [locale, dictionary] of DICTIONARIES) {
       for (const [key, text] of Object.entries(dictionary)) {
-        // Only the notes and the part names are substituted this way; the
-        // panel's own strings are filled by their own callers.
-        if (!key.startsWith('harness.note.') && !key.startsWith('harness.part.')) continue;
+        // The notes, the part names and the value labels are all substituted
+        // this way; the panel's own strings are filled by their own callers.
+        if (
+          !key.startsWith('harness.note.') &&
+          !key.startsWith('harness.part.') &&
+          !key.startsWith('harness.value.')
+        ) {
+          continue;
+        }
         for (const match of text.matchAll(/\{\{(\w+)\}\}/g)) {
           const name = match[1]!;
           if (!PLACEHOLDERS.includes(name)) unknown.push(`${locale}: ${key} {{${name}}}`);
@@ -185,6 +191,9 @@ describe('the harness explains itself', () => {
       if (!note) continue;
       if (note.body.includes('{{') || note.title.includes('{{')) {
         rendered.push(`${state.engineId} ${bodyId} ${role}`);
+      }
+      for (const value of note.values) {
+        if (value.label.includes('{{')) rendered.push(`${state.engineId} ${role} label`);
       }
       expect(note.values.length).toBeGreaterThan(0);
     }

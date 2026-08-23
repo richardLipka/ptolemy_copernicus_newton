@@ -189,7 +189,9 @@ export function describeHarnessPart(part: HarnessPart): HarnessNote {
     subject: bodyName(part.bodyId),
     body: t(harnessNoteKey(part), names(part)),
     values: part.measures.map((measure) => ({
-      label: t(harnessValueKey(part, measure)),
+      // Labels take the same names the note does: one of them asks who is
+      // looking, and "as Earth sees it" beats any wording that avoids saying so.
+      label: t(harnessValueKey(part, measure), names(part)),
       value: formatMeasure(measure),
     })),
   };
