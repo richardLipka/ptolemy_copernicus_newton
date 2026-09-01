@@ -7,7 +7,7 @@
 
 import cs from './cs.json';
 import en from './en.json';
-import { BODIES, type BodyId } from '@orrery/core/bodies';
+import type { BodyId } from '@orrery/core/bodies';
 
 export type Locale = 'cs' | 'en';
 
@@ -91,11 +91,17 @@ export type GrammaticalCase = 'nominative' | 'genitive';
  *
  * Czech inflects, so "conjunction of Mars and Jupiter" needs the genitive:
  * *konjunkce Marsu a Jupiteru*, not *konjunkce Mars a Jupiter*. English keeps
- * one form and ignores the argument. Nine bodies makes storing the forms
+ * one form and ignores the argument. Thirteen bodies makes storing the forms
  * cheaper than any clever morphology.
+ *
+ * Both forms live in the dictionaries with everything else the reader sees.
+ * They used to sit in `core/bodies.ts` beside the orbital elements, which put
+ * half the body names one file away from the other half — `t('body.mars')`
+ * titled the chips and the dropdown while this function titled the info panel,
+ * so a translator could change one and not the other. Core never read them.
  */
 export const bodyName = (id: BodyId, grammaticalCase: GrammaticalCase = 'nominative'): string =>
-  BODIES[id].names[current][grammaticalCase];
+  grammaticalCase === 'genitive' ? t(`body.${id}.genitive`) : t(`body.${id}`);
 
 /*
  * Formatters are built once and kept, keyed by locale and shape.

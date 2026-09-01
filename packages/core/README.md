@@ -65,7 +65,7 @@ eight in at once.
 
 | module | what it holds |
 |---|---|
-| `bodies` | the body table — elements, masses, radii, satellite orbits, names |
+| `bodies` | the body table — elements, masses, radii, satellite orbits |
 | `time` | Julian dates, the calendar, the simulation clock |
 | `vec` | 3-vectors and angle helpers |
 | `coordinates` | apparent longitude, elongation, spherical conversion |

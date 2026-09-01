@@ -1065,6 +1065,17 @@
       width: auto;
       max-height: none;
       inset: auto;
+      /*
+       * The stack is the scroller here; the docks inside it are not.
+       *
+       * They have to be told so explicitly. `.dock--left` and `.dock--right`
+       * carry `overflow-y: auto` for the floating layout, and a grid item that
+       * scrolls has an automatic minimum size of zero rather than of its
+       * content — so the row would take its height from whatever sat beside it.
+       * That put the whole selected-body panel, phase disc and all, inside a
+       * 34px window the height of the switch bar it shares a row with.
+       */
+      overflow: visible;
     }
 
     .dock-stack {

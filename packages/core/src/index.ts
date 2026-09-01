@@ -41,7 +41,6 @@ export type {
   Body,
   BodyId,
   KeplerianElements,
-  LocalizedName,
   OrbitalModel,
   SatelliteOrbit,
 } from './bodies.js';

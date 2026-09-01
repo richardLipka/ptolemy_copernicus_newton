@@ -24,23 +24,22 @@ export interface ZodiacDivision {
   start: number;
   /** End of the division, degrees. May wrap past 360. */
   end: number;
-  names: { en: string; cs: string };
 }
 
 /** The twelve equal signs, measured from the equinox of date. */
 export const SIGNS: readonly ZodiacDivision[] = [
-  { id: 'aries', start: 0, end: 30, names: { en: 'Aries', cs: 'Beran' } },
-  { id: 'taurus', start: 30, end: 60, names: { en: 'Taurus', cs: 'Býk' } },
-  { id: 'gemini', start: 60, end: 90, names: { en: 'Gemini', cs: 'Blíženci' } },
-  { id: 'cancer', start: 90, end: 120, names: { en: 'Cancer', cs: 'Rak' } },
-  { id: 'leo', start: 120, end: 150, names: { en: 'Leo', cs: 'Lev' } },
-  { id: 'virgo', start: 150, end: 180, names: { en: 'Virgo', cs: 'Panna' } },
-  { id: 'libra', start: 180, end: 210, names: { en: 'Libra', cs: 'Váhy' } },
-  { id: 'scorpio', start: 210, end: 240, names: { en: 'Scorpio', cs: 'Štír' } },
-  { id: 'sagittarius', start: 240, end: 270, names: { en: 'Sagittarius', cs: 'Střelec' } },
-  { id: 'capricorn', start: 270, end: 300, names: { en: 'Capricorn', cs: 'Kozoroh' } },
-  { id: 'aquarius', start: 300, end: 330, names: { en: 'Aquarius', cs: 'Vodnář' } },
-  { id: 'pisces', start: 330, end: 360, names: { en: 'Pisces', cs: 'Ryby' } },
+  { id: 'aries', start: 0, end: 30 },
+  { id: 'taurus', start: 30, end: 60 },
+  { id: 'gemini', start: 60, end: 90 },
+  { id: 'cancer', start: 90, end: 120 },
+  { id: 'leo', start: 120, end: 150 },
+  { id: 'virgo', start: 150, end: 180 },
+  { id: 'libra', start: 180, end: 210 },
+  { id: 'scorpio', start: 210, end: 240 },
+  { id: 'sagittarius', start: 240, end: 270 },
+  { id: 'capricorn', start: 270, end: 300 },
+  { id: 'aquarius', start: 300, end: 330 },
+  { id: 'pisces', start: 330, end: 360 },
 ];
 
 /**
@@ -49,19 +48,19 @@ export const SIGNS: readonly ZodiacDivision[] = [
  * through it, however inconvenient that is for the twelve-sign scheme.
  */
 export const CONSTELLATIONS: readonly ZodiacDivision[] = [
-  { id: 'pisces', start: 351.6, end: 388.7, names: { en: 'Pisces', cs: 'Ryby' } },
-  { id: 'aries', start: 28.7, end: 53.5, names: { en: 'Aries', cs: 'Beran' } },
-  { id: 'taurus', start: 53.5, end: 90.4, names: { en: 'Taurus', cs: 'Býk' } },
-  { id: 'gemini', start: 90.4, end: 118.3, names: { en: 'Gemini', cs: 'Blíženci' } },
-  { id: 'cancer', start: 118.3, end: 138.2, names: { en: 'Cancer', cs: 'Rak' } },
-  { id: 'leo', start: 138.2, end: 174.0, names: { en: 'Leo', cs: 'Lev' } },
-  { id: 'virgo', start: 174.0, end: 217.8, names: { en: 'Virgo', cs: 'Panna' } },
-  { id: 'libra', start: 217.8, end: 241.1, names: { en: 'Libra', cs: 'Váhy' } },
-  { id: 'scorpius', start: 241.1, end: 247.7, names: { en: 'Scorpius', cs: 'Štír' } },
-  { id: 'ophiuchus', start: 247.7, end: 266.6, names: { en: 'Ophiuchus', cs: 'Hadonoš' } },
-  { id: 'sagittarius', start: 266.6, end: 299.7, names: { en: 'Sagittarius', cs: 'Střelec' } },
-  { id: 'capricornus', start: 299.7, end: 327.6, names: { en: 'Capricornus', cs: 'Kozoroh' } },
-  { id: 'aquarius', start: 327.6, end: 351.6, names: { en: 'Aquarius', cs: 'Vodnář' } },
+  { id: 'pisces', start: 351.6, end: 388.7 },
+  { id: 'aries', start: 28.7, end: 53.5 },
+  { id: 'taurus', start: 53.5, end: 90.4 },
+  { id: 'gemini', start: 90.4, end: 118.3 },
+  { id: 'cancer', start: 118.3, end: 138.2 },
+  { id: 'leo', start: 138.2, end: 174.0 },
+  { id: 'virgo', start: 174.0, end: 217.8 },
+  { id: 'libra', start: 217.8, end: 241.1 },
+  { id: 'scorpius', start: 241.1, end: 247.7 },
+  { id: 'ophiuchus', start: 247.7, end: 266.6 },
+  { id: 'sagittarius', start: 266.6, end: 299.7 },
+  { id: 'capricornus', start: 299.7, end: 327.6 },
+  { id: 'aquarius', start: 327.6, end: 351.6 },
 ];
 
 /**

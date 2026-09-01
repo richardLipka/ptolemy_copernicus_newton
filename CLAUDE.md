@@ -352,6 +352,30 @@ localized: UI strings, body names, zodiac sign and constellation names, event
 type names and descriptions, date formatting. Czech grammar needs care in a few
 places (declension in phrases like "konjunkce Marsu a Jupiteru") — see §12 Q3.
 
+**`cs.json` and `en.json` are the whole of it.** Nothing else in the tree holds a
+string a reader will see. That is a rule with a history: body names used to live
+in `core/bodies.ts` as a `names` field beside the orbital elements, and the
+zodiac tables carried one too. So half the body names on screen came from
+`t('body.mars')` and half from `bodyName()` reading the registry, and the zodiac
+copy was read by nothing at all — a translator could correct *Kallisto* in the
+physics file and watch the dropdown ignore it. Both are gone; `bodyName()` reads
+`body.<id>` and `body.<id>.genitive` from the dictionary like everything else,
+and core now carries no display text in any form.
+
+Core still *names* keys — `calculation.ts` labels its working rows with
+`labelKey` and `costKey` strings. That split is deliberate (core says which line
+this is, the app says how to word it) but it does put a key the dictionary must
+satisfy in a package that cannot see the dictionary, which is why the scan in
+`i18n/dictionaries.test.ts` walks core as well as the app.
+
+`i18n/dictionaries.test.ts` is what makes the files safe to hand to someone who
+will not run the app: identical key sets in both languages, no empty values,
+matching `{{placeholders}}` outside the harness (where Czech legitimately needs
+its own — see `harnessNotes.test.ts`), both cases for every body, and every key
+named literally in either package present in both dictionaries. A missing key is
+not a crash; `t` returns the key itself, so it reaches the screen as
+`harness.note.deferent` mid-sentence, in the language nobody proofreads first.
+
 ---
 
 ## 10. Aesthetic Direction
@@ -823,6 +847,17 @@ The instrument is *not* measured against the viewport but against
 centred in the gap the user can actually see and the zodiac labels clear of the
 panels, even though the drawing itself may pass beneath them. Below 60rem the
 docks stop floating and stack as a scrolling column under the map.
+
+When they stack, **the stack scrolls and the docks inside it must not** —
+`.dock` is given an explicit `overflow: visible` there to say so. Left to the
+`overflow-y: auto` they carry for the floating layout, they become grid items
+that scroll, and a grid item that scrolls has an automatic minimum size of zero
+rather than of its content: the row then takes its height from whatever sits
+beside it. The selected-body panel shares a row with the slim bar of switches,
+so the whole of it — phase disc, readouts, export buttons — was being served
+through a 34px window the height of that bar. It looked like a panel that had
+lost its contents rather than one that had been crushed, which is why it stood
+for a while.
 
 **Themes.** Four looks, chosen from the top bar and remembered in localStorage:
 

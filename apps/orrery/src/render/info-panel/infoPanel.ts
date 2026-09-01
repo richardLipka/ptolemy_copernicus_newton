@@ -68,13 +68,13 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
   if (selected !== 'sun' && !body.isObserver) {
     const lit = body.illumination.illuminatedFraction;
 
-    // Everything that belongs *in* the picture, grouped as one visual unit —
-    // the heading, the disc, the caption and the three readouts, and nothing
-    // from the rest of the panel. `phaseSvg.ts` redraws the same content as
-    // real shapes for export rather than reading this element back; see its
-    // file note for why.
+    // The disc, its caption and the three readouts, grouped as one visual unit.
+    // No heading of its own: the card is already titled above, and a second
+    // copy of the body's name is what this grouping briefly introduced. The
+    // exported figure does carry one, drawn by `phaseSvg.ts`, which rebuilds
+    // this content as real shapes rather than reading the element back — see
+    // its file note for why.
     const phaseCard = el('div', 'phase-card');
-    phaseCard.appendChild(el('h3', 'masthead__title', bodyName(selected)));
 
     const disc = el('div', 'phase-disc');
     disc.style.setProperty('--tint', `var(--body-${selected})`);

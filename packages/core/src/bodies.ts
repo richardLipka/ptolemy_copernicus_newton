@@ -75,13 +75,6 @@ export interface OrbitalModel {
   correction?: { b: number; c: number; s: number; f: number };
 }
 
-export interface LocalizedName {
-  /** Nominative — the default display form. */
-  nominative: string;
-  /** Genitive — needed by Czech event phrasing ("konjunkce Marsu a Jupiteru"). */
-  genitive: string;
-}
-
 /**
  * A satellite's orbit about its primary — mean elements, and no more.
  *
@@ -125,7 +118,6 @@ export interface Body {
   nakedEye: boolean;
   /** Counted among the seven classical "wandering stars". */
   classicalPlanet: boolean;
-  names: { en: LocalizedName; cs: LocalizedName };
   /** Absent for the Sun (the origin) and the Moon (see lunar theory). */
   orbit?: OrbitalModel;
   /** Present only for satellites, which orbit `parent` rather than the Sun. */
@@ -153,10 +145,6 @@ export const BODIES: Record<BodyId, Body> = {
     gm: GM_SUN,
     nakedEye: true,
     classicalPlanet: true,
-    names: {
-      en: { nominative: 'Sun', genitive: 'the Sun' },
-      cs: { nominative: 'Slunce', genitive: 'Slunce' },
-    },
   },
 
   mercury: {
@@ -166,10 +154,6 @@ export const BODIES: Record<BodyId, Body> = {
     gm: gm(MASS_RATIO.mercury),
     nakedEye: true,
     classicalPlanet: true,
-    names: {
-      en: { nominative: 'Mercury', genitive: 'Mercury' },
-      cs: { nominative: 'Merkur', genitive: 'Merkuru' },
-    },
     orbit: {
       epoch: {
         a: 0.38709843,
@@ -197,10 +181,6 @@ export const BODIES: Record<BodyId, Body> = {
     gm: gm(MASS_RATIO.venus),
     nakedEye: true,
     classicalPlanet: true,
-    names: {
-      en: { nominative: 'Venus', genitive: 'Venus' },
-      cs: { nominative: 'Venuše', genitive: 'Venuše' },
-    },
     orbit: {
       epoch: {
         a: 0.72332102,
@@ -230,10 +210,6 @@ export const BODIES: Record<BodyId, Body> = {
     gm: gm(MASS_RATIO.earth),
     nakedEye: false,
     classicalPlanet: false,
-    names: {
-      en: { nominative: 'Earth', genitive: 'Earth' },
-      cs: { nominative: 'Země', genitive: 'Země' },
-    },
     orbit: {
       epoch: {
         a: 1.00000018,
@@ -261,10 +237,6 @@ export const BODIES: Record<BodyId, Body> = {
     gm: gm(MASS_RATIO.moon),
     nakedEye: true,
     classicalPlanet: true,
-    names: {
-      en: { nominative: 'Moon', genitive: 'the Moon' },
-      cs: { nominative: 'Měsíc', genitive: 'Měsíce' },
-    },
   },
 
   mars: {
@@ -274,10 +246,6 @@ export const BODIES: Record<BodyId, Body> = {
     gm: gm(MASS_RATIO.mars),
     nakedEye: true,
     classicalPlanet: true,
-    names: {
-      en: { nominative: 'Mars', genitive: 'Mars' },
-      cs: { nominative: 'Mars', genitive: 'Marsu' },
-    },
     orbit: {
       epoch: {
         a: 1.52371243,
@@ -305,10 +273,6 @@ export const BODIES: Record<BodyId, Body> = {
     gm: gm(MASS_RATIO.jupiter),
     nakedEye: true,
     classicalPlanet: true,
-    names: {
-      en: { nominative: 'Jupiter', genitive: 'Jupiter' },
-      cs: { nominative: 'Jupiter', genitive: 'Jupiteru' },
-    },
     orbit: {
       epoch: {
         a: 5.20248019,
@@ -337,10 +301,6 @@ export const BODIES: Record<BodyId, Body> = {
     gm: gm(MASS_RATIO.saturn),
     nakedEye: true,
     classicalPlanet: true,
-    names: {
-      en: { nominative: 'Saturn', genitive: 'Saturn' },
-      cs: { nominative: 'Saturn', genitive: 'Saturnu' },
-    },
     orbit: {
       epoch: {
         a: 9.54149883,
@@ -369,10 +329,6 @@ export const BODIES: Record<BodyId, Body> = {
     // Galileo needed a telescope; nobody saw these with the naked eye.
     nakedEye: false,
     classicalPlanet: false,
-    names: {
-      en: { nominative: 'Io', genitive: 'Io' },
-      cs: { nominative: 'Io', genitive: 'Io' },
-    },
     satellite: {
       a: 421800.0 / AU_IN_KM,
       e: 0.0041,
@@ -391,10 +347,6 @@ export const BODIES: Record<BodyId, Body> = {
     // Galileo needed a telescope; nobody saw these with the naked eye.
     nakedEye: false,
     classicalPlanet: false,
-    names: {
-      en: { nominative: 'Europa', genitive: 'Europa' },
-      cs: { nominative: 'Europa', genitive: 'Europy' },
-    },
     satellite: {
       a: 671100.0 / AU_IN_KM,
       e: 0.0094,
@@ -413,10 +365,6 @@ export const BODIES: Record<BodyId, Body> = {
     // Galileo needed a telescope; nobody saw these with the naked eye.
     nakedEye: false,
     classicalPlanet: false,
-    names: {
-      en: { nominative: 'Ganymede', genitive: 'Ganymede' },
-      cs: { nominative: 'Ganymed', genitive: 'Ganymeda' },
-    },
     satellite: {
       a: 1070400.0 / AU_IN_KM,
       e: 0.0013,
@@ -435,10 +383,6 @@ export const BODIES: Record<BodyId, Body> = {
     // Galileo needed a telescope; nobody saw these with the naked eye.
     nakedEye: false,
     classicalPlanet: false,
-    names: {
-      en: { nominative: 'Callisto', genitive: 'Callisto' },
-      cs: { nominative: 'Kallisto', genitive: 'Kallisto' },
-    },
     satellite: {
       a: 1882700.0 / AU_IN_KM,
       e: 0.0074,
@@ -457,10 +401,6 @@ export const BODIES: Record<BodyId, Body> = {
     // Galileo needed a telescope; nobody saw these with the naked eye.
     nakedEye: false,
     classicalPlanet: false,
-    names: {
-      en: { nominative: 'Titan', genitive: 'Titan' },
-      cs: { nominative: 'Titan', genitive: 'Titanu' },
-    },
     satellite: {
       a: 1221870.0 / AU_IN_KM,
       e: 0.0288,
