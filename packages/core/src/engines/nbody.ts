@@ -101,7 +101,13 @@ function correctedSeedStates(
 }
 
 /**
- * Velocity-Verlet n-body integrator over the nine modelled bodies.
+ * Velocity-Verlet n-body integrator over the eight gravitating bodies.
+ *
+ * Sun to Saturn, plus the Moon. **Uranus and Neptune are not in it**, so this
+ * does not converge on the reference ephemeris: their pull on Saturn is real,
+ * and leaving it out costs more there than the two-body Kepler engine gives
+ * away. See CLAUDE.md 12.3 for the measured figures. The error is bounded, not
+ * growing — the integrator is sound, the guest list is short.
  *
  * State is held in flat Float64Arrays rather than Vec3 objects: the inner loop
  * runs tens of millions of times over an 800-year span, and allocating three
@@ -311,7 +317,7 @@ export class NBodySimulation {
      * The moons are hung on afterwards rather than integrated, because a
      * quarter-day step gives Io seven of them per orbit and an orbit sampled
      * seven times does not close. Resolving it would need a step fifteen times
-     * finer and, with fourteen bodies instead of nine, would turn a 370 ms seek
+     * finer and, with thirteen bodies instead of eight, would turn a 370 ms seek
      * into something near fifteen seconds.
      *
      * This is not a dodge around the arithmetic. It is Newton's own treatment:

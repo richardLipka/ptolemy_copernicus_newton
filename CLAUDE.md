@@ -502,7 +502,7 @@ Ptolemy sit in the same bracket, use the same number of circles to within one,
 and cost the same two table look-ups. What broke the deadlock was Kepler's
 change of *shape*.
 
-Two honesty notes that the tests carry as comments:
+Three honesty notes, the first two carried as comments by the tests:
 
 - The comparison is **asymmetric**. The Ptolemaic engine runs on Almagest
   parameters, carrying Ptolemy's measurement errors; the Copernican runs on
@@ -516,6 +516,19 @@ Two honesty notes that the tests carry as comments:
   there than the second-order error the circles leave behind. The ellipse's real
   advantage on those planets appears only once perturbation is added, which is
   Newton's territory.
+- The n-body engine integrates **eight bodies — out to Saturn**. Uranus and
+  Neptune are not in it, and their pull on Saturn is real. So `nbody` does not
+  converge on the reference: measured against VSOP87 over 1600–2400 its worst
+  Saturn error is 0.58°, *larger* than the two-body Kepler engine's 0.35°, which
+  reads backwards for the model the app presents as the one that finally got it
+  right. The residual is bounded rather than growing — sampled by century it runs
+  0.35°, 0.09°, 0.37°, 0.09°, 0.34° — so this is missing physics and not the
+  integrator coming apart; energy oscillates about a flat mean over the same
+  span. Adding the two would cost a wider table of elements for planets the app
+  does not draw, to close an error smaller than the line width at any zoom the
+  map offers. Worth knowing before quoting an `nbody` figure as truth: on
+  Saturn, VSOP87 is the more accurate of the two, and it is what the accuracy
+  tests measure against.
 
 ### 12.3b The moons, and why they sit outside every model
 
