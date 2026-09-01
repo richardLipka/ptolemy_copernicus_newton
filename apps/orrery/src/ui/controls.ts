@@ -9,11 +9,14 @@
 
 import { BODY_IDS, type BodyId } from '@orrery/core/bodies';
 import { MODES, type EngineId, type ModeId } from '@orrery/core/engines/types';
+import { dateFromJd } from '@orrery/core/time';
 import type { ZodiacScheme } from '@orrery/core/zodiac';
 import { formatNumber, t } from '../i18n/i18n';
 import type { GhostSelection, ScaleMode, SphereCentre, Store } from '../state/store';
 import { COMPARISON_ENGINES, focusViewFor } from '../state/selectors';
 import { el, field, panel, select, toggleButton } from './dom';
+import { exportButtonRow } from './exportButtons';
+import { buildMapSvg } from '../render/export/mapSvg';
 
 const bodyOptions = (): { value: BodyId; label: string }[] =>
   BODY_IDS.map((id) => ({ value: id, label: t(`body.${id}`) }));
@@ -404,4 +407,38 @@ export function renderControls(container: HTMLElement, store: Store): void {
   }
 
   container.appendChild(harnessPanel);
+
+  // --- save an image ------------------------------------------------------
+
+  /*
+   * A separate panel rather than a button folded into one of the others,
+   * because it answers to nothing above it: it does not toggle, it is never
+   * pressed, and it has no state of its own to show. The map is rebuilt from
+   * `store.get()` at the moment of the click — see `exportButtonRow` — so this
+   * panel does not need to rebuild when the zoom or the date changes, only
+   * when the dock itself does.
+   */
+  const exportPanel = panel(t('export.mapTitle'));
+  exportPanel.appendChild(
+    exportButtonRow(
+      (width, height) =>
+        buildMapSvg({ width, height, state: store.get(), trails: store.trails.all() }),
+      () => {
+        const current = store.get();
+        return [
+          'orrery',
+          current.engineId,
+          current.selectedBody,
+          current.scaleMode,
+          dateFromJd(current.julianDate).toISOString().slice(0, 10),
+        ];
+      },
+      () => {
+        const field = document.querySelector<HTMLElement>('.stage__field');
+        return { width: field?.clientWidth || 800, height: field?.clientHeight || 800 };
+      },
+    ),
+  );
+  exportPanel.appendChild(el('p', 'note', t('export.mapNote')));
+  container.appendChild(exportPanel);
 }

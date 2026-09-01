@@ -1969,6 +1969,55 @@ are marked as such in the source so nobody later mistakes them for a catalogue.
 Pictorial engravings — an actual ram, an actual bull — would need SVG artwork
 or bitmaps and are therefore out of scope under the CSS-only constraint.
 
+### 13.7b Saving an image: two exporters, and why neither snapshots the DOM
+
+Both the map ("Save an image", in the left dock) and the selected body's phase
+card (its own PNG/SVG pair in the info panel) can be downloaded. The obvious
+way to build this — clone the live element, wrap it in an SVG
+`<foreignObject>`, and the clone is already a valid image — was the first
+approach taken, and it produces a perfectly good, perfectly viewable SVG file.
+It cannot be turned into a PNG. The instant a `foreignObject` is involved,
+Chromium refuses to read pixels back out of any canvas that has painted one:
+`canvas.toBlob()` throws `SecurityError: Tainted canvases may not be
+exported`, regardless of origin, with nothing external referenced and nothing
+to fix by escaping more carefully. That is documented behaviour other
+DOM-to-image tools carry the same restriction under, not a defect in this
+app's markup — confirmed by testing a bare `foreignObject` containing nothing
+but an inline-styled `<div>`, no stylesheet at all, which taints identically.
+
+So `render/export/mapSvg.ts` and `phaseSvg.ts` build **real SVG shapes** —
+circles, lines, text — that never pass through HTML. They are not a second
+guess at the geometry: both call the same pure functions `orrery.ts` and
+`infoPanel.ts` call — `buildView`, `buildConstruction`, `buildDynamicsView`,
+`projectTrail`, `divisionsFor`, `CONSTELLATION_FIGURES`, `labelHasRoom` — so
+what differs is only the last step, a `<circle>` here where the live renderer
+would write `--x`/`--y` onto a positioned div. The map's own projection
+(`mapProjection` in `mapSvg.ts`) is copied from `createOrrery`'s arithmetic —
+`field / ringExtent / 2 * zoom` — because that arithmetic is not exposed
+anywhere a caller could just ask for it, and is pinned in `mapSvg.test.ts`
+against `--field`/`--zoom`/`unitPx()` figures read back from the running app,
+the same way `labels.test.ts` pins `labelHasRoom` against a measured
+configuration.
+
+Theme colours are resolved once, at export time, via
+`getComputedStyle(document.documentElement).getPropertyValue('--brass-dark')`
+and friends — literal colour values baked into the SVG rather than a
+stylesheet reference, since the exported file has no cascade of its own to
+inherit one from.
+
+Left out of the map export, deliberately: the ghost-overlay comparison and the
+edge-of-map pointer for a body that has scrolled off screen. Both are real
+features of the live map; neither is "the model in its current configuration,"
+which is what a reader asking for this image actually wants, and the
+export's own viewBox already handles an off-screen body honestly — it is
+simply outside the picture, which is what off the map means.
+
+`resolveThemeColor`/`buildExportFilename`/`escapeXml`/`mapProjection`/
+`ringGeometry` are all pure and are tested directly; the parts that call
+`getComputedStyle` or a canvas are checked by hand in the running app, the
+same accommodation `orrery.ts` itself gets for the same reason — see
+`vitest.config.ts`'s own note that this suite is plain Node throughout.
+
 ### 13.8 Still assumed, not confirmed
 
 - **Deployment form** — building for a folder of static assets with a relative

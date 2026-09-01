@@ -1028,6 +1028,15 @@
     color: var(--text);
     margin: 0 0 0.4rem;
   }
+
+  /*
+   * The download row. `.phase-card` needs no rule of its own — it is a plain
+   * block wrapper grouping the heading, disc, caption and readouts as one
+   * visual unit, and inherits the layout its children already had.
+   */
+  .export {
+    margin-top: 0.6rem;
+  }
 }
 
 /* --- narrow viewports ---------------------------------------------------- */

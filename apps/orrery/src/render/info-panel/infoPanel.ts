@@ -25,12 +25,15 @@ import {
 import { inDeferentParts } from '@orrery/core/engines/ptolemaicUnits';
 import type { EngineId } from '@orrery/core/engines/types';
 import { illuminationOf, phaseName } from '@orrery/core/illumination';
+import { dateFromJd } from '@orrery/core/time';
 import { t, bodyName, formatExponent, formatNumber, formatShare } from '../../i18n/i18n';
 import { angleDiffDeg } from '@orrery/core/vec';
 import { ENGINES } from '@orrery/core/engines/registry';
 import type { Store } from '../../state/store';
 import { buildView } from '../../state/selectors';
 import { el, panel, readout } from '../../ui/dom';
+import { exportButtonRow } from '../../ui/exportButtons';
+import { buildPhaseSvg } from '../export/phaseSvg';
 
 /** One engine per model, for the side-by-side phase figures. */
 const PHASE_COMPARISON_ENGINES: readonly EngineId[] = [
@@ -65,6 +68,14 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
   if (selected !== 'sun' && !body.isObserver) {
     const lit = body.illumination.illuminatedFraction;
 
+    // Everything that belongs *in* the picture, grouped as one visual unit —
+    // the heading, the disc, the caption and the three readouts, and nothing
+    // from the rest of the panel. `phaseSvg.ts` redraws the same content as
+    // real shapes for export rather than reading this element back; see its
+    // file note for why.
+    const phaseCard = el('div', 'phase-card');
+    phaseCard.appendChild(el('h3', 'masthead__title', bodyName(selected)));
+
     const disc = el('div', 'phase-disc');
     disc.style.setProperty('--tint', `var(--body-${selected})`);
     // The lit limb faces the Sun, so it sits on the side the body lies away
@@ -75,9 +86,9 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
     disc.style.setProperty('--lit-width', Math.abs(2 * lit - 1).toFixed(4));
     disc.appendChild(el('div', 'phase-disc__half'));
     disc.appendChild(el('div', 'phase-disc__terminator'));
-    card.appendChild(disc);
+    phaseCard.appendChild(disc);
 
-    card.appendChild(
+    phaseCard.appendChild(
       el(
         'p',
         'phase-caption',
@@ -86,14 +97,32 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
       ),
     );
 
-    card.appendChild(readout(t('info.phase'), t(`phase.${phaseName(body.illumination)}`)));
-    card.appendChild(
+    phaseCard.appendChild(readout(t('info.phase'), t(`phase.${phaseName(body.illumination)}`)));
+    phaseCard.appendChild(
       readout(t('info.illuminated'), `${formatNumber(lit * 100, 0)} %`),
     );
-    card.appendChild(
+    phaseCard.appendChild(
       readout(
         t('info.phaseAngle'),
         `${formatNumber(body.illumination.phaseAngle, 1)}${t('info.unit.deg')}`,
+      ),
+    );
+    card.appendChild(phaseCard);
+
+    // A body's phase is the one figure here worth lifting out on its own — the
+    // rest of the panel is numbers, and a screenshot of numbers is a table.
+    // Built fresh from the state rather than from `phaseCard` itself — see
+    // `phaseSvg.ts` for why nothing this app exports is a DOM snapshot.
+    card.appendChild(
+      exportButtonRow(
+        (width, height) => buildPhaseSvg({ width, height, state }),
+        () => [
+          'phase',
+          selected,
+          state.engineId,
+          dateFromJd(state.julianDate).toISOString().slice(0, 10),
+        ],
+        () => ({ width: 480, height: 420 }),
       ),
     );
   }

@@ -134,6 +134,11 @@ quietly regress.
   because his model here has longitudes and no latitude theory at all; and
   **Venus keeps her phase**, never passing half under Ptolemy and filling under
   the other three.
+- **Save the map, or a body's phase, as an image.** SVG or PNG, from a button
+  beside each — the map exactly as it stands, this model and this zoom, or the
+  selected body's phase disc on its own for dropping into a slide. Real vector
+  shapes rather than a picture of the page, so the SVG opens as editable
+  circles and lines and the PNG rasterises cleanly at print resolution.
 - **Compare two models at once.** The ghost overlay draws a second model faintly
   beside the active one, so Ptolemy's 2.8° at Mars is a visible gap rather than a
   number — and the bare-circle sub-mode's 13.5°, which is what heliocentrism
