@@ -872,7 +872,41 @@ through a 34px window the height of that bar. It looked like a panel that had
 lost its contents rather than one that had been crushed, which is why it stood
 for a while.
 
-**Themes.** Four looks, chosen from the top bar and remembered in localStorage:
+**Two columns a side, once there is room.** The instrument is a circle, so on any
+screen wider than it is tall its size is set by the *height* — a 1920×1080 window
+drew a 949px map into a field 1264px wide and wasted the rest, while both docks
+scrolled. Past 84rem the docks take that spare width instead: they widen, split
+into two columns, and some 2400px of panel stops needing a scrollbar to reach.
+The dock width is bounded so the field never becomes narrower than it is tall,
+which is the point at which widening would begin costing the map.
+
+Three rules keep that from breaking, each of which it broke first:
+
+- **No panel may exceed the column height** — `max-height: 100%`, with a
+  scrollbar of its own if it comes to that. `break-inside: avoid` is a preference
+  and not a guarantee: a panel that does not fit is split regardless. The
+  selected-body panel is 876px of readouts against a 656px column on a 900px
+  screen, and it was being cut in half, its remainder taking the second column
+  and shunting the events panel into a third one off the side of the dock.
+- **The events feed is bounded** — `.event-list`, 46vh. It is the one panel whose
+  height is set by how much sky there is rather than by how much there is to say,
+  and left alone it decided the height of everything around it.
+- **Anything with an intrinsic width has to be told it may shrink.** A grid item
+  defaults to `min-width: auto`, and a `select` reports its longest *option* as
+  its content — 244px of "Almagest — Ptolemaiovy tabulky" inside a 172px field,
+  quietly pushing its panel wider than the column. Toggle labels are the same
+  case, and now drop to one per row rather than breaking Czech words mid-syllable.
+
+Below 84rem the docks stay a single column and still scroll, by roughly half what
+they did before. Fitting them there would mean a map small enough to defeat the
+purpose of having one.
+
+**Panel type is a step smaller than the map's**, set on `.dock` rather than
+lowered globally. A zodiac label is read at a glance from across a lecture room;
+a panel is read up close by someone who has already decided to look at it. Sized
+alike the panels shout, and the column runs off the bottom of the screen.
+
+**Themes.** Five looks, chosen from the top bar and remembered in localStorage:
 
 | id | |
 |---|---|
@@ -880,6 +914,7 @@ for a while.
 | `atelier` | the same pigments as a modern instrument: near-white ground, UI sans, soft elevation, generous radii |
 | `nocturne` | the same instrument by candlelight — warm lamplight on metal against sky-black |
 | `lcars` | after the Okudagram: black ground, flat saturated blocks, asymmetric elbows |
+| `flightdeck` | the glass cockpit: near-black ground, dim blue chrome, bright bodies |
 
 A theme is **a block of custom properties and nothing else**. No theme file
 contains a component selector, with one deliberate exception: LCARS needs shape

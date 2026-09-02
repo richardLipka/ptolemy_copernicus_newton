@@ -20,7 +20,7 @@ fills in as time runs.
 No installation, no backend, no database. It builds to a folder of static files
 and runs from any web server or straight off disk.
 
-Czech and English · four looks · [Architecture notes](CLAUDE.md) · MIT licensed
+Czech and English · five looks · [Architecture notes](CLAUDE.md) · MIT licensed
 
 **[Try it live →](https://richardlipka.github.io/ptolemy_copernicus_newton/)**
 
@@ -169,7 +169,7 @@ quietly regress.
   event panel shows the date each of the four models predicts and the spread
   between them.
 
-## Four looks
+## Five looks
 
 The map runs full-bleed with the controls floating over it, and the top-right bar
 switches language and theme. Your choice of both is remembered.
@@ -184,12 +184,17 @@ switches language and theme. Your choice of both is remembered.
   engraving would vanish.
 - **LCARS** — after the Okudagram. Black ground, flat saturated blocks, block
   capitals, asymmetric elbows.
+- **Flightdeck** — the glass cockpit. Near-black ground, the chrome dim and blue,
+  and the bodies pitched as far the other way as the palette allows: on this one
+  a planet should be the brightest thing on screen by a wide margin, because it
+  is the only thing that is real. Corners near-square, so a panel reads as a
+  region of a display rather than an object on a desk.
 
 Every look is a block of CSS custom properties and nothing else, so the body
-colours stay comparable between them and adding a fifth means adding one file.
+colours stay comparable between them and adding a sixth means adding one file.
 
 Text contrast is measured rather than eyeballed, and the measurement is not
-uniformly flattering: headings run 9:1 to 16:1 across the four themes and control
+uniformly flattering: headings run 9:1 to 18:1 across the five themes and control
 labels 6:1 to 13:1, but the muted small type is weaker — panel titles and the
 credit line sit at 3.1:1 on Parchment, below the 4.5:1 that type that size wants.
 That is the low-contrast engraving the theme is imitating working against

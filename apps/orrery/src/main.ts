@@ -13,6 +13,7 @@ import './render/theme/theme-orrery.css';
 import './render/theme/theme-atelier.css';
 import './render/theme/theme-nocturne.css';
 import './render/theme/theme-lcars.css';
+import './render/theme/theme-flightdeck.css';
 import './render/theme/shell.css';
 import './render/theme/layout.css';
 

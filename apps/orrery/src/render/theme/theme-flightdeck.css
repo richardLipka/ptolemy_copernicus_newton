@@ -1,0 +1,109 @@
+/*
+ * Flightdeck — the instrument as a modern spacecraft display.
+ *
+ * The other dark themes are period pieces: Nocturne is brass by candlelight,
+ * LCARS is moulded plastic from a 1987 set. This one is the glass cockpit —
+ * what a screen looks like when the room around it has to stay dark and the
+ * person reading it is working.
+ *
+ * Three rules carry the look, and the palette follows from them.
+ *
+ * **The ground is black and stays black.** Not charcoal, not navy: #04070d, a
+ * near-black carrying just enough blue that the cool lines above it read as
+ * belonging to the same surface rather than floating over grey.
+ *
+ * **The chrome is dim and blue; the sky is bright.** Everything the app draws
+ * *about* the solar system — rules, borders, labels, the zodiac ring — sits in
+ * a narrow band of desaturated blue and is deliberately quiet. Everything that
+ * *is* the solar system is pitched as far the other way as the palette allows.
+ * That gap is the whole design: on this theme a planet should be the brightest
+ * thing on screen by a wide margin, because it is the only thing that is real.
+ *
+ * **Corners are nearly square.** 3px, not 14px. A rounded panel reads as a
+ * physical object sitting on a desk, which is Nocturne's job. A near-square one
+ * reads as a region of a display, which is this one's.
+ *
+ * The body colours are not the parchment set brightened — they are re-picked.
+ * Warm metals on black turn muddy, so each planet is taken to the bright,
+ * slightly desaturated end of its own hue where it holds against a black ground
+ * at a two-pixel marker.
+ */
+
+@layer theme {
+  :root[data-theme='flightdeck'] {
+    --surface: #04070d;
+    /* A cold wash off the top-left, as though from an instrument out of frame. */
+    --surface-glow: rgba(64, 148, 224, 0.09);
+    --surface-shade: rgba(0, 0, 0, 0.6);
+
+    --text-strong: #e6f2ff;
+    --text: #a6c2da;
+    --text-muted: #5f7d97;
+
+    /*
+     * Blue, and held down on purpose.
+     *
+     * The accent draws every rule, border and hairline in the app. On a black
+     * ground a saturated blue at full strength turns the panel edges into the
+     * loudest thing on screen and the planets into an afterthought — exactly
+     * backwards. These sit dim enough to read as structure and no louder.
+     */
+    --accent: #3d87bd;
+    --accent-bright: #6cc4f0;
+    --accent-dark: #235a80;
+    --accent-shadow: #12314a;
+
+    --panel-surface: rgba(8, 15, 26, 0.74);
+    --panel-inner: rgba(120, 196, 255, 0.05);
+    --panel-edge: #1e4a69;
+    --panel-radius: 3px;
+    --panel-blur: 14px;
+    --panel-shadow: 0 4px 20px rgba(0, 0, 0, 0.65);
+    --control-radius: 3px;
+    --hover-tint: rgba(92, 176, 240, 0.16);
+
+    /* Deep space is darker than any night on Earth; the terminator is opaque. */
+    --shadow-fill: rgba(1, 3, 6, 0.94);
+    --shadow-solid: #010306;
+
+    /* Cyan against the warm bodies, so a velocity vector is never a planet. */
+    --velocity-tint: #43d6f0;
+    --net-force-tint: #e6f2ff;
+
+    --face-display: 'Eurostile', 'Bahnschrift', 'DIN Alternate', system-ui,
+      -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --face-text: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+      sans-serif;
+    --face-numeric: ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, Menlo,
+      monospace;
+
+    /* The bright half of the design. Re-picked, not brightened. */
+    --body-sun: #ffd23f;
+    --body-mercury: #cfc3b2;
+    --body-venus: #ffe9a3;
+    --body-earth: #4fd8a4;
+    --body-moon: #eceff4;
+    --body-mars: #ff7048;
+    --body-jupiter: #ffb063;
+    --body-saturn: #ffd98f;
+
+    --body-io: #ffd75e;
+    --body-europa: #d8ecff;
+    --body-ganymede: #d0a878;
+    --body-callisto: #a89684;
+    --body-titan: #ffc478;
+
+    /*
+     * Lifted with everything else: the defaults were chosen to read on
+     * parchment and on Nocturne's warm black, and against this colder ground
+     * they sit too close to the chrome to separate from it.
+     */
+    --model-ptolemy: #ff6f5c;
+    --model-copernicus: #b18cff;
+    --model-kepler: #3fd8b4;
+    --model-newton: #56b4ff;
+
+    --ghost-opacity: 0.46;
+    --sightline-opacity: 0.5;
+  }
+}

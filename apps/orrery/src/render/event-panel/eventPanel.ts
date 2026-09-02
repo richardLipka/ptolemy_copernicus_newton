@@ -105,6 +105,19 @@ export function renderEventPanel(container: HTMLElement, store: Store): void {
     return;
   }
 
+  /*
+   * The rows go in a list of their own, and the list is what scrolls.
+   *
+   * A chronological feed has no natural end — it is the one panel in the app
+   * whose height is set by how much sky there is rather than by how much there
+   * is to say. Left to grow it decided the height of the whole dock, and on a
+   * two-column layout it was tall enough on its own to push a third column off
+   * the side of the screen. Bounded here instead, so the panel is a known size
+   * and the *docks* never scroll; the events keep a short scroll of their own,
+   * which is what a feed is supposed to have.
+   */
+  const list = el('div', 'event-list');
+
   for (const event of events) {
     const row = el('div', 'event');
     row.appendChild(el('div', 'event__date', formatDate(dateFromJd(event.jd))));
@@ -183,8 +196,9 @@ export function renderEventPanel(container: HTMLElement, store: Store): void {
       expanded = table;
     });
 
-    card.appendChild(row);
+    list.appendChild(row);
   }
 
+  card.appendChild(list);
   container.appendChild(card);
 }

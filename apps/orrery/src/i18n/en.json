@@ -241,6 +241,8 @@
   "theme.nocturne.short": "Night",
   "theme.lcars": "LCARS",
   "theme.lcars.short": "LCARS",
+  "theme.flightdeck": "Flightdeck — modern spacecraft display",
+  "theme.flightdeck.short": "Flightdeck",
   "time.slower": "Slower",
   "time.faster": "Faster",
   "view.zoomHint": "The mouse wheel and the + / - keys zoom the map, dragging moves it, both about the stationary point. Double-click returns to the fitted view. On the realistic scale the zoom reaches far enough to separate the Moon from the Earth; bodies that fall off the map are then shown as pointers on its edge.",

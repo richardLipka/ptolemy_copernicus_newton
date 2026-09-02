@@ -131,6 +131,21 @@
     gap: var(--dock-gap);
     width: var(--dock-width);
     max-height: calc(100% - var(--dock-gap) * 2);
+
+    /*
+     * The panels read a step smaller than the map does.
+     *
+     * Scoped here rather than lowered globally, because the two sets of type
+     * have opposite jobs: a zodiac label on the instrument is read at a glance
+     * from across a lecture room, while a dock is read deliberately, up close,
+     * by someone who has already decided to look at it. Sized alike, the
+     * panels shout and — the practical half — the column runs off the bottom
+     * of the screen. Everything below inherits from these three.
+     */
+    --size-label: clamp(0.6rem, 0.57rem + 0.12vw, 0.69rem);
+    --size-body: clamp(0.72rem, 0.69rem + 0.15vw, 0.83rem);
+    --size-heading: clamp(0.83rem, 0.79rem + 0.17vw, 0.95rem);
+    --size-title: clamp(0.98rem, 0.9rem + 0.36vw, 1.2rem);
   }
 
   .dock--left {
@@ -170,6 +185,69 @@
   .dock:empty {
     display: none;
   }
+
+  /*
+   * --- wide viewports: two columns a side ---------------------------------
+   *
+   * The instrument is a circle, and on any screen wider than it is tall the
+   * circle is sized by the *height*. A 1920x1080 window draws a 949px map into
+   * a field 1264px wide and simply wastes the remaining 315px. Meanwhile both
+   * docks are scrolling.
+   *
+   * So the docks take that width instead. They widen and split in two, the map
+   * keeps the diameter it already had — its limit was never horizontal — and
+   * roughly 2400px of panel stops needing a scrollbar to reach. Multicol rather
+   * than grid because the panels differ in height and should flow to wherever
+   * there is room, not line up in rows against a neighbour they have nothing to
+   * do with.
+   *
+   * Panels are addressed by class rather than as children: the hosts between
+   * them are display:contents, so > * would set a margin on a box that is not
+   * there. Nothing nests a panel inside a panel, which is what makes that safe.
+   */
+  @media (min-width: 84rem) {
+    /*
+     * Bounded so the map keeps the diameter it had at one column. The circle is
+     * sized by the shorter side of the field, so the docks may take width right
+     * up to the point where the field stops being wider than it is tall — past
+     * that they would start costing the instrument, which is the one thing on
+     * screen that must not shrink to make room for the writing around it.
+     */
+    :root {
+      --dock-width: clamp(22rem, 21vw, 28rem);
+    }
+
+    .dock--left,
+    .dock--right {
+      display: block;
+      columns: 2;
+      column-gap: var(--dock-gap);
+    }
+
+    .dock--left .panel,
+    .dock--right .panel {
+      break-inside: avoid;
+      margin-bottom: var(--dock-gap);
+
+      /*
+       * No panel may be taller than the column it sits in.
+       *
+       * break-inside: avoid is a preference, not a guarantee: a panel that
+       * simply does not fit gets split anyway. The selected-body panel is
+       * 876px of readouts against a 656px column on a 900px screen, so it was
+       * being cut in half - the first part filling column one, the remainder
+       * taking column two, and the events panel shunted into a third column
+       * off the side of the dock. Capping the height removes the choice: the
+       * panel stays whole, stays in one column, and scrolls its own contents
+       * in the rare case it has more than the screen is tall. Which is still
+       * a great deal better than the whole dock scrolling, as it used to.
+       */
+      max-height: 100%;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+  }
 }
 
 @layer components {
@@ -185,7 +263,7 @@
   }
 
   .panel {
-    padding: 0.7rem 0.75rem;
+    padding: var(--panel-pad-block) var(--panel-pad-inline);
   }
 
   .panel__title {
@@ -194,8 +272,8 @@
     letter-spacing: var(--tracking-wide);
     text-transform: uppercase;
     color: var(--text-muted);
-    margin: 0 0 0.5rem;
-    padding-bottom: 0.3rem;
+    margin: 0 0 0.4rem;
+    padding-bottom: 0.24rem;
     border-bottom: var(--line-hairline) solid var(--accent-dark);
   }
 
@@ -316,8 +394,30 @@
 
   .field {
     display: grid;
-    gap: 0.2rem;
-    margin-bottom: 0.55rem;
+    gap: 0.15rem;
+    margin-bottom: 0.42rem;
+  }
+
+  /*
+   * A grid item will not shrink below its own content unless told to, and a
+   * <select> reports the width of its longest *option* as that content —
+   * "Almagest — Ptolemaiovy tabulky" is 244px of intrinsic width in a field
+   * that may be 172px wide. The label beside it does the same with a long
+   * caption. So the control quietly pushed its panel wider than the column it
+   * was in, which the docks then had to scroll sideways to reach.
+   *
+   * Truncating with an ellipsis rather than wrapping: these are one-line
+   * controls, and the full text is in the open list the moment it is clicked.
+   */
+  .field > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .field > select {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .field:last-child {
@@ -412,6 +512,15 @@
 
   .segmented {
     display: flex;
+    /*
+     * Wraps to one per row rather than letting a label break mid-word.
+     *
+     * Once the docks split into columns a two-button control gets about 72px a
+     * side, and Czech does not always fit: "Sfera kolem pozorovatele" was
+     * splitting as pozorovatel/e. A basis of 6rem keeps the pair side by side
+     * wherever there is room for both and stacks them where there is not.
+     */
+    flex-wrap: wrap;
     border: var(--line-fine) solid var(--accent-dark);
     border-radius: var(--control-radius);
     overflow: hidden;
@@ -429,7 +538,7 @@
    * again.
    */
   .segmented button {
-    flex: 1;
+    flex: 1 1 6rem;
     border: 0;
     border-radius: 0;
     border-inline-end: var(--line-hairline) solid var(--accent-dark);
@@ -547,7 +656,17 @@
    */
   .toggle-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    /*
+     * Two up where there is room for two, one up where there is not.
+     *
+     * A hard repeat(2, ...) gave each button about 70px once the docks split
+     * into columns, and Czech labels do not fit in 70px: break-word had to
+     * step in and was cutting them mid-syllable - Konstru/kce, Obrazc/e
+     * souhvez/di. auto-fit drops the block to a single full-width column
+     * before it comes to that, and restores the pair as soon as the dock is
+     * wide enough to hold one.
+     */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.5rem), 1fr));
     gap: 0.35rem;
   }
 
@@ -555,8 +674,22 @@
     grid-column: 1 / -1;
   }
 
+  /*
+   * Wrapped the same way the segmented labels are, and for the same reason.
+   *
+   * These sit two to a row inside a dock, so each gets half of whatever the
+   * column is - about 70px once the docks split in two. A single unbreakable
+   * word longer than that ("Constructions", "Souhvezdi") pushed its button
+   * wider than the track, the panel wider than its column, and a scrollbar
+   * onto the dock. The minmax(0, 1fr) above lets the *track* shrink; this is
+   * what lets the text inside it do the same.
+   */
   .toggle-grid button {
     width: 100%;
+    min-width: 0;
+    hyphens: auto;
+    overflow-wrap: break-word;
+    text-wrap: balance;
   }
 
   /* --- body chips -------------------------------------------------------- */
@@ -867,7 +1000,7 @@
     display: flex;
     justify-content: space-between;
     gap: 0.5rem;
-    padding: 0.12rem 0;
+    padding: 0.06rem 0;
     font-size: var(--size-body);
   }
 
@@ -905,9 +1038,29 @@
 
   /* --- events ------------------------------------------------------------ */
 
+  /*
+   * The feed scrolls; the panel around it does not.
+   *
+   * Bounded against the viewport rather than set in rem, because what it has to
+   * fit inside is a dock whose height is the window height. 58vh leaves room
+   * for the panel title and for the clock below it at every size the two-column
+   * layout covers, and on a narrow screen it simply stops the list running away
+   * down a column that was already scrolling. The figure is set by the worst
+   * case rather than the typical one: LCARS in English, where uppercase labels
+   * at 0.16em of tracking wrap far more than Czech sentence case and make every
+   * panel beside them taller.
+   */
+  .event-list {
+    max-height: min(46vh, 40rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+
   .event {
     border-bottom: var(--line-hairline) solid var(--accent-dark);
-    padding: 0.35rem 0;
+    padding: 0.22rem 0;
+    line-height: 1.25;
     cursor: pointer;
   }
 

@@ -42,6 +42,16 @@
 
     --transition-fast: 120ms ease-out;
 
+    /*
+     * A panel's own inner padding, as a token because a theme has to be able to
+     * cancel it exactly. LCARS bleeds its title bar out to the panel edge with a
+     * negative margin, and when that margin was written as a literal it silently
+     * stopped matching the moment the padding was tuned — the bar then hung a
+     * couple of pixels past the panel and pushed a scrollbar onto the dock.
+     */
+    --panel-pad-block: 0.55rem;
+    --panel-pad-inline: 0.6rem;
+
     /* How far the floating panels sit from the edge, and how wide they run. */
     --dock-gap: clamp(0.5rem, 1.1vw, 1rem);
     --dock-width: clamp(13rem, 20vw, 18.5rem);

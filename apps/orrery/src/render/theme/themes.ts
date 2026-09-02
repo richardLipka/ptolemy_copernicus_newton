@@ -6,7 +6,7 @@
  * adding a look means adding one CSS file and one entry here.
  */
 
-export const THEMES = ['orrery', 'atelier', 'nocturne', 'lcars'] as const;
+export const THEMES = ['orrery', 'atelier', 'nocturne', 'lcars', 'flightdeck'] as const;
 
 export type ThemeId = (typeof THEMES)[number];
 
