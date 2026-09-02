@@ -121,6 +121,14 @@ quietly regress.
   hard as Earth does — near 69% against 31%, with the ratio breathing between 1.9
   and 2.5 across a year — and it orbits Earth anyway, because the two are falling
   toward the Sun together.
+- **Every name in the explanations is a link.** Ptolemy, Tycho, the *Rudolphine
+  Tables*, Gassendi watching a transit in Paris — people, books, places and
+  planets carry a faint dotted underline out to Wikipedia, in the language the
+  app is set to. The dictionaries stay plain text: the names are matched against
+  a table rather than marked up by hand, so translating a sentence cannot break
+  a link. Czech is matched by stem, because it declines — Ptolemaios turns up as
+  Ptolemaia, Ptolemaiovi and Ptolemaiovými, and all of them should point at the
+  same man.
 - **Look at the sky itself.** Open the band along the bottom and it shows the
   patch of sky the selected body is in, as seen from the observation point:
   the bright stars within 35° of the ecliptic at their catalogued places, every

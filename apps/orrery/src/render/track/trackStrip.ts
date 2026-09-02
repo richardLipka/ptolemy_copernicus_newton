@@ -23,7 +23,7 @@ import { bodyName, t } from '../../i18n/i18n';
 import { dateFromJd } from '@orrery/core/time';
 import { divisionsFor } from '@orrery/core/zodiac';
 import { normalizeDeg } from '@orrery/core/vec';
-import { el } from '../../ui/dom';
+import { el, note } from '../../ui/dom';
 
 const div = (className: string): HTMLDivElement => {
   const element = document.createElement('div');
@@ -178,7 +178,7 @@ export function renderTrackStrip(container: HTMLElement, input: TrackStripInput)
   axis.appendChild(el('span', undefined, yearOf(track.endJd)));
   strip.appendChild(axis);
 
-  strip.appendChild(el('p', 'note', t('track.hint')));
+  strip.appendChild(note(t('track.hint')));
 
   container.appendChild(strip);
 }

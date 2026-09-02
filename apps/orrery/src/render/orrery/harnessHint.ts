@@ -22,6 +22,7 @@ import type { BodyId } from '@orrery/core/bodies';
 import type { HarnessRole } from '../../state/harnessMeasures';
 import type { Store } from '../../state/store';
 import { el } from '../../ui/dom';
+import { linkify } from '../../i18n/wikiLinks';
 import { harnessNote, type HarnessNote } from './harnessNotes';
 
 export interface HarnessHint {
@@ -165,7 +166,9 @@ export function createHarnessHint(
 
     title.textContent = note.title;
     subject.textContent = note.subject;
-    body.textContent = note.body;
+    // Linked rather than assigned: the harness notes name Ptolemy, Copernicus
+    // and the Almagest more often than anything else in the app.
+    body.replaceChildren(linkify(note.body));
 
     if (rebuildRows) {
       values.replaceChildren(

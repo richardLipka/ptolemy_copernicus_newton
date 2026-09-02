@@ -14,7 +14,7 @@ import type { ZodiacScheme } from '@orrery/core/zodiac';
 import { formatNumber, t } from '../i18n/i18n';
 import type { GhostSelection, ScaleMode, SphereCentre, Store } from '../state/store';
 import { COMPARISON_ENGINES, focusViewFor } from '../state/selectors';
-import { el, field, panel, select, toggleButton } from './dom';
+import { el, field, note, panel, select, toggleButton } from './dom';
 import { exportButtonRow } from './exportButtons';
 import { buildMapSvg } from '../render/export/mapSvg';
 
@@ -80,7 +80,7 @@ export function renderControls(container: HTMLElement, store: Store): void {
   }
 
   modelPanel.appendChild(
-    el('p', 'note', t(`engine.help.${state.engineId}`)),
+    note(t(`engine.help.${state.engineId}`)),
   );
 
   // Ghost overlay: any engine other than the active one.
@@ -193,7 +193,7 @@ export function renderControls(container: HTMLElement, store: Store): void {
   // A note rather than a tooltip on each chip: a title attribute becomes the
   // button's accessible name, which would leave all eight reading as the same
   // sentence instead of as the body they name.
-  bodyPanel.appendChild(el('p', 'note', t('bodies.focusHint')));
+  bodyPanel.appendChild(note(t('bodies.focusHint')));
   container.appendChild(bodyPanel);
 
   // --- view -------------------------------------------------------------
@@ -231,13 +231,9 @@ export function renderControls(container: HTMLElement, store: Store): void {
   }
   viewPanel.appendChild(centreRow);
   viewPanel.appendChild(
-    el(
-      'p',
-      'note',
-      state.sphereCentre === 'observer'
+    note(state.sphereCentre === 'observer'
         ? t('view.sphere.observerHint')
-        : t('view.sphere.frameHint'),
-    ),
+        : t('view.sphere.frameHint')),
   );
 
   const scaleRow = el('div', 'segmented');
@@ -253,13 +249,13 @@ export function renderControls(container: HTMLElement, store: Store): void {
     );
   }
   viewPanel.appendChild(scaleRow);
-  viewPanel.appendChild(el('p', 'note', t('view.scaleHint')));
+  viewPanel.appendChild(note(t('view.scaleHint')));
 
   // The wheel has no visible affordance, so it needs saying — as does the way
   // back. Deliberately static: putting the live magnification here would tie the
   // controls to a value that changes on every wheel tick, and rebuilding the
   // panels through a gesture is exactly the trap the clock readout fell into.
-  viewPanel.appendChild(el('p', 'note', t('view.zoomHint')));
+  viewPanel.appendChild(note(t('view.zoomHint')));
 
   container.appendChild(viewPanel);
 
@@ -339,7 +335,7 @@ export function renderControls(container: HTMLElement, store: Store): void {
     state.observationPoint !== state.frameOrigin &&
     state.scaleMode === 'compressed'
   ) {
-    harnessPanel.appendChild(el('p', 'note', t('harness.sightlineBend')));
+    harnessPanel.appendChild(note(t('harness.sightlineBend')));
   }
 
   if (hasMachinery && state.showConstruction) {
@@ -356,21 +352,21 @@ export function renderControls(container: HTMLElement, store: Store): void {
           : 'view.ellipseLegend';
 
     harnessPanel.appendChild(
-      el('p', 'note', !state.selectedBody ? t('view.constructionHint') : t(legend)),
+      note(!state.selectedBody ? t('view.constructionHint') : t(legend)),
     );
 
     // The legend names the parts; the map itself will describe any one of them,
     // with its figures for the date on screen. Worth saying once — a reader who
     // does not know the notes are there will never go looking for them.
     if (state.selectedBody) {
-      harnessPanel.appendChild(el('p', 'note', t('harness.hoverNote')));
+      harnessPanel.appendChild(note(t('harness.hoverNote')));
     }
 
     // Under the compressed scale a circle not centred on the frame origin does
     // not project to a circle, which rather undercuts "circles upon circles".
     // Say so, and point at the toggle that fixes it.
     if (store.engine.construction && state.selectedBody && state.scaleMode === 'compressed') {
-      harnessPanel.appendChild(el('p', 'note', t('view.constructionScaleWarning')));
+      harnessPanel.appendChild(note(t('view.constructionScaleWarning')));
     }
   }
 
@@ -401,9 +397,9 @@ export function renderControls(container: HTMLElement, store: Store): void {
 
     // Shown or hidden by the explanations switch, which the CSS handles for
     // every `.note` in the app — no panel decides that for itself.
-    harnessPanel.appendChild(el('p', 'note', t('sky.zoomNote')));
-    harnessPanel.appendChild(el('p', 'note', t('sky.note')));
-    harnessPanel.appendChild(el('p', 'note', t('sky.starsNote')));
+    harnessPanel.appendChild(note(t('sky.zoomNote')));
+    harnessPanel.appendChild(note(t('sky.note')));
+    harnessPanel.appendChild(note(t('sky.starsNote')));
   }
 
   container.appendChild(harnessPanel);
@@ -439,6 +435,6 @@ export function renderControls(container: HTMLElement, store: Store): void {
       },
     ),
   );
-  exportPanel.appendChild(el('p', 'note', t('export.mapNote')));
+  exportPanel.appendChild(note(t('export.mapNote')));
   container.appendChild(exportPanel);
 }

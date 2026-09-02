@@ -23,7 +23,7 @@ import { dateFromJd } from '@orrery/core/time';
 import { bodyName, formatDate, formatDateTime, formatNumber, t } from '../../i18n/i18n';
 import { ENGINES } from '@orrery/core/engines/registry';
 import type { Store } from '../../state/store';
-import { el, panel } from '../../ui/dom';
+import { el, note, panel } from '../../ui/dom';
 
 /** Window scanned around the current date, days. */
 const WINDOW_DAYS = 400;
@@ -100,7 +100,7 @@ export function renderEventPanel(container: HTMLElement, store: Store): void {
   ).slice(0, 12);
 
   if (events.length === 0) {
-    card.appendChild(el('p', 'note', t('events.none')));
+    card.appendChild(note(t('events.none')));
     container.appendChild(card);
     return;
   }
@@ -190,7 +190,7 @@ export function renderEventPanel(container: HTMLElement, store: Store): void {
 
       // The reference is an approximation too, and saying so is the difference
       // between a teaching tool and a false authority.
-      table.appendChild(el('p', 'note', t('events.comparison.referenceNote')));
+      table.appendChild(note(t('events.comparison.referenceNote')));
 
       row.appendChild(table);
       expanded = table;

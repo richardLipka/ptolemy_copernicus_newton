@@ -368,6 +368,38 @@ this is, the app says how to word it) but it does put a key the dictionary must
 satisfy in a package that cannot see the dictionary, which is why the scan in
 `i18n/dictionaries.test.ts` walks core as well as the app.
 
+**Names in the prose link out to Wikipedia.** `i18n/wikiLinks.ts` carries a table
+of people, books, places and bodies, and every explanatory paragraph is built
+through `note()` / `linked()` in `ui/dom.ts` rather than through `el`, so the
+linking is decided in one place instead of at each of two dozen call sites.
+
+The dictionaries stay plain text — no markup was added to them, a translator
+never has to write or preserve a link, and rewording a sentence cannot break
+one. Three rules make the matching safe:
+
+- **Case-sensitive, always.** Czech *měsíc* is a month and *Měsíc* is the Moon;
+  *newtonů* is a unit and *Newton* is a man. Case is all that separates them.
+- **Stems for Czech, not word lists.** Ptolemaios appears in `cs.json` as
+  Ptolemaia, Ptolemaiem, Ptolemaiovi, Ptolemaiovy, Ptolemaiova, Ptolemaiovo,
+  Ptolemaiův, Ptolemaiovu and Ptolemaiovými. The stem is bounded — `Slunc` plus
+  at most two letters reaches *Sluncem* and stops short of *sluneční* — because
+  an unbounded stem is a prefix search and will eventually catch a real word.
+- **One link per name per block.** "Sun" appears thirteen times across the notes
+  and "Earth" ten; linking every one makes a hedge of underlines out of a
+  paragraph and says nothing the first did not.
+
+Order in the table is load-bearing: alternation takes the first branch that
+matches, so "Newton–Raphson" has to be listed above "Newton" or the method never
+links. A test asserts no earlier pattern shadows a later one.
+
+Every title was checked against the live API of the wiki it belongs to — all 32
+English and 26 Czech articles the app can reach resolve directly, with no
+redirects. Where an article exists in one language only (the *Alfonsine tables*
+have no Czech page) the name is left as plain text in the other rather than
+sending a reader to a wiki they did not ask for. `segments()` is the pure half,
+split from the DOM half so it can be tested in the Node-only environment — the
+same division as `labelHasRoom` and `mapProjection`.
+
 `i18n/dictionaries.test.ts` is what makes the files safe to hand to someone who
 will not run the app: identical key sets in both languages, no empty values,
 matching `{{placeholders}}` outside the harness (where Czech legitimately needs

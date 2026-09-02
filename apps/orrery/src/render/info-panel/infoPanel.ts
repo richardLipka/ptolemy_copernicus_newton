@@ -31,7 +31,7 @@ import { angleDiffDeg } from '@orrery/core/vec';
 import { ENGINES } from '@orrery/core/engines/registry';
 import type { Store } from '../../state/store';
 import { buildView } from '../../state/selectors';
-import { el, panel, readout } from '../../ui/dom';
+import { el, note, panel, readout } from '../../ui/dom';
 import { exportButtonRow } from '../../ui/exportButtons';
 import { buildPhaseSvg } from '../export/phaseSvg';
 
@@ -50,7 +50,7 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
   const card = panel(t('info.title'));
 
   if (!state.selectedBody) {
-    card.appendChild(el('p', 'note', t('info.none')));
+    card.appendChild(note(t('info.none')));
     container.appendChild(card);
     return;
   }
@@ -181,7 +181,7 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
     // body's 60 is a different length will compare these across bodies and draw
     // a conclusion the Almagest never supported.
     if (inPtolemysUnits && parts(body.distanceFromObserver) !== null) {
-      card.appendChild(el('p', 'note', t('info.ptolemyParts')));
+      card.appendChild(note(t('info.ptolemyParts')));
     }
     card.appendChild(
       readout(
@@ -244,7 +244,7 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
       table.appendChild(row);
     }
 
-    table.appendChild(el('p', 'note', t('info.forceScaleNote')));
+    table.appendChild(note(t('info.forceScaleNote')));
     card.appendChild(table);
   }
 

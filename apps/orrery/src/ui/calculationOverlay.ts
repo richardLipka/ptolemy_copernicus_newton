@@ -20,7 +20,7 @@ import { DEMONSTRATIONS } from '@orrery/core/demonstrations';
 import { dateFromJd } from '@orrery/core/time';
 import { bodyName, formatDate, formatNumber, t } from '../i18n/i18n';
 import type { Store } from '../state/store';
-import { el } from './dom';
+import { el, linked, note } from './dom';
 
 /**
  * Render a magnitude in the reader's locale.
@@ -79,14 +79,14 @@ function renderCalculationColumn(calculation: ModelCalculation): HTMLElement {
       formatNumber(value, 0),
     ]),
   );
-  column.appendChild(el('p', 'working__cost', t(calculation.costKey, costValues)));
+  column.appendChild(note(t(calculation.costKey, costValues), 'working__cost'));
 
   // The tables are the other half, and the larger one: nobody computed a planet
   // from scratch when they wanted one, they opened a book.
   const tables = el('div', 'working__tables');
   tables.append(
     el('div', 'working__tables-label', t('calc.tables')),
-    el('p', undefined, t(calculation.tablesKey)),
+    note(t(calculation.tablesKey), ''),
   );
   column.appendChild(tables);
   return column;
@@ -119,12 +119,12 @@ export function renderCalculationOverlay(container: HTMLElement, store: Store): 
   header.appendChild(close);
   sheet.appendChild(header);
 
-  sheet.appendChild(el('p', 'note', t('calc.intro')));
+  sheet.appendChild(note(t('calc.intro')));
 
   // --- demonstrations ---------------------------------------------------
 
   sheet.appendChild(el('h3', 'overlay__section', t('calc.demonstrations')));
-  sheet.appendChild(el('p', 'note', t('calc.demonstrations.intro')));
+  sheet.appendChild(note(t('calc.demonstrations.intro')));
 
   const list = el('div', 'demos');
   for (const demonstration of DEMONSTRATIONS) {
@@ -133,7 +133,7 @@ export function renderCalculationOverlay(container: HTMLElement, store: Store): 
     card.append(
       el('span', 'demo__date', formatDate(dateFromJd(demonstration.jd))),
       el('span', 'demo__title', t(`demo.${demonstration.id}`)),
-      el('span', 'demo__note', t(`demo.${demonstration.id}.note`)),
+      linked('span', 'demo__note', t(`demo.${demonstration.id}.note`)),
     );
     card.addEventListener('click', () => store.applyDemonstration(demonstration));
     list.appendChild(card);
@@ -145,17 +145,13 @@ export function renderCalculationOverlay(container: HTMLElement, store: Store): 
   sheet.appendChild(el('h3', 'overlay__section', t('calc.working')));
 
   if (!state.selectedBody || state.selectedBody === state.observationPoint) {
-    sheet.appendChild(el('p', 'note', t('calc.selectBody')));
+    sheet.appendChild(note(t('calc.selectBody')));
   } else {
     sheet.appendChild(
-      el(
-        'p',
-        'note',
-        t('calc.working.intro', {
+      note(t('calc.working.intro', {
           body: bodyName(state.selectedBody, 'genitive'),
           date: formatDate(dateFromJd(state.julianDate)),
-        }),
-      ),
+        })),
     );
 
     const columns = el('div', 'workings');
@@ -167,7 +163,7 @@ export function renderCalculationOverlay(container: HTMLElement, store: Store): 
       columns.appendChild(renderCalculationColumn(calculation));
     }
     sheet.appendChild(columns);
-    sheet.appendChild(el('p', 'note', t('calc.working.moral')));
+    sheet.appendChild(note(t('calc.working.moral')));
   }
 
   container.appendChild(sheet);

@@ -1050,6 +1050,42 @@
    * at 0.16em of tracking wrap far more than Czech sentence case and make every
    * panel beside them taller.
    */
+  /*
+   * --- names linked out to Wikipedia --------------------------------------
+   *
+   * Underlined faintly and in the same colour as the prose around it. These
+   * sit inside explanatory paragraphs, several to a panel, and a conventional
+   * blue link would pull the eye through the text in the order the names
+   * happen to fall rather than the order the sentence means. The reader who
+   * wants one will find it; the reader who does not is not interrupted.
+   *
+   * The underline is drawn with a border rather than text-decoration so it
+   * keeps a hairline width at every type size and does not thicken when the
+   * theme changes the font.
+   */
+  .wiki-link {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: var(--line-hairline) dotted var(--accent);
+    transition: color var(--transition-fast), border-color var(--transition-fast);
+  }
+
+  .wiki-link:hover,
+  .wiki-link:focus-visible {
+    color: var(--accent-bright);
+    border-bottom-color: var(--accent-bright);
+    border-bottom-style: solid;
+  }
+
+  /* On the light themes the bright accent is the *paler* of the two. */
+  :root[data-theme='orrery'] .wiki-link:hover,
+  :root[data-theme='orrery'] .wiki-link:focus-visible,
+  :root[data-theme='atelier'] .wiki-link:hover,
+  :root[data-theme='atelier'] .wiki-link:focus-visible {
+    color: var(--accent-dark);
+    border-bottom-color: var(--accent-dark);
+  }
+
   .event-list {
     max-height: min(46vh, 40rem);
     overflow-y: auto;

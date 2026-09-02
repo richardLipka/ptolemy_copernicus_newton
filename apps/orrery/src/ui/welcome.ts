@@ -13,7 +13,7 @@
 
 import { t } from '../i18n/i18n';
 import type { Store } from '../state/store';
-import { el } from './dom';
+import { el, linked, note } from './dom';
 
 export function renderWelcome(container: HTMLElement, store: Store): void {
   const state = store.get();
@@ -32,16 +32,16 @@ export function renderWelcome(container: HTMLElement, store: Store): void {
 
   sheet.append(
     el('h2', 'overlay__title', t('welcome.title')),
-    el('p', 'welcome__lede', t('welcome.lede')),
+    note(t('welcome.lede'), 'welcome__lede'),
   );
 
   const points = el('ul', 'welcome__points');
   for (const key of ['welcome.point.models', 'welcome.point.centre', 'welcome.point.demos']) {
-    points.appendChild(el('li', undefined, t(key)));
+    points.appendChild(linked('li', undefined, t(key)));
   }
   sheet.appendChild(points);
 
-  sheet.appendChild(el('p', 'welcome__keys', t('welcome.keys')));
+  sheet.appendChild(note(t('welcome.keys'), 'welcome__keys'));
 
   const actions = el('div', 'welcome__actions');
 
