@@ -372,6 +372,27 @@ export function renderControls(container: HTMLElement, store: Store): void {
           }),
         ),
       );
+
+      /*
+       * The Ptolemaic reading, and only where it is true.
+       *
+       * With Jupiter held still and Mars selected the figure is still two
+       * orbits composed, but it is nobody's historical model and saying
+       * otherwise would be the one genuinely misleading thing this overlay
+       * could do. So the claim about Ptolemy is made only when the stationary
+       * body is the Earth, which is the case he was describing.
+       */
+      if (state.frameOrigin === 'earth') {
+        harnessPanel.appendChild(
+          note(
+            t(
+              harness.jointIsSun
+                ? 'view.recentredPtolemyInferior'
+                : 'view.recentredPtolemySuperior',
+            ),
+          ),
+        );
+      }
     }
   }
 

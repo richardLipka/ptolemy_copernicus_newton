@@ -251,10 +251,11 @@ export function recentredConstruction(
       { from: first.centre, to: first.end, role: 'deferent-arm' },
       { from: first.end, to: second.end, role: 'epicycle-arm' },
     ],
-    markers: [
-      { at: first.centre, role: 'centre' },
-      { at: second.centre, role: 'centre' },
-    ],
+    // No markers. The two centres and the joint are all readable from where the
+    // arms meet, and a marker carries a hover note keyed by role and family
+    // that this overlay has no wording for — a dot that explains itself as
+    // something else would be worse than no dot.
+    markers: [],
   };
 
   return {

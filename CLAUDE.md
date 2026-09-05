@@ -1508,13 +1508,21 @@ endpoint is identical and only the joint moves. `jointIsSun` says which case is
 on screen, and the caption changes with it rather than claiming the Sun sits at
 a point where nothing does.
 
+**The caption leads with the composition, and names Ptolemy only where he
+applies.** The overlay's subject is two motions added together; that sentence is
+true from any stationary body. The Ptolemaic reading is a second note, appended
+only when the stationary body is the **Earth**. With Jupiter held still and Mars
+selected the figure is still two orbits composed, but it is nobody's historical
+model, and an earlier draft that said "this is how Ptolemy lays out a superior
+planet" regardless of origin was the one genuinely misleading thing here.
+
 **Kepler gives two ellipses; Copernicus gives four circles.** His orbits are not
 ellipses — eccentric plus epicyclet — so each leg contributes both, and the
 overlay says so by drawing them. Approximating his construction with an ellipse
 would be a lie of exactly *a·e²*, which is 2.4 million km at Mercury and 2.0 at
 Mars, and this is a harness: the machinery *is* the model.
 
-Two things worth knowing:
+Three things worth knowing:
 
 - The layer is gated on `showConstruction || showRecentredHarness`. Gating it on
   the construction switch alone hid this overlay along with it, and that is
@@ -1523,6 +1531,21 @@ Two things worth knowing:
 - Segments are pooled, so `data-overlay` is cleared in `takeSegment` rather than
   merely set by the caller that wants it. Otherwise a recycled element carries
   the overlay's styling onto the model's own machinery.
+- The construction carries **no markers**. A marker's hover note is keyed by
+  role and family (`harnessNotes.ts`), and this overlay has no wording there; a
+  dot that explained itself as something else would be worse than no dot. The
+  two centres and the joint are readable from where the arms meet.
+
+Measured over 1440 (stationary body, selected body, date) combinations across
+both families and every pair of orbiting bodies: the chain starts on the
+stationary body, its two legs sum to the true relative vector, and it ends on
+the body, all to better than 2e-15 AU. The Keplerian ellipses carry their own
+points to a conic residual of 5e-15. Copernicus's circles are exact in three
+dimensions to 4e-15 and are drawn flat, so an inclined orbit is a circle where
+the true path projects to an ellipse — at most 0.009 AU out at Saturn, 0.003 at
+Mercury. That is inherited from `copernicanConstruction`, which draws its
+circles the same way, and is a property of the plan view rather than of this
+overlay.
 
 Under Kepler the chain begins at the Earth–Moon barycentre rather than at the
 Earth, because that is what the Earth's *orbit* carries; the two differ by some
