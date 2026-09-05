@@ -201,6 +201,14 @@
     width: auto;
   }
 
+  /*
+   * Until the dock is wide enough to hold two columns the wrappers are not
+   * there at all, and the panels stack in the dock's own flow in DOM order.
+   */
+  .dock-column {
+    display: contents;
+  }
+
   /* Docks must not swallow clicks where they have no panel. */
   .dock:empty {
     display: none;
@@ -238,45 +246,52 @@
     }
 
     /*
-     * Only the left dock splits. The right holds two panels — the selected body
-     * and the events — and they read as one column of detail: side by side each
-     * was half as wide as the numbers in it wanted, and the pair still did not
-     * reach the bottom of the screen. Stacked, they take the dock's full width
-     * and share its height between them.
+     * The left dock: two columns placed by hand, not by multicol.
+     *
+     * Multicol balances, which means it picks the break — and it kept choosing
+     * the middle of the run of controls that belong together. The columns are
+     * real elements now (see `renderControls`): the working sequence on the
+     * left, read straight down, and the zodiac settings on their own at the
+     * right, being the one group that is not part of that sequence.
+     *
+     * The masthead spans both. The row beneath it is `minmax(0, 1fr)` so the
+     * columns are bounded by the dock rather than by their contents, which is
+     * what lets the taller one scroll inside itself while the zodiac panel and
+     * the title stay put. The dock itself no longer scrolls.
      */
     .dock--left {
-      display: block;
-      columns: 2;
-      column-gap: var(--dock-gap);
+      display: grid;
+      /*
+       * Not an even split. The left column carries four panels and the right
+       * one, so an even split left the working sequence scrolling with half
+       * the dock standing empty beside it. The wider it is, the fewer of its
+       * toggle labels wrap, and the shorter it gets.
+       */
+      grid-template-columns: 1.45fr 1fr;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: var(--dock-gap);
+      overflow: hidden;
     }
 
-    .dock--right > * > .panel {
-      /* Grow to fill the dock, and scroll rather than push past the bottom. */
-      flex: 1 1 auto;
+    .dock--left > .masthead {
+      grid-column: 1 / -1;
+    }
+
+    .dock-column {
+      display: flex;
+      flex-direction: column;
+      gap: var(--dock-gap);
+      min-width: 0;
       min-height: 0;
       overflow-y: auto;
       overscroll-behavior: contain;
       scrollbar-width: thin;
     }
 
-    .dock--left .panel {
-      break-inside: avoid;
-      margin-bottom: var(--dock-gap);
-
-      /*
-       * No panel may be taller than the column it sits in.
-       *
-       * break-inside: avoid is a preference, not a guarantee: a panel that
-       * simply does not fit gets split anyway. The selected-body panel is
-       * 876px of readouts against a 656px column on a 900px screen, so it was
-       * being cut in half - the first part filling column one, the remainder
-       * taking column two, and the events panel shunted into a third column
-       * off the side of the dock. Capping the height removes the choice: the
-       * panel stays whole, stays in one column, and scrolls its own contents
-       * in the rare case it has more than the screen is tall. Which is still
-       * a great deal better than the whole dock scrolling, as it used to.
-       */
-      max-height: 100%;
+    .dock--right > * > .panel {
+      /* Grow to fill the dock, and scroll rather than push past the bottom. */
+      flex: 1 1 auto;
+      min-height: 0;
       overflow-y: auto;
       overscroll-behavior: contain;
       scrollbar-width: thin;

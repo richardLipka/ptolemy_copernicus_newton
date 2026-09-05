@@ -1467,6 +1467,29 @@ draws and insists on a real wording for all of it in both languages — `t` fall
 back to English silently, so the dictionaries are checked as data rather than
 through it.
 
+### 13.0d The left dock's two columns are placed, not balanced
+
+CSS multicol balances, which means it picks where the break falls — and it kept
+choosing the middle of the run of controls that belong together. The columns are
+real elements now (`.dock-column`, built in `renderControls`): the working
+sequence on the left, read straight down as **model → stationary point → what to
+show → bodies**, and the zodiac settings alone on the right, being the one group
+that is not part of that sequence.
+
+The masthead spans both. The row beneath it is `minmax(0, 1fr)`, so the columns
+are bounded by the dock rather than by their own contents — which is what lets
+the taller one scroll inside itself while the title and the zodiac panel stay
+put. The dock itself no longer scrolls.
+
+The split is `1.45fr 1fr` rather than even. Four panels against one made an even
+split leave the working column scrolling with half the dock empty beside it, and
+the wider that column is the fewer of its toggle labels wrap, so it gets shorter
+as well. It still scrolls below about 1000px of viewport height, which is the
+honest cost of asking for four panels in one column.
+
+Below the wide breakpoint both wrappers are `display: contents` and the panels
+stack in that same order, so the DOM order is the reading order at every width.
+
 ### 13.3a The recentred harness — what a heliocentric model turns into
 
 An optional overlay (**Skládání / Composition**) offered under Copernicus and

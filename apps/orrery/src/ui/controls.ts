@@ -134,7 +134,6 @@ export function renderControls(container: HTMLElement, store: Store): void {
   calculation.addEventListener('click', () => store.setCalculationOpen(true));
   modelPanel.appendChild(calculation);
 
-  container.appendChild(modelPanel);
 
   // --- vantage ----------------------------------------------------------
 
@@ -155,7 +154,6 @@ export function renderControls(container: HTMLElement, store: Store): void {
       t('observer.hint'),
     ),
   );
-  container.appendChild(vantagePanel);
 
   // --- bodies -----------------------------------------------------------
   //
@@ -200,7 +198,6 @@ export function renderControls(container: HTMLElement, store: Store): void {
   // button's accessible name, which would leave all eight reading as the same
   // sentence instead of as the body they name.
   bodyPanel.appendChild(note(t('bodies.focusHint')));
-  container.appendChild(bodyPanel);
 
   // --- view -------------------------------------------------------------
 
@@ -263,7 +260,6 @@ export function renderControls(container: HTMLElement, store: Store): void {
   // panels through a gesture is exactly the trap the clock readout fell into.
   viewPanel.appendChild(note(t('view.zoomHint')));
 
-  container.appendChild(viewPanel);
 
   // --- harness ----------------------------------------------------------
   //
@@ -482,13 +478,27 @@ export function renderControls(container: HTMLElement, store: Store): void {
   }
 
   /*
-   * Built here but placed directly under the stationary point, because that is
-   * the control it answers to: what is worth drawing over the map depends on
-   * which body is being held still, and the two were reading as unrelated with
-   * the body and zodiac panels between them.
+   * Two explicit columns rather than the CSS multicol this used to be.
+   *
+   * Multicol balances: it chooses where the break falls, and it kept putting
+   * the split in the middle of the run of controls that belong together. The
+   * left column is now the working sequence read straight down — which model,
+   * held still about what, showing what, of which body. The zodiac settings are
+   * the one thing that is not part of that sequence, so they take the second
+   * column on their own.
+   *
+   * Appended here rather than as each panel is built, because the order wanted
+   * on screen is not the order they are cheapest to build in: "what to show" is
+   * constructed last and belongs third.
+   *
+   * Below the wide breakpoint both columns are `display: contents`, and the
+   * panels stack in exactly this order.
    */
-  container.insertBefore(harnessPanel, bodyPanel);
-
+  const columnMain = el('div', 'dock-column dock-column--main');
+  const columnSide = el('div', 'dock-column dock-column--side');
+  columnMain.append(modelPanel, vantagePanel, harnessPanel, bodyPanel);
+  columnSide.append(viewPanel);
+  container.append(columnMain, columnSide);
 }
 
 
