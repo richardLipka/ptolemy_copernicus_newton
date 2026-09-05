@@ -1469,11 +1469,10 @@ through it.
 
 ### 13.3a The recentred harness — what a heliocentric model turns into
 
-**Experimental, on the `experimental/recentred-harness` branch.** An optional
-overlay (**Skládání / Composition**) offered under Copernicus and Kepler
-whenever the stationary point is not the Sun. It draws the model's own two
-orbits, chained, and nothing else changes: positions still come from the engine,
-and the switch is off by default.
+An optional overlay (**Skládání / Composition**) offered under Copernicus and
+Kepler whenever the stationary point is not the Sun. It draws the model's own
+two orbits, chained, and nothing else changes: positions still come from the
+engine, and the switch is off by default.
 
 The whole of it is one identity, already implemented by `frame.ts` as a
 subtraction and here split back into its parts:
@@ -1515,6 +1514,22 @@ only when the stationary body is the **Earth**. With Jupiter held still and Mars
 selected the figure is still two orbits composed, but it is nobody's historical
 model, and an earlier draft that said "this is how Ptolemy lays out a superior
 planet" regardless of origin was the one genuinely misleading thing here.
+
+**Which bodies it covers.** Every planet, from any planet held still — the
+matrix is symmetric and the larger orbit always leads. The **Sun** is the one
+body whose chain has a *single* leg: seen from anywhere that is not the Sun its
+whole apparent path is the stationary body's own orbit run backwards, with
+nothing riding on it, and that leg is exactly the deferent every other figure
+carries. `epicycleBody` is null there and the caption says nothing is composed.
+
+The **Moon and the satellites are refused, and the panel says why.** They have
+no heliocentric orbit to contribute a leg, so from anywhere but their own
+primary their apparent path composes three motions rather than two — and
+`constructionProjector` maps a satellite's geometry into an exaggerated frame
+about its primary (§13.3b), which a chain of true-scale legs reaching out to the
+Sun could never meet. Withdrawing the switch silently left a reader wondering
+where the button went, so `recentredHarnessBlockedBy` names the body and the
+note explains it.
 
 **Kepler gives two ellipses; Copernicus gives four circles.** His orbits are not
 ellipses — eccentric plus epicyclet — so each leg contributes both, and the

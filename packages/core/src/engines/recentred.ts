@@ -73,14 +73,21 @@ export interface RecentredHarness {
   construction: Construction;
   /** Whose orbit became the deferent — always the larger of the two. */
   deferentBody: BodyId;
-  /** Whose orbit rides on it. */
-  epicycleBody: BodyId;
+  /**
+   * Whose orbit rides on it, or null when there is nothing riding.
+   *
+   * Null only for the Sun. Seen from a body that is not the Sun the Sun has no
+   * second motion of its own: the chain is the stationary body's orbit walked
+   * backwards and nothing more, which is a deferent with no epicycle on it.
+   */
+  epicycleBody: BodyId | null;
   /**
    * True when the joint between the two stages is the Sun.
    *
    * It is the Sun exactly when the origin's own orbit is the deferent. In the
    * other order the joint is a construction point with nothing at it, which is
-   * the same thing Ptolemy's epicycle centre is.
+   * the same thing Ptolemy's epicycle centre is. False when there is no joint
+   * because there is only one leg.
    */
   jointIsSun: boolean;
 }
@@ -182,17 +189,41 @@ export function recentredConstruction(
   family: RecentredFamily,
   options: RecentredOptions = {},
 ): RecentredHarness | null {
-  if (originId === 'sun' || bodyId === 'sun' || bodyId === originId) return null;
+  if (originId === 'sun' || bodyId === originId) return null;
 
-  const bodyOrbit = orbitOf(bodyId, options);
   const originOrbit = orbitOf(originId, options);
-  if (!bodyOrbit || !originOrbit) return null;
+  if (!originOrbit) return null;
 
   const params = options.copernican ?? COPERNICAN_PARAMETERS;
-  const bodyEl = elementsAt(jd, bodyOrbit);
   const originEl = elementsAt(jd, originOrbit);
-  const bodyM = meanAnomalyAt(jd, bodyOrbit);
   const originM = meanAnomalyAt(jd, originOrbit);
+
+  /*
+   * Where the stationary body's own orbit puts it, under the same model the
+   * legs are drawn with — mixing families here left the Copernican figure
+   * ending a thousand kilometres off its own planet.
+   *
+   * For the Earth that is the Earth–Moon barycentre rather than the Earth,
+   * which the Keplerian engine separates and Copernicus has no concept of. The
+   * two differ by some 4700 km, so under Kepler the figure begins that far from
+   * the middle of the map. The alternative is to start on the marker and end
+   * 4700 km off the body, and ending on the body is the claim being made.
+   */
+  const start =
+    family === 'kepler'
+      ? positionFromElements(originEl, originM)
+      : copernicanHeliocentricAt(jd, originOrbit, params);
+
+  // The Sun is the one body with no second motion to compose. Its whole
+  // apparent path is the stationary body's orbit run backwards — one leg,
+  // ending on the Sun, and it is precisely the deferent that every other
+  // body's epicycle is about to ride on.
+  if (bodyId === 'sun') return oneLeg(start, originId, originEl, originM, family, params);
+
+  const bodyOrbit = orbitOf(bodyId, options);
+  if (!bodyOrbit) return null;
+  const bodyEl = elementsAt(jd, bodyOrbit);
+  const bodyM = meanAnomalyAt(jd, bodyOrbit);
 
   // The larger orbit is the deferent, which is the only decision here and the
   // one that reproduces Ptolemy's own arrangement for both classes of planet.
@@ -220,21 +251,6 @@ export function recentredConstruction(
           params,
         );
 
-  /*
-   * The chain starts where the stationary body's *own orbit* puts it, under the
-   * same model the legs are drawn with — mixing families here left the
-   * Copernican figure ending a thousand kilometres off its own planet.
-   *
-   * For the Earth that is the Earth–Moon barycentre rather than the Earth,
-   * which the Keplerian engine separates and Copernicus has no concept of. The
-   * two differ by some 4700 km, so under Kepler the figure begins that far from
-   * the middle of the map. The alternative is to start on the marker and end
-   * 4700 km off the body, and ending on the body is the claim being made.
-   */
-  const start =
-    family === 'kepler'
-      ? positionFromElements(originEl, originM)
-      : copernicanHeliocentricAt(jd, originOrbit, params);
   const first = stageAt(start, originLeads ? 'origin' : 'body', 'deferent');
   const second = stageAt(first.end, originLeads ? 'body' : 'origin', 'epicycle');
 
@@ -263,6 +279,46 @@ export function recentredConstruction(
     deferentBody: originLeads ? originId : bodyId,
     epicycleBody: originLeads ? bodyId : originId,
     jointIsSun: originLeads,
+  };
+}
+
+/**
+ * The Sun, seen from a body that is not the Sun: one leg and no epicycle.
+ *
+ * Kept beside the two-leg case rather than folded into it, because the two
+ * differ in what they can claim. This one composes nothing; it draws the single
+ * motion that the stationary body's own orbit already is.
+ */
+function oneLeg(
+  anchor: Vec3,
+  originId: BodyId,
+  originEl: KeplerianElements,
+  originM: number,
+  family: RecentredFamily,
+  params: CopernicanParameters,
+): RecentredHarness {
+  const leg =
+    family === 'kepler'
+      ? keplerStage(anchor, originEl, originM, true, 'deferent')
+      : copernicanStage(anchor, originEl, originM, true, 'deferent', params);
+
+  return {
+    construction: {
+      circles: leg.curves.circles,
+      ellipses: leg.curves.ellipses,
+      arms: [
+        {
+          from: add(leg.centre, leg.apsidalHalf),
+          to: sub(leg.centre, leg.apsidalHalf),
+          role: 'apsidal',
+        },
+        { from: leg.centre, to: leg.end, role: 'deferent-arm' },
+      ],
+      markers: [],
+    },
+    deferentBody: originId,
+    epicycleBody: null,
+    jointIsSun: false,
   };
 }
 

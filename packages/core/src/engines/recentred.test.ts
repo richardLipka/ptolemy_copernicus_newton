@@ -96,9 +96,43 @@ describe('recentred harness', () => {
     expect(norm(joint)).toBeLessThan(1e-12); // the Sun is the coordinate origin
   });
 
+  /*
+   * The Sun is the one body whose apparent path is a single motion: the
+   * stationary body's own orbit, walked backwards. It gets a one-leg chain
+   * rather than being refused, because that leg is exactly the deferent every
+   * other body's epicycle rides on.
+   */
+  it('gives the Sun a single leg that ends on the Sun', () => {
+    for (const family of ['kepler', 'copernican'] as const) {
+      for (const origin of PLANETS) {
+        for (const jd of DATES) {
+          const h = recentredConstruction(jd, 'sun', origin, family)!;
+          expect(h).not.toBeNull();
+          expect(h.deferentBody).toBe(origin);
+          expect(h.epicycleBody).toBeNull();
+          expect(h.jointIsSun).toBe(false);
+          // One curve, and no epicycle arm because nothing rides on it.
+          expect(h.construction.arms.some((a) => a.role === 'epicycle-arm')).toBe(false);
+          // The Sun is the coordinate origin, so the chain must end at zero.
+          expect(norm(recentredEndpoint(jd, 'sun', origin, family)!)).toBeLessThan(1e-12);
+        }
+      }
+    }
+  });
+
+  it('draws the Sun with the family it was asked for', () => {
+    const kepler = recentredConstruction(J2000, 'sun', 'earth', 'kepler')!;
+    expect(kepler.construction.ellipses!.length).toBe(1);
+    expect(kepler.construction.circles.length).toBe(0);
+
+    const copernican = recentredConstruction(J2000, 'sun', 'earth', 'copernican')!;
+    expect(copernican.construction.circles.length).toBe(2);
+    expect(copernican.construction.ellipses!.length).toBe(0);
+  });
+
   it('declines the cases where the picture would be a lie', () => {
     expect(recentredConstruction(J2000, 'mars', 'sun', 'kepler')).toBeNull();
-    expect(recentredConstruction(J2000, 'sun', 'earth', 'kepler')).toBeNull();
+    expect(recentredConstruction(J2000, 'sun', 'sun', 'kepler')).toBeNull();
     expect(recentredConstruction(J2000, 'mars', 'mars', 'kepler')).toBeNull();
     // The Moon has no heliocentric orbit of its own to contribute a leg.
     expect(BODIES.moon.orbit).toBeUndefined();

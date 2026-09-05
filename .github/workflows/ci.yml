@@ -2,10 +2,7 @@ name: CI
 
 on:
   push:
-    # The experiment branch too, so pushing it actually runs the suite. Its
-    # Pages workflow builds but does not test, and a branch nobody checks is a
-    # branch that quietly rots.
-    branches: [main, experimental/recentred-harness]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 

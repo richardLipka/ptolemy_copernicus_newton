@@ -721,14 +721,36 @@ export function recentredFamilyFor(engineId: EngineId): RecentredFamily | null {
 export function recentredHarnessAvailable(state: State): boolean {
   if (!recentredFamilyFor(state.engineId)) return false;
   if (state.frameOrigin === 'sun') return false;
+  if (!BODIES[state.frameOrigin].orbit) return false;
   const body = state.selectedBody;
-  if (!body) return false;
-  return Boolean(BODIES[body].orbit) && Boolean(BODIES[state.frameOrigin].orbit);
+  // A body cannot be composed against itself: held still, it sits at the middle
+  // of the map and the chain has nowhere to go. The switch used to be offered
+  // for it and then drew nothing.
+  if (!body || body === state.frameOrigin) return false;
+  // The Sun is allowed: it is the one body whose chain has a single leg.
+  return body === 'sun' || Boolean(BODIES[body].orbit);
+}
+
+/**
+ * The body that is stopping the overlay from being offered, if one is.
+ *
+ * A moon has no heliocentric orbit to contribute a leg, and the map draws its
+ * orbit enlarged besides — so the switch is withdrawn rather than left to draw
+ * a chain that ends nowhere near the marker. Withdrawing it silently leaves a
+ * reader wondering where the button went, hence this.
+ */
+export function recentredHarnessBlockedBy(state: State): BodyId | null {
+  if (!recentredFamilyFor(state.engineId)) return null;
+  if (state.frameOrigin === 'sun' || !BODIES[state.frameOrigin].orbit) return null;
+  const body = state.selectedBody;
+  if (!body || body === 'sun' || body === state.frameOrigin) return null;
+  return BODIES[body].orbit ? null : body;
 }
 
 export interface ProjectedRecentred extends ProjectedConstruction {
   deferentBody: BodyId;
-  epicycleBody: BodyId;
+  /** Null for the Sun, whose chain is a single leg with nothing riding on it. */
+  epicycleBody: BodyId | null;
   jointIsSun: boolean;
 }
 

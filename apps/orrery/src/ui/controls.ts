@@ -7,7 +7,7 @@
  * place instead.
  */
 
-import { BODY_IDS, type BodyId } from '@orrery/core/bodies';
+import { BODIES, BODY_IDS, type BodyId } from '@orrery/core/bodies';
 import { MODES, type EngineId, type ModeId } from '@orrery/core/engines/types';
 import { dateFromJd } from '@orrery/core/time';
 import type { ZodiacScheme } from '@orrery/core/zodiac';
@@ -18,6 +18,7 @@ import {
   buildRecentredHarness,
   focusViewFor,
   recentredHarnessAvailable,
+  recentredHarnessBlockedBy,
 } from '../state/selectors';
 import { el, field, note, panel, select, toggleButton } from './dom';
 import { exportButtonRow } from './exportButtons';
@@ -360,14 +361,22 @@ export function renderControls(container: HTMLElement, store: Store): void {
   if (recentredHarnessAvailable(state) && state.showRecentredHarness) {
     const harness = buildRecentredHarness(state, state.selectedBody!);
     if (harness) {
+      // Three cases: one leg (the Sun), and the two orders of two legs.
+      const wording =
+        harness.epicycleBody === null
+          ? 'view.recentredSunOnly'
+          : harness.jointIsSun
+            ? 'view.recentredSunJoint'
+            : 'view.recentredEmptyJoint';
+
       harnessPanel.appendChild(
         note(
           // Cases, because Czech needs them: the two that appear after "the
           // orbit of" are genitive, and the one that is the subject of its own
           // sentence is not.
-          t(harness.jointIsSun ? 'view.recentredSunJoint' : 'view.recentredEmptyJoint', {
+          t(wording, {
             deferent: t(`body.${harness.deferentBody}.genitive`),
-            epicycle: t(`body.${harness.epicycleBody}`),
+            epicycle: harness.epicycleBody ? t(`body.${harness.epicycleBody}`) : '',
             origin: t(`body.${state.frameOrigin}.genitive`),
           }),
         ),
@@ -382,7 +391,7 @@ export function renderControls(container: HTMLElement, store: Store): void {
        * could do. So the claim about Ptolemy is made only when the stationary
        * body is the Earth, which is the case he was describing.
        */
-      if (state.frameOrigin === 'earth') {
+      if (state.frameOrigin === 'earth' && harness.epicycleBody !== null) {
         harnessPanel.appendChild(
           note(
             t(
@@ -394,6 +403,18 @@ export function renderControls(container: HTMLElement, store: Store): void {
         );
       }
     }
+  }
+
+  const blocked = recentredHarnessBlockedBy(state);
+  if (blocked) {
+    harnessPanel.appendChild(
+      note(
+        t('view.recentredNoOrbit', {
+          body: t(`body.${blocked}`),
+          parent: t(`body.${BODIES[blocked].parent ?? 'sun'}.genitive`),
+        }),
+      ),
+    );
   }
 
   if (hasMachinery && state.showConstruction) {
