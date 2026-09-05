@@ -32,7 +32,7 @@ import { precessionSinceJ2000 } from '@orrery/core/zodiac';
 import { renderEventPanel } from './render/event-panel/eventPanel';
 import { renderInfoPanel } from './render/info-panel/infoPanel';
 import { applyTheme } from './render/theme/themes';
-import { renderControls } from './ui/controls';
+import { renderControls, renderMapExport } from './ui/controls';
 import { renderTimeDock } from './ui/timeDock';
 import { renderTopBar } from './ui/topBar';
 import { renderCalculationOverlay } from './ui/calculationOverlay';
@@ -84,6 +84,14 @@ dockRight.className = 'dock dock--right';
 
 const dockBottomRight = document.createElement('div');
 dockBottomRight.className = 'dock dock--bottom-right';
+
+/*
+ * Saving the map gets the opposite corner from the clock, and is the one dock
+ * meant to be overlooked: it is a utility rather than a control that shapes the
+ * view, and it sat in the left column taking the eye every time.
+ */
+const dockBottomLeft = document.createElement('div');
+dockBottomLeft.className = 'dock dock--bottom-left';
 
 /*
  * renderTimeDock() replaces the *whole* contents of whatever container it is
@@ -145,7 +153,7 @@ dockBottomRight.appendChild(credit);
 /** Wrapper the narrow-viewport rules turn into a stacked column. */
 const dockStack = document.createElement('div');
 dockStack.className = 'dock-stack';
-dockStack.append(dockTopRight, dockRight, dockBottomRight, dockLeft);
+dockStack.append(dockTopRight, dockRight, dockBottomRight, dockLeft, dockBottomLeft);
 
 root.append(field, dockStack);
 
@@ -429,6 +437,7 @@ function render(): void {
     renderMasthead();
     renderTopBar(dockTopRight, store);
     renderControls(controlsHost, store);
+    renderMapExport(dockBottomLeft, store);
     const dock = renderTimeDock(timeDockHost, store);
     dateInput = dock.dateInput;
     clockReadout = dock.clock;

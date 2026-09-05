@@ -97,6 +97,24 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
       ),
     );
 
+    /*
+     * Directly under the disc, because that is the thing being saved. Below the
+     * readouts it read as belonging to the whole panel, and people were not
+     * finding it. Compact, since it is a utility sitting inside a figure.
+     */
+    const phaseExport = exportButtonRow(
+      (width, height) => buildPhaseSvg({ width, height, state }),
+      () => [
+        'phase',
+        selected,
+        state.engineId,
+        dateFromJd(state.julianDate).toISOString().slice(0, 10),
+      ],
+      () => ({ width: 480, height: 420 }),
+    );
+    phaseExport.classList.add('export--compact');
+    phaseCard.appendChild(phaseExport);
+
     phaseCard.appendChild(readout(t('info.phase'), t(`phase.${phaseName(body.illumination)}`)));
     phaseCard.appendChild(
       readout(t('info.illuminated'), `${formatNumber(lit * 100, 0)} %`),
@@ -108,23 +126,6 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
       ),
     );
     card.appendChild(phaseCard);
-
-    // A body's phase is the one figure here worth lifting out on its own — the
-    // rest of the panel is numbers, and a screenshot of numbers is a table.
-    // Built fresh from the state rather than from `phaseCard` itself — see
-    // `phaseSvg.ts` for why nothing this app exports is a DOM snapshot.
-    card.appendChild(
-      exportButtonRow(
-        (width, height) => buildPhaseSvg({ width, height, state }),
-        () => [
-          'phase',
-          selected,
-          state.engineId,
-          dateFromJd(state.julianDate).toISOString().slice(0, 10),
-        ],
-        () => ({ width: 480, height: 420 }),
-      ),
-    );
   }
 
   card.appendChild(

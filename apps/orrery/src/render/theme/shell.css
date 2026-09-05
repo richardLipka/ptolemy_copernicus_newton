@@ -126,6 +126,8 @@
   .dock {
     position: absolute;
     z-index: 2;
+    /* What the clock and the credit line below it need; see .dock--right. */
+    --clock-reserve: 16rem;
     display: flex;
     flex-direction: column;
     gap: var(--dock-gap);
@@ -151,7 +153,8 @@
   .dock--left {
     inset-inline-start: var(--dock-gap);
     inset-block-start: var(--dock-gap);
-    inset-block-end: var(--dock-gap);
+    /* Clear of the save-an-image corner below it. */
+    inset-block-end: calc(var(--dock-gap) * 2 + 2rem);
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
@@ -166,11 +169,21 @@
     align-items: center;
   }
 
-  /* Selected-body detail, directly beneath the switches. */
+  /*
+   * Selected-body detail, directly beneath the switches and stopping above the
+   * clock.
+   *
+   * The reserve has to cover the whole bottom-right dock — the time panel and
+   * the credit line under it, some 238px together — not the time panel alone.
+   * It used to read 8.5rem, which was a hundred pixels short; nothing showed
+   * while the two panels here sat side by side and left the lower half of the
+   * dock empty, and the moment they were stacked to fill it they ran under the
+   * clock.
+   */
   .dock--right {
     inset-inline-end: var(--dock-gap);
     inset-block-start: calc(var(--dock-gap) * 2 + 2.1rem);
-    inset-block-end: calc(var(--dock-gap) * 2 + 8.5rem);
+    inset-block-end: calc(var(--dock-gap) * 2 + var(--clock-reserve));
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
@@ -179,6 +192,13 @@
   .dock--bottom-right {
     inset-inline-end: var(--dock-gap);
     inset-block-end: var(--dock-gap);
+  }
+
+  /* Saving the map: the quiet corner, opposite the clock. */
+  .dock--bottom-left {
+    inset-inline-start: var(--dock-gap);
+    inset-block-end: var(--dock-gap);
+    width: auto;
   }
 
   /* Docks must not swallow clicks where they have no panel. */
@@ -217,15 +237,29 @@
       --dock-width: clamp(22rem, 21vw, 28rem);
     }
 
-    .dock--left,
-    .dock--right {
+    /*
+     * Only the left dock splits. The right holds two panels — the selected body
+     * and the events — and they read as one column of detail: side by side each
+     * was half as wide as the numbers in it wanted, and the pair still did not
+     * reach the bottom of the screen. Stacked, they take the dock's full width
+     * and share its height between them.
+     */
+    .dock--left {
       display: block;
       columns: 2;
       column-gap: var(--dock-gap);
     }
 
-    .dock--left .panel,
-    .dock--right .panel {
+    .dock--right > * > .panel {
+      /* Grow to fill the dock, and scroll rather than push past the bottom. */
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+
+    .dock--left .panel {
       break-inside: avoid;
       margin-bottom: var(--dock-gap);
 
@@ -1225,6 +1259,62 @@
    */
   .export {
     margin-top: 0.6rem;
+  }
+
+  /*
+   * The phase download, sitting inside the figure it saves rather than under
+   * the whole panel. Small enough not to compete with the disc above it.
+   */
+  .export--compact {
+    margin: 0.15rem 0 0.5rem;
+    display: flex;
+    justify-content: center;
+  }
+
+  .export--compact .button-row button:not(.icon-button) {
+    font-size: calc(var(--size-label) * 0.88);
+    padding: 0.08rem 0.4rem;
+    opacity: 0.75;
+  }
+
+  .export--compact .button-row button:hover {
+    opacity: 1;
+  }
+
+  /*
+   * The quiet corner: saving the map. Faint until it is pointed at, because it
+   * shapes nothing on screen and should never be the first thing read.
+   */
+  .panel--quiet {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.22rem 0.45rem;
+    opacity: 0.42;
+    transition: opacity var(--transition-fast);
+  }
+
+  .panel--quiet:hover,
+  .panel--quiet:focus-within {
+    opacity: 1;
+  }
+
+  .panel--quiet .export {
+    margin-top: 0;
+  }
+
+  .export__label {
+    font-family: var(--face-display);
+    font-size: calc(var(--size-label) * 0.92);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .panel--quiet .button-row button:not(.icon-button) {
+    font-size: calc(var(--size-label) * 0.88);
+    padding: 0.08rem 0.4rem;
   }
 }
 

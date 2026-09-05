@@ -302,33 +302,54 @@
 /*
  * The recentred harness — the same roles, drawn as a second voice.
  *
- * It has to read as the model's own machinery, because the whole point is that
- * the figure is Ptolemy's; so it keeps the deferent and epicycle colours rather
- * than taking a hue of its own. What separates it is weight and a dashed
- * deferent: it is a restatement of where the body already is, not the thing
- * that put it there, and with both switches on the two must not be confusable.
+ * It keeps the deferent and epicycle colours rather than taking a hue of its
+ * own, because the whole point is that the figure is Ptolemy's. What separates
+ * it is that **every line of it is dashed, without exception**: the model's own
+ * machinery is solid, this is a restatement of where the body already is, and
+ * with both switches on the two must be told apart at a glance rather than by
+ * comparing thicknesses.
+ *
+ * Each curve arrives as some seventy short segments, so the dash restarts on
+ * every one of them; the period is kept small enough that even a 3px segment
+ * carries a gap and the curve reads as broken rather than solid.
  */
 .harness__segment[data-overlay='recentred'] {
   opacity: 0.85;
-}
-
-.harness__segment[data-overlay='recentred'][data-role='deferent'] {
   height: var(--line-fine);
   background: repeating-linear-gradient(
     to right,
-    var(--brass) 0 5px,
-    transparent 5px 10px
+    var(--brass) 0 3px,
+    transparent 3px 6px
   );
 }
 
 .harness__segment[data-overlay='recentred'][data-role='epicycle'] {
-  height: var(--line-fine);
-  background: var(--brass-bright);
+  background: repeating-linear-gradient(
+    to right,
+    var(--brass-bright) 0 3px,
+    transparent 3px 6px
+  );
 }
 
+/* The arms are the one part drawn heavier, since they carry the chain. */
 .harness__segment[data-overlay='recentred'][data-role='deferent-arm'],
 .harness__segment[data-overlay='recentred'][data-role='epicycle-arm'] {
   height: var(--line-medium);
+  background: repeating-linear-gradient(
+    to right,
+    var(--brass-bright) 0 5px,
+    transparent 5px 10px
+  );
+}
+
+/* Scaffolding rather than mechanism, so it stays the faintest thing here. */
+.harness__segment[data-overlay='recentred'][data-role='apsidal'] {
+  opacity: 0.45;
+  background: repeating-linear-gradient(
+    to right,
+    var(--brass-dark) 0 3px,
+    transparent 3px 8px
+  );
 }
 
 .harness__marker {

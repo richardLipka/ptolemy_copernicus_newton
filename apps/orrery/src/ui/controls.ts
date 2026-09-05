@@ -481,19 +481,41 @@ export function renderControls(container: HTMLElement, store: Store): void {
     harnessPanel.appendChild(note(t('sky.starsNote')));
   }
 
-  container.appendChild(harnessPanel);
-
-  // --- save an image ------------------------------------------------------
-
   /*
-   * A separate panel rather than a button folded into one of the others,
-   * because it answers to nothing above it: it does not toggle, it is never
-   * pressed, and it has no state of its own to show. The map is rebuilt from
-   * `store.get()` at the moment of the click — see `exportButtonRow` — so this
-   * panel does not need to rebuild when the zoom or the date changes, only
-   * when the dock itself does.
+   * Built here but placed directly under the stationary point, because that is
+   * the control it answers to: what is worth drawing over the map depends on
+   * which body is being held still, and the two were reading as unrelated with
+   * the body and zodiac panels between them.
    */
-  const exportPanel = panel(t('export.mapTitle'));
+  container.insertBefore(harnessPanel, bodyPanel);
+
+}
+
+
+/**
+ * Saving the map, in its own corner and deliberately quiet.
+ *
+ * It sat in the left dock as a full panel, level with the controls that decide
+ * what the map *is*. It is not that kind of thing: nobody sets up a view by
+ * reaching for it, and it was taking the eye every time. So it lives at the
+ * bottom-left instead, faint until pointed at, with the title carried by the
+ * buttons rather than a heading above them.
+ *
+ * Its own render rather than part of `renderControls`, because it now has its
+ * own dock — and because it answers to nothing at all: the map is rebuilt from
+ * `store.get()` at the moment of the click, so this never needs rebuilding for
+ * a change of zoom or date.
+ */
+export function renderMapExport(container: HTMLElement, store: Store): void {
+  container.replaceChildren();
+
+  const exportPanel = panel();
+  exportPanel.classList.add('panel--quiet');
+  // The prose that used to sit under it as a note. There is no room for a
+  // paragraph in a corner strip, and the corner is the point — but the
+  // explanation is still worth having a click away from being needed.
+  exportPanel.title = t('export.mapNote');
+  exportPanel.appendChild(el('span', 'export__label', t('export.mapTitle')));
   exportPanel.appendChild(
     exportButtonRow(
       (width, height) =>
@@ -514,6 +536,5 @@ export function renderControls(container: HTMLElement, store: Store): void {
       },
     ),
   );
-  exportPanel.appendChild(note(t('export.mapNote')));
   container.appendChild(exportPanel);
 }

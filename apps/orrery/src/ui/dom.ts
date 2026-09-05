@@ -37,9 +37,10 @@ export function linked<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
-export function panel(title: string): HTMLDivElement {
+/** A panel. The heading is optional: the quiet corner ones carry their own. */
+export function panel(title?: string): HTMLDivElement {
   const container = el('div', 'panel');
-  container.appendChild(el('h2', 'panel__title', title));
+  if (title !== undefined) container.appendChild(el('h2', 'panel__title', title));
   return container;
 }
 

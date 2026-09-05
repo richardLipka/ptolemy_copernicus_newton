@@ -1531,6 +1531,12 @@ Sun could never meet. Withdrawing the switch silently left a reader wondering
 where the button went, so `recentredHarnessBlockedBy` names the body and the
 note explains it.
 
+**Every line of the overlay is dashed, without exception.** The model's own
+machinery is solid, so with both switches on the two are told apart at a glance
+rather than by comparing thicknesses. Each curve arrives as some seventy short
+segments and the dash restarts on every one, so the period is kept short enough
+that even a 3px segment carries a gap.
+
 **Kepler gives two ellipses; Copernicus gives four circles.** His orbits are not
 ellipses — eccentric plus epicyclet — so each leg contributes both, and the
 overlay says so by drawing them. Approximating his construction with an ellipse
