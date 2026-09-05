@@ -1,11 +1,11 @@
 /**
  * The corner switches, top right.
  *
- * Two buttons now, not eight. Language, look, and the two choices about how the
- * zodiac ring is drawn are all set once and then never touched again — eleven
- * permanent buttons, five of them for the theme alone — so they moved behind a
- * cog. What stays on the bar is the cog and the explanations toggle, which is a
- * reading preference people genuinely flip mid-task.
+ * Two buttons now, not eight. Language, look and the zodiac scheme are set once
+ * and then never touched again — nine permanent buttons, five of them for the
+ * theme alone — so they moved behind a cog. What stays on the bar is the cog and
+ * the explanations toggle, which is a reading preference people genuinely flip
+ * mid-task.
  *
  * Nothing here affects the simulation, which is why it all sits apart from the
  * controls that do.
@@ -13,7 +13,7 @@
 
 import { LOCALES, t, type Locale } from '../i18n/i18n';
 import { THEMES, type ThemeId } from '../render/theme/themes';
-import type { SphereCentre, Store } from '../state/store';
+import type { Store } from '../state/store';
 import type { ZodiacScheme } from '@orrery/core/zodiac';
 import { el, panel, toggleButton } from './dom';
 
@@ -97,23 +97,6 @@ export function renderTopBar(container: HTMLElement, store: Store): void {
       ],
       state.zodiacScheme,
       (scheme) => store.setZodiacScheme(scheme),
-    ),
-  );
-
-  /*
-   * What the sphere is drawn around. Concentric with the map is the traditional
-   * orrery arrangement; around the observer is where the sky actually belongs,
-   * and is the only way to get straight sight-lines in a heliocentric view.
-   */
-  menu.appendChild(
-    choiceRow<SphereCentre>(
-      t('view.sphere.label'),
-      [
-        { id: 'frame', label: t('view.sphere.frame') },
-        { id: 'observer', label: t('view.sphere.observer') },
-      ],
-      state.sphereCentre,
-      (centre) => store.setSphereCentre(centre),
     ),
   );
 

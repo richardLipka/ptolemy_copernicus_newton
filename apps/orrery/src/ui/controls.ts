@@ -11,7 +11,7 @@ import { BODIES, BODY_IDS, type BodyId } from '@orrery/core/bodies';
 import { MODES, type EngineId, type ModeId } from '@orrery/core/engines/types';
 import { dateFromJd } from '@orrery/core/time';
 import { formatNumber, t } from '../i18n/i18n';
-import type { GhostSelection, ScaleMode, Store } from '../state/store';
+import type { GhostSelection, ScaleMode, SphereCentre, Store } from '../state/store';
 import {
   COMPARISON_ENGINES,
   buildRecentredHarness,
@@ -89,50 +89,6 @@ export function renderControls(container: HTMLElement, store: Store): void {
   );
 
   // Ghost overlay: any engine other than the active one.
-  const ghostChoices: { value: string; label: string }[] = [
-    { value: '', label: t('ghost.none') },
-  ];
-  for (const mode of Object.values(MODES)) {
-    for (const engineId of mode.engines) {
-      if (engineId === state.engineId) continue;
-      if (ghostChoices.some((choice) => choice.value === engineId)) continue;
-      ghostChoices.push({ value: engineId, label: t(`engine.${engineId}`) });
-    }
-  }
-
-  // Four models now, so "one other" is a narrower question than it used to be.
-  ghostChoices.splice(1, 0, { value: 'all', label: t('ghost.all') });
-
-  modelPanel.appendChild(
-    field(
-      t('ghost.label'),
-      select(ghostChoices, state.ghostEngineId ?? '', (value) =>
-        store.setGhostEngine(value === '' ? null : (value as GhostSelection)),
-      ),
-      t('ghost.hint'),
-    ),
-  );
-
-  // With three ghosts on the map, tinted per model, the map needs a key.
-  if (state.ghostEngineId === 'all') {
-    const legend = el('div', 'chips chips--legend');
-    for (const engineId of COMPARISON_ENGINES) {
-      if (engineId === state.engineId) continue;
-      const item = el('span', 'chip chip--static');
-      item.style.setProperty('--tint', `var(--model-${MODEL_TOKEN[engineId]})`);
-      item.append(el('span', 'chip__swatch'), el('span', undefined, t(`engine.${engineId}`)));
-      legend.appendChild(item);
-    }
-    modelPanel.appendChild(legend);
-  }
-
-  // The one control that opens something rather than changing something, so it
-  // sits apart from the pickers above it.
-  const calculation = el('button', 'wide-button', t('calc.open'));
-  calculation.type = 'button';
-  calculation.addEventListener('click', () => store.setCalculationOpen(true));
-  modelPanel.appendChild(calculation);
-
 
   // --- vantage ----------------------------------------------------------
 
@@ -151,6 +107,37 @@ export function renderControls(container: HTMLElement, store: Store): void {
         store.setObservationPoint(id),
       ),
       t('observer.hint'),
+    ),
+  );
+
+  /*
+   * What the celestial sphere is drawn around, directly under the observer it
+   * answers to.
+   *
+   * Concentric with the map is the traditional orrery arrangement; around the
+   * observer is where the sky actually belongs, and is the only way to get
+   * straight sight-lines in a heliocentric view. It spent a while behind the
+   * cog with the set-once preferences and does not belong there: it is a
+   * question about the vantage, and the vantage is chosen here.
+   */
+  const centreRow = el('div', 'segmented');
+  const centres: { id: SphereCentre; label: string }[] = [
+    { id: 'frame', label: t('view.sphere.frame') },
+    { id: 'observer', label: t('view.sphere.observer') },
+  ];
+  for (const centre of centres) {
+    centreRow.appendChild(
+      toggleButton(centre.label, state.sphereCentre === centre.id, () =>
+        store.setSphereCentre(centre.id),
+      ),
+    );
+  }
+  vantagePanel.appendChild(centreRow);
+  vantagePanel.appendChild(
+    note(
+      state.sphereCentre === 'observer'
+        ? t('view.sphere.observerHint')
+        : t('view.sphere.frameHint'),
     ),
   );
 
@@ -216,9 +203,6 @@ export function renderControls(container: HTMLElement, store: Store): void {
     toggleButton(t('view.sky'), state.showSky, () => store.toggle('showSky')),
     toggleButton(t('view.sightlines'), state.showSightLines, () =>
       store.toggle('showSightLines'),
-    ),
-    toggleButton(t('view.figures'), state.showStarFigures, () =>
-      store.toggle('showStarFigures'),
     ),
   );
 
@@ -502,4 +486,71 @@ export function renderMapExport(container: HTMLElement, store: Store): void {
     ),
   );
   container.appendChild(exportPanel);
+}
+
+/**
+ * Which model to draw faintly beside the running one, and its key.
+ *
+ * Exported because it lives in the selected-body panel now rather than in the
+ * dock: comparing two models is a question about what is on screen, not a
+ * setting for how the screen is arranged, and the left column was the longer
+ * for holding it.
+ */
+export function comparisonField(store: Store): DocumentFragment {
+  const state = store.get();
+  const fragment = document.createDocumentFragment();
+
+  const ghostChoices: { value: string; label: string }[] = [
+    { value: '', label: t('ghost.none') },
+  ];
+  const mode = MODES[state.mode];
+  if (mode) {
+    for (const engineId of mode.engines) {
+      if (engineId === state.engineId) continue;
+      if (ghostChoices.some((choice) => choice.value === engineId)) continue;
+      ghostChoices.push({ value: engineId, label: t(`engine.${engineId}`) });
+    }
+  }
+  // Four models now, so "one other" is a narrower question than it used to be.
+  ghostChoices.splice(1, 0, { value: 'all', label: t('ghost.all') });
+
+  fragment.appendChild(
+    field(
+      t('ghost.label'),
+      select(ghostChoices, state.ghostEngineId ?? '', (value) =>
+        store.setGhostEngine(value === '' ? null : (value as GhostSelection)),
+      ),
+      t('ghost.hint'),
+    ),
+  );
+
+  // With three ghosts on the map, tinted per model, the map needs a key.
+  if (state.ghostEngineId === 'all') {
+    const legend = el('div', 'chips chips--legend');
+    for (const engineId of COMPARISON_ENGINES) {
+      if (engineId === state.engineId) continue;
+      const item = el('span', 'chip chip--static');
+      item.style.setProperty('--tint', `var(--model-${MODEL_TOKEN[engineId]})`);
+      item.append(el('span', 'chip__swatch'), el('span', undefined, t(`engine.${engineId}`)));
+      legend.appendChild(item);
+    }
+    fragment.appendChild(legend);
+  }
+
+  return fragment;
+}
+
+/** The button that opens the calculation and demonstrations overlay. */
+export function calculationButton(store: Store): HTMLButtonElement {
+  const button = el('button', 'wide-button', t('calc.open'));
+  button.type = 'button';
+  button.addEventListener('click', () => store.setCalculationOpen(true));
+  return button;
+}
+
+/** The constellation figures switch, which draws on the sphere rather than the map. */
+export function starFiguresToggle(store: Store): HTMLButtonElement {
+  return toggleButton(t('view.figures'), store.get().showStarFigures, () =>
+    store.toggle('showStarFigures'),
+  );
 }

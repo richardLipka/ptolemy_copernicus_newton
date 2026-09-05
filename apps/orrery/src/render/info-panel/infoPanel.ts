@@ -33,6 +33,7 @@ import type { Store } from '../../state/store';
 import { buildView } from '../../state/selectors';
 import { el, note, panel, readout } from '../../ui/dom';
 import { exportButtonRow } from '../../ui/exportButtons';
+import { calculationButton, comparisonField, starFiguresToggle } from '../../ui/controls';
 import { buildPhaseSvg } from '../export/phaseSvg';
 
 /** One engine per model, for the side-by-side phase figures. */
@@ -43,6 +44,29 @@ const PHASE_COMPARISON_ENGINES: readonly EngineId[] = [
   'ptolemaic-epicyclic',
 ];
 
+
+/**
+ * The three things that belong with what is on screen rather than with how the
+ * screen is arranged.
+ *
+ * Comparing against a second model is a question about the body being looked
+ * at. So is the calculation overlay, which shows four models' working for it.
+ * The constellation figures draw on the sphere the body is read against. None
+ * of them is a setting, and all three were making the left column longer.
+ *
+ * Appended whether or not a body is selected, because two of them still mean
+ * something when none is.
+ */
+function toolsGroup(store: Store): DocumentFragment {
+  const fragment = document.createDocumentFragment();
+  fragment.appendChild(el('div', 'info__rule'));
+  fragment.appendChild(comparisonField(store));
+  const row = el('div', 'button-row');
+  row.append(starFiguresToggle(store), calculationButton(store));
+  fragment.appendChild(row);
+  return fragment;
+}
+
 export function renderInfoPanel(container: HTMLElement, store: Store): void {
   const state = store.get();
   container.replaceChildren();
@@ -51,6 +75,7 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
 
   if (!state.selectedBody) {
     card.appendChild(note(t('info.none')));
+    card.appendChild(toolsGroup(store));
     container.appendChild(card);
     return;
   }
@@ -324,5 +349,6 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
     }
   }
 
+  card.appendChild(toolsGroup(store));
   container.appendChild(card);
 }

@@ -234,7 +234,16 @@
     scrollbar-width: thin;
   }
 
+  /*
+   * The clock, under the readouts and matching their width.
+   *
+   * It used to take the default dock width, which is the *left* one — narrower
+   * since the left column holds only controls. That left the time panel visibly
+   * narrower than the events panel directly above it, and the two read as one
+   * stack of right-hand detail, so they take the same measure.
+   */
   .dock--bottom-right {
+    width: var(--dock-width-right);
     inset-inline-end: var(--dock-gap);
     inset-block-end: var(--dock-gap);
   }
@@ -1297,6 +1306,14 @@
    */
   .export {
     margin-top: 0.6rem;
+  }
+
+  /* Separates the readouts from the controls that follow them. */
+  .info__rule {
+    height: var(--line-hairline);
+    background: var(--accent-dark);
+    opacity: 0.45;
+    margin: 0.7rem 0 0.6rem;
   }
 
   /*

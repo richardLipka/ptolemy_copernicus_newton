@@ -1478,10 +1478,12 @@ going to its own title, padding and border.
 Four things were compounding, and each got the same answer — take it off screen
 or make it smaller, never redraw it prettier:
 
-- **Nothing was ever hidden.** Eighteen of the 49 buttons were set once and then
-  never touched: five themes, two languages, the zodiac scheme, the sphere
-  centre. They now live behind the cog (`topBar.ts`), which is the whole of
-  `showSettings`. Scale stayed out in the open on purpose — swapping a
+- **Nothing was ever hidden.** Sixteen of the 49 buttons were set once and then
+  never touched: five themes, two languages, the zodiac scheme. They now live
+  behind the cog (`topBar.ts`), which is the whole of `showSettings`. The sphere
+  centre went there too at first and came back out: it is a question about the
+  *vantage*, not a preference, so it sits under the observation point it answers
+  to. Scale stayed out in the open on purpose — swapping a
   compressed map for an honest one is a thing a lecturer does mid-sentence — and
   moved in beside the overlay switches, where it belongs: like them it changes
   what the map shows without touching what the model computes.
@@ -1495,8 +1497,20 @@ or make it smaller, never redraw it prettier:
   the right holds readouts. They have separate widths now (`--dock-width` and
   `--dock-width-right`), and the space the left gives up goes to the map.
 
-After: **15.8%** for the instrument against **32.7%** for the docks, **39**
-buttons, **9** panels. The map's diameter went from 447px to **511px** — a
+Three more things left the left column afterwards, for the same reason in
+reverse — they belong with *what is on screen* rather than with how the screen
+is arranged, so they moved into the selected-body panel: the comparison picker
+(which model to draw faintly beside this one), the calculation overlay's button
+(which shows four models' working for the selected body), and the constellation
+figures switch (which draws on the sphere that body is read against). That is
+what finally stopped the left dock scrolling at 900px.
+
+The clock takes `--dock-width-right` rather than the default. The default is the
+*left* width, and since the left column narrowed the time panel was visibly
+thinner than the events panel directly above it, when the two read as one stack.
+
+After: **15.8%** for the instrument against **34%** for the docks, **9** panels,
+and a left column that no longer scrolls. The map's diameter went from 447px to **511px** — a
 third more area — without a line of the drawing code changing, because the
 circle is sized by the shorter side of the field and the field simply got
 wider.
