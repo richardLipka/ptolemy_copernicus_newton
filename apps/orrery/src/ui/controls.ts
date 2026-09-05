@@ -7,13 +7,19 @@
  * place instead.
  */
 
-import { BODY_IDS, type BodyId } from '@orrery/core/bodies';
+import { BODIES, BODY_IDS, type BodyId } from '@orrery/core/bodies';
 import { MODES, type EngineId, type ModeId } from '@orrery/core/engines/types';
 import { dateFromJd } from '@orrery/core/time';
 import type { ZodiacScheme } from '@orrery/core/zodiac';
 import { formatNumber, t } from '../i18n/i18n';
 import type { GhostSelection, ScaleMode, SphereCentre, Store } from '../state/store';
-import { COMPARISON_ENGINES, focusViewFor } from '../state/selectors';
+import {
+  COMPARISON_ENGINES,
+  buildRecentredHarness,
+  focusViewFor,
+  recentredHarnessAvailable,
+  recentredHarnessBlockedBy,
+} from '../state/selectors';
 import { el, field, note, panel, select, toggleButton } from './dom';
 import { exportButtonRow } from './exportButtons';
 import { buildMapSvg } from '../render/export/mapSvg';
@@ -299,6 +305,20 @@ export function renderControls(container: HTMLElement, store: Store): void {
     );
   }
 
+  /*
+   * The recentred harness, offered only when it has something to say: a
+   * heliocentric construction, and something other than the Sun held still.
+   * It is the one control in this panel that depends on the frame origin, which
+   * is why it can appear and vanish as that picker moves.
+   */
+  if (recentredHarnessAvailable(state)) {
+    toggles.appendChild(
+      toggleButton(t('view.recentred'), state.showRecentredHarness, () =>
+        store.toggle('showRecentredHarness'),
+      ),
+    );
+  }
+
   harnessPanel.appendChild(toggles);
 
   if (state.showOrbits) {
@@ -336,6 +356,65 @@ export function renderControls(container: HTMLElement, store: Store): void {
     state.scaleMode === 'compressed'
   ) {
     harnessPanel.appendChild(note(t('harness.sightlineBend')));
+  }
+
+  if (recentredHarnessAvailable(state) && state.showRecentredHarness) {
+    const harness = buildRecentredHarness(state, state.selectedBody!);
+    if (harness) {
+      // Three cases: one leg (the Sun), and the two orders of two legs.
+      const wording =
+        harness.epicycleBody === null
+          ? 'view.recentredSunOnly'
+          : harness.jointIsSun
+            ? 'view.recentredSunJoint'
+            : 'view.recentredEmptyJoint';
+
+      harnessPanel.appendChild(
+        note(
+          // Cases, because Czech needs them: the two that appear after "the
+          // orbit of" are genitive, and the one that is the subject of its own
+          // sentence is not.
+          t(wording, {
+            deferent: t(`body.${harness.deferentBody}.genitive`),
+            epicycle: harness.epicycleBody ? t(`body.${harness.epicycleBody}`) : '',
+            origin: t(`body.${state.frameOrigin}.genitive`),
+          }),
+        ),
+      );
+
+      /*
+       * The Ptolemaic reading, and only where it is true.
+       *
+       * With Jupiter held still and Mars selected the figure is still two
+       * orbits composed, but it is nobody's historical model and saying
+       * otherwise would be the one genuinely misleading thing this overlay
+       * could do. So the claim about Ptolemy is made only when the stationary
+       * body is the Earth, which is the case he was describing.
+       */
+      if (state.frameOrigin === 'earth' && harness.epicycleBody !== null) {
+        harnessPanel.appendChild(
+          note(
+            t(
+              harness.jointIsSun
+                ? 'view.recentredPtolemyInferior'
+                : 'view.recentredPtolemySuperior',
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  const blocked = recentredHarnessBlockedBy(state);
+  if (blocked) {
+    harnessPanel.appendChild(
+      note(
+        t('view.recentredNoOrbit', {
+          body: t(`body.${blocked}`),
+          parent: t(`body.${BODIES[blocked].parent ?? 'sun'}.genitive`),
+        }),
+      ),
+    );
   }
 
   if (hasMachinery && state.showConstruction) {

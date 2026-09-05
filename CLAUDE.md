@@ -1467,6 +1467,107 @@ draws and insists on a real wording for all of it in both languages — `t` fall
 back to English silently, so the dictionaries are checked as data rather than
 through it.
 
+### 13.3a The recentred harness — what a heliocentric model turns into
+
+An optional overlay (**Skládání / Composition**) offered under Copernicus and
+Kepler whenever the stationary point is not the Sun. It draws the model's own
+two orbits, chained, and nothing else changes: positions still come from the
+engine, and the switch is off by default.
+
+The whole of it is one identity, already implemented by `frame.ts` as a
+subtraction and here split back into its parts:
+
+```
+body − origin  =  (origin → Sun)  +  (Sun → body)
+```
+
+Both terms are curves the model already knows how to draw. Insert the Sun
+between them and a heliocentric model, recentred, *is* a deferent carrying an
+epicycle. That is the point — not that Ptolemy was right, but that the
+disagreement was never about the geometry. `engines/recentred.ts` builds it and
+`recentred.test.ts` pins the claim that matters: the chain ends on the body the
+engine placed, to better than 1e-12 AU, from every stationary body and in both
+families. On screen the gap is exactly zero in map-radius units.
+
+**The larger orbit is the deferent.** That is the only decision the module
+makes, and it reproduces the *Almagest*'s own split with no special-casing:
+
+- **Origin outside the body** (Earth, Venus): the origin's orbit leads, so the
+  joint between the two stages is **the Sun itself** and the figure is Tycho's.
+  Ptolemy lays his inferior planets out the same way, with the Sun carrying the
+  epicycle.
+- **Body outside the origin** (Earth, Mars): the body's orbit leads, drawn about
+  the stationary point, and the epicycle riding it is the origin's orbit
+  reversed. That is Ptolemy's superior planet — and it explains why his epicycle
+  arm stays parallel to the direction of the Sun, because it *is* the Earth's
+  orbit.
+
+The two orders are the same two vectors added the other way round, so the
+endpoint is identical and only the joint moves. `jointIsSun` says which case is
+on screen, and the caption changes with it rather than claiming the Sun sits at
+a point where nothing does.
+
+**The caption leads with the composition, and names Ptolemy only where he
+applies.** The overlay's subject is two motions added together; that sentence is
+true from any stationary body. The Ptolemaic reading is a second note, appended
+only when the stationary body is the **Earth**. With Jupiter held still and Mars
+selected the figure is still two orbits composed, but it is nobody's historical
+model, and an earlier draft that said "this is how Ptolemy lays out a superior
+planet" regardless of origin was the one genuinely misleading thing here.
+
+**Which bodies it covers.** Every planet, from any planet held still — the
+matrix is symmetric and the larger orbit always leads. The **Sun** is the one
+body whose chain has a *single* leg: seen from anywhere that is not the Sun its
+whole apparent path is the stationary body's own orbit run backwards, with
+nothing riding on it, and that leg is exactly the deferent every other figure
+carries. `epicycleBody` is null there and the caption says nothing is composed.
+
+The **Moon and the satellites are refused, and the panel says why.** They have
+no heliocentric orbit to contribute a leg, so from anywhere but their own
+primary their apparent path composes three motions rather than two — and
+`constructionProjector` maps a satellite's geometry into an exaggerated frame
+about its primary (§13.3b), which a chain of true-scale legs reaching out to the
+Sun could never meet. Withdrawing the switch silently left a reader wondering
+where the button went, so `recentredHarnessBlockedBy` names the body and the
+note explains it.
+
+**Kepler gives two ellipses; Copernicus gives four circles.** His orbits are not
+ellipses — eccentric plus epicyclet — so each leg contributes both, and the
+overlay says so by drawing them. Approximating his construction with an ellipse
+would be a lie of exactly *a·e²*, which is 2.4 million km at Mercury and 2.0 at
+Mars, and this is a harness: the machinery *is* the model.
+
+Three things worth knowing:
+
+- The layer is gated on `showConstruction || showRecentredHarness`. Gating it on
+  the construction switch alone hid this overlay along with it, and that is
+  precisely the pairing a reader wants — the model's own machinery off, and what
+  it becomes when recentred on.
+- Segments are pooled, so `data-overlay` is cleared in `takeSegment` rather than
+  merely set by the caller that wants it. Otherwise a recycled element carries
+  the overlay's styling onto the model's own machinery.
+- The construction carries **no markers**. A marker's hover note is keyed by
+  role and family (`harnessNotes.ts`), and this overlay has no wording there; a
+  dot that explained itself as something else would be worse than no dot. The
+  two centres and the joint are readable from where the arms meet.
+
+Measured over 1440 (stationary body, selected body, date) combinations across
+both families and every pair of orbiting bodies: the chain starts on the
+stationary body, its two legs sum to the true relative vector, and it ends on
+the body, all to better than 2e-15 AU. The Keplerian ellipses carry their own
+points to a conic residual of 5e-15. Copernicus's circles are exact in three
+dimensions to 4e-15 and are drawn flat, so an inclined orbit is a circle where
+the true path projects to an ellipse — at most 0.009 AU out at Saturn, 0.003 at
+Mercury. That is inherited from `copernicanConstruction`, which draws its
+circles the same way, and is a property of the plan view rather than of this
+overlay.
+
+Under Kepler the chain begins at the Earth–Moon barycentre rather than at the
+Earth, because that is what the Earth's *orbit* carries; the two differ by some
+4700 km. The alternative is to begin on the marker and end 4700 km off the body,
+and ending on the body is the claim being made. Copernicus has no barycentre and
+no such caveat.
+
 ### 13.3b The Moon is only exaggerated at compressed scale
 
 `moonDrawnRadius()` takes the scale mode, and at **true scale it returns the

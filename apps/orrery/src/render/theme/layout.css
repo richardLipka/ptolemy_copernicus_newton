@@ -299,6 +299,38 @@
   opacity: 0.5;
 }
 
+/*
+ * The recentred harness — the same roles, drawn as a second voice.
+ *
+ * It has to read as the model's own machinery, because the whole point is that
+ * the figure is Ptolemy's; so it keeps the deferent and epicycle colours rather
+ * than taking a hue of its own. What separates it is weight and a dashed
+ * deferent: it is a restatement of where the body already is, not the thing
+ * that put it there, and with both switches on the two must not be confusable.
+ */
+.harness__segment[data-overlay='recentred'] {
+  opacity: 0.85;
+}
+
+.harness__segment[data-overlay='recentred'][data-role='deferent'] {
+  height: var(--line-fine);
+  background: repeating-linear-gradient(
+    to right,
+    var(--brass) 0 5px,
+    transparent 5px 10px
+  );
+}
+
+.harness__segment[data-overlay='recentred'][data-role='epicycle'] {
+  height: var(--line-fine);
+  background: var(--brass-bright);
+}
+
+.harness__segment[data-overlay='recentred'][data-role='deferent-arm'],
+.harness__segment[data-overlay='recentred'][data-role='epicycle-arm'] {
+  height: var(--line-medium);
+}
+
 .harness__marker {
   position: absolute;
   top: 50%;

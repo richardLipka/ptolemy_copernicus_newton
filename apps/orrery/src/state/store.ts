@@ -143,6 +143,16 @@ export interface State {
   /** Draw the selected body's deferent, epicycle and equant. */
   showConstruction: boolean;
   /**
+   * The recentred harness: a heliocentric model's own two orbits, chained,
+   * once something other than the Sun is held still.
+   *
+   * Off by default and separate from `showConstruction`, because it answers a
+   * different question. That switch shows how the model places a body; this one
+   * shows what the model *turns into* when the stationary point moves — which is
+   * a claim about Ptolemy rather than about Kepler, and worth opting into.
+   */
+  showRecentredHarness: boolean;
+  /**
    * The longitude-against-time strip along the top of the stage.
    *
    * Off by default: it is the observer's record rather than the map, and a
@@ -217,6 +227,7 @@ export class Store {
       showSightLines: true,
       showStarFigures: true,
       showConstruction: true,
+      showRecentredHarness: false,
       showTrack: false,
       showSky: false,
       skyField: DEFAULT_SKY_FIELD,
@@ -420,6 +431,7 @@ export class Store {
       | 'showSightLines'
       | 'showStarFigures'
       | 'showConstruction'
+      | 'showRecentredHarness'
       | 'showTrack'
       | 'showSky',
   ): void {
