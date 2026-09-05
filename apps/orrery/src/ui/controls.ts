@@ -8,12 +8,11 @@
  */
 
 import { BODIES, BODY_IDS, type BodyId } from '@orrery/core/bodies';
-import { MODES, type EngineId, type ModeId } from '@orrery/core/engines/types';
+import { MODES, type ModeId } from '@orrery/core/engines/types';
 import { dateFromJd } from '@orrery/core/time';
 import { formatNumber, t } from '../i18n/i18n';
-import type { GhostSelection, ScaleMode, SphereCentre, Store } from '../state/store';
+import type { ScaleMode, SphereCentre, Store } from '../state/store';
 import {
-  COMPARISON_ENGINES,
   buildRecentredHarness,
   focusViewFor,
   recentredHarnessAvailable,
@@ -25,14 +24,6 @@ import { buildMapSvg } from '../render/export/mapSvg';
 
 const bodyOptions = (): { value: BodyId; label: string }[] =>
   BODY_IDS.map((id) => ({ value: id, label: t(`body.${id}`) }));
-
-/** Engine id to the colour token compare-all tints it with. */
-const MODEL_TOKEN: Partial<Record<EngineId, string>> = {
-  'ptolemaic-epicyclic': 'ptolemy',
-  circular: 'copernicus',
-  keplerian: 'kepler',
-  nbody: 'newton',
-};
 
 /** The left dock: which model, seen from where, and what to draw over it. */
 /**
@@ -203,6 +194,13 @@ export function renderControls(container: HTMLElement, store: Store): void {
     toggleButton(t('view.sky'), state.showSky, () => store.toggle('showSky')),
     toggleButton(t('view.sightlines'), state.showSightLines, () =>
       store.toggle('showSightLines'),
+    ),
+    // Back among the other draw switches. It went to the selected-body panel
+    // for a while as a thing about the body being read against the sphere; it
+    // is simpler than that — it draws a set of lines on the map, the same as
+    // the four beside it.
+    toggleButton(t('view.figures'), state.showStarFigures, () =>
+      store.toggle('showStarFigures'),
     ),
   );
 
@@ -486,71 +484,4 @@ export function renderMapExport(container: HTMLElement, store: Store): void {
     ),
   );
   container.appendChild(exportPanel);
-}
-
-/**
- * Which model to draw faintly beside the running one, and its key.
- *
- * Exported because it lives in the selected-body panel now rather than in the
- * dock: comparing two models is a question about what is on screen, not a
- * setting for how the screen is arranged, and the left column was the longer
- * for holding it.
- */
-export function comparisonField(store: Store): DocumentFragment {
-  const state = store.get();
-  const fragment = document.createDocumentFragment();
-
-  const ghostChoices: { value: string; label: string }[] = [
-    { value: '', label: t('ghost.none') },
-  ];
-  const mode = MODES[state.mode];
-  if (mode) {
-    for (const engineId of mode.engines) {
-      if (engineId === state.engineId) continue;
-      if (ghostChoices.some((choice) => choice.value === engineId)) continue;
-      ghostChoices.push({ value: engineId, label: t(`engine.${engineId}`) });
-    }
-  }
-  // Four models now, so "one other" is a narrower question than it used to be.
-  ghostChoices.splice(1, 0, { value: 'all', label: t('ghost.all') });
-
-  fragment.appendChild(
-    field(
-      t('ghost.label'),
-      select(ghostChoices, state.ghostEngineId ?? '', (value) =>
-        store.setGhostEngine(value === '' ? null : (value as GhostSelection)),
-      ),
-      t('ghost.hint'),
-    ),
-  );
-
-  // With three ghosts on the map, tinted per model, the map needs a key.
-  if (state.ghostEngineId === 'all') {
-    const legend = el('div', 'chips chips--legend');
-    for (const engineId of COMPARISON_ENGINES) {
-      if (engineId === state.engineId) continue;
-      const item = el('span', 'chip chip--static');
-      item.style.setProperty('--tint', `var(--model-${MODEL_TOKEN[engineId]})`);
-      item.append(el('span', 'chip__swatch'), el('span', undefined, t(`engine.${engineId}`)));
-      legend.appendChild(item);
-    }
-    fragment.appendChild(legend);
-  }
-
-  return fragment;
-}
-
-/** The button that opens the calculation and demonstrations overlay. */
-export function calculationButton(store: Store): HTMLButtonElement {
-  const button = el('button', 'wide-button', t('calc.open'));
-  button.type = 'button';
-  button.addEventListener('click', () => store.setCalculationOpen(true));
-  return button;
-}
-
-/** The constellation figures switch, which draws on the sphere rather than the map. */
-export function starFiguresToggle(store: Store): HTMLButtonElement {
-  return toggleButton(t('view.figures'), store.get().showStarFigures, () =>
-    store.toggle('showStarFigures'),
-  );
 }

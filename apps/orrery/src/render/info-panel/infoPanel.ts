@@ -33,7 +33,6 @@ import type { Store } from '../../state/store';
 import { buildView } from '../../state/selectors';
 import { el, note, panel, readout } from '../../ui/dom';
 import { exportButtonRow } from '../../ui/exportButtons';
-import { calculationButton, comparisonField, starFiguresToggle } from '../../ui/controls';
 import { buildPhaseSvg } from '../export/phaseSvg';
 
 /** One engine per model, for the side-by-side phase figures. */
@@ -45,27 +44,16 @@ const PHASE_COMPARISON_ENGINES: readonly EngineId[] = [
 ];
 
 
-/**
- * The three things that belong with what is on screen rather than with how the
- * screen is arranged.
+/*
+ * Readings only.
  *
- * Comparing against a second model is a question about the body being looked
- * at. So is the calculation overlay, which shows four models' working for it.
- * The constellation figures draw on the sphere the body is read against. None
- * of them is a setting, and all three were making the left column longer.
- *
- * Appended whether or not a body is selected, because two of them still mean
- * something when none is.
+ * The comparison picker and the calculation overlay's button were briefly here,
+ * on the argument that both are about the body being looked at. But with
+ * nothing selected this panel then held nothing except those two controls,
+ * under a heading promising details of a body — a settings drawer wearing the
+ * label of a readout. They live behind the cog now; the constellation figures
+ * switch went back to the other draw toggles in the left dock.
  */
-function toolsGroup(store: Store): DocumentFragment {
-  const fragment = document.createDocumentFragment();
-  fragment.appendChild(el('div', 'info__rule'));
-  fragment.appendChild(comparisonField(store));
-  const row = el('div', 'button-row');
-  row.append(starFiguresToggle(store), calculationButton(store));
-  fragment.appendChild(row);
-  return fragment;
-}
 
 export function renderInfoPanel(container: HTMLElement, store: Store): void {
   const state = store.get();
@@ -74,8 +62,10 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
   const card = panel(t('info.title'));
 
   if (!state.selectedBody) {
-    card.appendChild(note(t('info.none')));
-    card.appendChild(toolsGroup(store));
+    // `note--live`, so it survives the explanations switch. It is not prose
+    // about the panel — with nothing selected it is the whole of the panel, and
+    // collapsing it leaves a titled empty box saying nothing at all.
+    card.appendChild(note(t('info.none'), 'note note--live'));
     container.appendChild(card);
     return;
   }
@@ -349,6 +339,5 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
     }
   }
 
-  card.appendChild(toolsGroup(store));
   container.appendChild(card);
 }

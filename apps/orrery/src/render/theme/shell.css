@@ -1308,14 +1308,6 @@
     margin-top: 0.6rem;
   }
 
-  /* Separates the readouts from the controls that follow them. */
-  .info__rule {
-    height: var(--line-hairline);
-    background: var(--accent-dark);
-    opacity: 0.45;
-    margin: 0.7rem 0 0.6rem;
-  }
-
   /*
    * The phase download, sitting inside the figure it saves rather than under
    * the whole panel. Small enough not to compete with the disc above it.

@@ -1497,13 +1497,26 @@ or make it smaller, never redraw it prettier:
   the right holds readouts. They have separate widths now (`--dock-width` and
   `--dock-width-right`), and the space the left gives up goes to the map.
 
-Three more things left the left column afterwards, for the same reason in
-reverse — they belong with *what is on screen* rather than with how the screen
-is arranged, so they moved into the selected-body panel: the comparison picker
-(which model to draw faintly beside this one), the calculation overlay's button
-(which shows four models' working for the selected body), and the constellation
-figures switch (which draws on the sphere that body is read against). That is
-what finally stopped the left dock scrolling at 900px.
+Three more things left the left column afterwards, on the argument that they
+belong with *what is on screen* rather than with how the screen is arranged: the
+comparison picker (which model to draw faintly beside this one), the calculation
+overlay's button (four models' working for the selected body), and the
+constellation figures switch. They went into the selected-body panel, and two of
+the three came straight back out.
+
+That panel is where the *readings* are. With nothing selected it then held
+nothing except those two controls, under a heading promising a body's details —
+a settings drawer wearing the label of a readout. Both are behind the cog now,
+first in the menu, ahead of the three rows nobody sets twice. The figures switch
+went back among the other draw toggles in "what to show": it is not a fact about
+the selected body, it is a set of lines on the map like the four beside it. The
+empty state carries `note--live`, so "select a body on the map" survives the
+explanations switch and the panel is never a titled blank.
+
+At 1440x900 the left dock overflows by about 50px with trails on — the trail
+status line and the clear button are what tip it — and fits exactly with them
+off. An earlier note here said the dock had stopped scrolling; that reading was
+taken with orbits switched off and did not hold for the default state.
 
 The clock takes `--dock-width-right` rather than the default. The default is the
 *left* width, and since the left column narrowed the time panel was visibly
