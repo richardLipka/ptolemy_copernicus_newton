@@ -1,0 +1,87 @@
+# Publishes this experiment to Pages *without* taking the stable app down.
+#
+# Pages serves one artifact as the whole site, so a branch that deployed the
+# ordinary way would replace what main publishes. Instead this builds both: the
+# stable app keeps the root of the site and the experiment gets a subdirectory
+# of its own, which is what makes the branch runnable without anyone losing the
+# app at the top level.
+#
+# `base` is './' in vite.config.ts, so the build runs from a subpath unchanged.
+#
+# Asymmetry worth knowing about: the next push to main runs main's own
+# `pages.yml`, which uploads main alone and so removes the subdirectory. Re-run
+# this workflow to put it back. Main is deliberately left untouched — an
+# experiment should not be able to change how the stable site deploys.
+name: Deploy experiment to Pages
+
+on:
+  push:
+    branches: [experimental/recentred-harness]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Share the group with `pages.yml` so the two can never publish at once.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out the experiment
+        uses: actions/checkout@v5
+        with:
+          path: experiment
+
+      - name: Check out main, for the root of the site
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          path: stable
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            stable/package-lock.json
+            experiment/package-lock.json
+
+      - name: Build the stable app
+        working-directory: stable
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build the experiment
+        working-directory: experiment
+        run: |
+          npm ci
+          npm run build
+
+      - name: Compose the site
+        run: |
+          mkdir -p site/experimental-harness
+          cp -r stable/apps/orrery/dist/. site/
+          cp -r experiment/apps/orrery/dist/. site/experimental-harness/
+          echo "Root:" && ls site | head
+          echo "Experiment:" && ls site/experimental-harness | head
+
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
