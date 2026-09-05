@@ -15,6 +15,7 @@ import { formatNumber, t } from '../../i18n/i18n';
 import type { Store } from '../../state/store';
 import {
   buildConstruction,
+  buildRecentredHarness,
   buildDynamicsView,
   buildView,
   projectRadius,
@@ -449,6 +450,10 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
       // Whose machinery this is, for the hover note: with a satellite family on
       // screen there are five constructions in this layer at once.
       element.dataset.body = body;
+      // Segments are pooled, so this has to be cleared rather than merely set
+      // by the caller that wants it — otherwise a recycled element keeps the
+      // recentred overlay's styling on the model's own machinery.
+      delete element.dataset.overlay;
       element.style.display = '';
       usedSegments++;
       return element;
@@ -512,6 +517,36 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
         element.style.display = '';
         setPoint(element, marker.at);
         usedMarkers++;
+      }
+    }
+
+    /*
+     * The recentred harness, on its own switch.
+     *
+     * Drawn into the same pooled layer so it obeys the same pan, zoom and
+     * compressed scale as everything else, but tagged `data-overlay` so it can
+     * be told from the model's own machinery when both are on. It adds no
+     * markers: the figure is about the two curves and the joint between them,
+     * and a third kind of dot in the middle of the map only crowds it.
+     */
+    if (state.showRecentredHarness && state.selectedBody) {
+      const recentred = buildRecentredHarness(state, state.selectedBody);
+      if (recentred) {
+        for (const curve of recentred.curves) {
+          for (let i = 1; i < curve.points.length; i++) {
+            const from = curve.points[i - 1]!;
+            const to = curve.points[i]!;
+            if (Math.hypot(to.x - from.x, to.y - from.y) > 0.6) continue;
+            const segment = takeSegment(curve.role, state.selectedBody);
+            segment.dataset.overlay = 'recentred';
+            setSegment(segment, from, to);
+          }
+        }
+        for (const arm of recentred.arms) {
+          const segment = takeSegment(arm.role, state.selectedBody);
+          segment.dataset.overlay = 'recentred';
+          setSegment(segment, arm.from, arm.to);
+        }
       }
     }
 
@@ -790,7 +825,15 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
       }
     }
     setFlag(instrument, 'figures', state.showStarFigures);
-    setFlag(instrument, 'construction', state.showConstruction);
+    // The layer holds both harnesses, so it stays up while *either* is asked
+    // for. Gating it on the construction switch alone hid the recentred
+    // overlay along with it, which is exactly the pairing a reader wants:
+    // the model's own machinery off, and what it becomes when recentred on.
+    setFlag(
+      instrument,
+      'construction',
+      state.showConstruction || state.showRecentredHarness,
+    );
 
     updateTrails();
     updateHarness();

@@ -256,6 +256,10 @@ function controlsSignature(): string {
     state.showSightLines,
     state.showStarFigures,
     state.showConstruction,
+    // The recentred harness appears and vanishes with the frame origin and the
+    // selection, both of which are already here, but its own pressed state is
+    // not — without it the button would not redraw when toggled.
+    state.showRecentredHarness,
     // The two strips as well. Their buttons carry a pressed state like every
     // other toggle, and the band's field selector only exists while the band
     // does — neither can redraw if the signature cannot see them change.

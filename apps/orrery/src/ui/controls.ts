@@ -13,7 +13,12 @@ import { dateFromJd } from '@orrery/core/time';
 import type { ZodiacScheme } from '@orrery/core/zodiac';
 import { formatNumber, t } from '../i18n/i18n';
 import type { GhostSelection, ScaleMode, SphereCentre, Store } from '../state/store';
-import { COMPARISON_ENGINES, focusViewFor } from '../state/selectors';
+import {
+  COMPARISON_ENGINES,
+  buildRecentredHarness,
+  focusViewFor,
+  recentredHarnessAvailable,
+} from '../state/selectors';
 import { el, field, note, panel, select, toggleButton } from './dom';
 import { exportButtonRow } from './exportButtons';
 import { buildMapSvg } from '../render/export/mapSvg';
@@ -299,6 +304,20 @@ export function renderControls(container: HTMLElement, store: Store): void {
     );
   }
 
+  /*
+   * The recentred harness, offered only when it has something to say: a
+   * heliocentric construction, and something other than the Sun held still.
+   * It is the one control in this panel that depends on the frame origin, which
+   * is why it can appear and vanish as that picker moves.
+   */
+  if (recentredHarnessAvailable(state)) {
+    toggles.appendChild(
+      toggleButton(t('view.recentred'), state.showRecentredHarness, () =>
+        store.toggle('showRecentredHarness'),
+      ),
+    );
+  }
+
   harnessPanel.appendChild(toggles);
 
   if (state.showOrbits) {
@@ -336,6 +355,24 @@ export function renderControls(container: HTMLElement, store: Store): void {
     state.scaleMode === 'compressed'
   ) {
     harnessPanel.appendChild(note(t('harness.sightlineBend')));
+  }
+
+  if (recentredHarnessAvailable(state) && state.showRecentredHarness) {
+    const harness = buildRecentredHarness(state, state.selectedBody!);
+    if (harness) {
+      harnessPanel.appendChild(
+        note(
+          // Cases, because Czech needs them: the two that appear after "the
+          // orbit of" are genitive, and the one that is the subject of its own
+          // sentence is not.
+          t(harness.jointIsSun ? 'view.recentredSunJoint' : 'view.recentredEmptyJoint', {
+            deferent: t(`body.${harness.deferentBody}.genitive`),
+            epicycle: t(`body.${harness.epicycleBody}`),
+            origin: t(`body.${state.frameOrigin}.genitive`),
+          }),
+        ),
+      );
+    }
   }
 
   if (hasMachinery && state.showConstruction) {

@@ -96,8 +96,14 @@ export const COPERNICAN_PARAMETERS: CopernicanParameters = {
 const orbitFor = (id: BodyId, params: CopernicanParameters): OrbitalModel | undefined =>
   params.orbits?.[id] ?? BODIES[id].orbit;
 
-/** The pieces of the construction, in the orbital plane. */
-interface PlaneGeometry {
+/**
+ * The pieces of the construction, in the orbital plane.
+ *
+ * Exported along with `copernicanPlaneGeometry` because the recentred harness
+ * has to lay the same eccentric and epicyclet out about a point that is not the
+ * Sun, and a second copy of the arithmetic would be free to drift from this one.
+ */
+export interface PlaneGeometry {
   /** Deferent centre, displaced toward aphelion. */
   centreX: number;
   centreY: number;
@@ -115,7 +121,7 @@ interface PlaneGeometry {
  * Lay out the deferent, the epicyclet and the planet, in the orbital plane with
  * perihelion along +x.
  */
-function planeGeometry(
+export function copernicanPlaneGeometry(
   el: KeplerianElements,
   meanAnomalyDeg: number,
   params: CopernicanParameters = COPERNICAN_PARAMETERS,
@@ -155,7 +161,7 @@ export function copernicanHeliocentricAt(
   params: CopernicanParameters = COPERNICAN_PARAMETERS,
 ): Vec3 {
   const el = elementsAt(jd, model);
-  const geometry = planeGeometry(el, meanAnomalyAt(jd, model), params);
+  const geometry = copernicanPlaneGeometry(el, meanAnomalyAt(jd, model), params);
   return orbitalPlaneToEcliptic(geometry.x, geometry.y, el);
 }
 
@@ -195,7 +201,7 @@ function lunarElements(jd: number): { el: KeplerianElements; meanAnomaly: number
 
 export function copernicanMoonGeocentricAt(jd: number): Vec3 {
   const { el, meanAnomaly } = lunarElements(jd);
-  const geometry = planeGeometry(el, meanAnomaly);
+  const geometry = copernicanPlaneGeometry(el, meanAnomaly);
   return orbitalPlaneToEcliptic(geometry.x, geometry.y, el);
 }
 
@@ -246,7 +252,7 @@ export function copernicanConstruction(
     ? lunarElements(jd)
     : { el: elementsAt(jd, model!), meanAnomaly: meanAnomalyAt(jd, model!) };
 
-  const geometry = planeGeometry(el, meanAnomaly, params);
+  const geometry = copernicanPlaneGeometry(el, meanAnomaly, params);
   const toEcliptic = (x: number, y: number): Vec3 => orbitalPlaneToEcliptic(x, y, el);
 
   // The Moon's construction hangs off Earth rather than off the Sun.

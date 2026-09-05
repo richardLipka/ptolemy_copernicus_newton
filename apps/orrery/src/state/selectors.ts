@@ -13,6 +13,11 @@ import { apparentLongitude, relativePosition } from '@orrery/core/coordinates';
 import type { EngineId, PositionSet } from '@orrery/core/engines/types';
 import { recenter } from '@orrery/core/frame';
 import { satelliteHarness } from '@orrery/core/satelliteHarness';
+import {
+  recentredConstruction,
+  type RecentredFamily,
+  type RecentredHarness,
+} from '@orrery/core/engines/recentred';
 import { illuminationOf, type Illumination } from '@orrery/core/illumination';
 import { DEG, length, sub, vec3, type Vec3 } from '@orrery/core/vec';
 import { locate, type ZodiacPosition } from '@orrery/core/zodiac';
@@ -691,6 +696,77 @@ function projectConstruction(
     markers: construction.markers.map(({ at, role }) => ({ at: project(at), role })),
   };
 
+}
+
+/**
+ * Which engines can wear the recentred harness, and under what name.
+ *
+ * Only the two heliocentric constructions. Ptolemy is already geocentric, so
+ * there is nothing to re-expand; the reframe and the integrator expose no
+ * geometry to re-expand with.
+ */
+export function recentredFamilyFor(engineId: EngineId): RecentredFamily | null {
+  if (engineId === 'copernican') return 'copernican';
+  if (engineId === 'keplerian') return 'kepler';
+  return null;
+}
+
+/**
+ * Whether the overlay has anything to say in the current state.
+ *
+ * It needs a heliocentric construction, a stationary point that is not the Sun,
+ * and two bodies with orbits of their own. The control hides rather than sits
+ * there disabled: a switch that does nothing is a worse answer than no switch.
+ */
+export function recentredHarnessAvailable(state: State): boolean {
+  if (!recentredFamilyFor(state.engineId)) return false;
+  if (state.frameOrigin === 'sun') return false;
+  const body = state.selectedBody;
+  if (!body) return false;
+  return Boolean(BODIES[body].orbit) && Boolean(BODIES[state.frameOrigin].orbit);
+}
+
+export interface ProjectedRecentred extends ProjectedConstruction {
+  deferentBody: BodyId;
+  epicycleBody: BodyId;
+  jointIsSun: boolean;
+}
+
+/**
+ * The recentred harness, projected like any other construction.
+ *
+ * Deliberately built from the same `Construction` shape and projected through
+ * the same function, so it inherits the compressed scale, the pan and the zoom
+ * without a second code path — and so it can never disagree with the map it is
+ * drawn on.
+ */
+export function buildRecentredHarness(
+  state: State,
+  bodyId: BodyId,
+): ProjectedRecentred | null {
+  const family = recentredFamilyFor(state.engineId);
+  if (!family || state.frameOrigin === 'sun') return null;
+
+  const harness: RecentredHarness | null = recentredConstruction(
+    state.julianDate,
+    bodyId,
+    state.frameOrigin,
+    family,
+  );
+  if (!harness) return null;
+
+  const positions = ENGINES[state.engineId].positionsAt(state.julianDate);
+  const projected = projectConstruction(
+    harness.construction,
+    constructionProjector(state, bodyId, positions),
+  );
+
+  return {
+    ...projected,
+    deferentBody: harness.deferentBody,
+    epicycleBody: harness.epicycleBody,
+    jointIsSun: harness.jointIsSun,
+  };
 }
 
 // --- Newton's machinery: force and velocity vectors ---------------------

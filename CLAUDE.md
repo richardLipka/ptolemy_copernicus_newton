@@ -1467,6 +1467,69 @@ draws and insists on a real wording for all of it in both languages — `t` fall
 back to English silently, so the dictionaries are checked as data rather than
 through it.
 
+### 13.3a The recentred harness — what a heliocentric model turns into
+
+**Experimental, on the `experimental/recentred-harness` branch.** An optional
+overlay (**Skládání / Composition**) offered under Copernicus and Kepler
+whenever the stationary point is not the Sun. It draws the model's own two
+orbits, chained, and nothing else changes: positions still come from the engine,
+and the switch is off by default.
+
+The whole of it is one identity, already implemented by `frame.ts` as a
+subtraction and here split back into its parts:
+
+```
+body − origin  =  (origin → Sun)  +  (Sun → body)
+```
+
+Both terms are curves the model already knows how to draw. Insert the Sun
+between them and a heliocentric model, recentred, *is* a deferent carrying an
+epicycle. That is the point — not that Ptolemy was right, but that the
+disagreement was never about the geometry. `engines/recentred.ts` builds it and
+`recentred.test.ts` pins the claim that matters: the chain ends on the body the
+engine placed, to better than 1e-12 AU, from every stationary body and in both
+families. On screen the gap is exactly zero in map-radius units.
+
+**The larger orbit is the deferent.** That is the only decision the module
+makes, and it reproduces the *Almagest*'s own split with no special-casing:
+
+- **Origin outside the body** (Earth, Venus): the origin's orbit leads, so the
+  joint between the two stages is **the Sun itself** and the figure is Tycho's.
+  Ptolemy lays his inferior planets out the same way, with the Sun carrying the
+  epicycle.
+- **Body outside the origin** (Earth, Mars): the body's orbit leads, drawn about
+  the stationary point, and the epicycle riding it is the origin's orbit
+  reversed. That is Ptolemy's superior planet — and it explains why his epicycle
+  arm stays parallel to the direction of the Sun, because it *is* the Earth's
+  orbit.
+
+The two orders are the same two vectors added the other way round, so the
+endpoint is identical and only the joint moves. `jointIsSun` says which case is
+on screen, and the caption changes with it rather than claiming the Sun sits at
+a point where nothing does.
+
+**Kepler gives two ellipses; Copernicus gives four circles.** His orbits are not
+ellipses — eccentric plus epicyclet — so each leg contributes both, and the
+overlay says so by drawing them. Approximating his construction with an ellipse
+would be a lie of exactly *a·e²*, which is 2.4 million km at Mercury and 2.0 at
+Mars, and this is a harness: the machinery *is* the model.
+
+Two things worth knowing:
+
+- The layer is gated on `showConstruction || showRecentredHarness`. Gating it on
+  the construction switch alone hid this overlay along with it, and that is
+  precisely the pairing a reader wants — the model's own machinery off, and what
+  it becomes when recentred on.
+- Segments are pooled, so `data-overlay` is cleared in `takeSegment` rather than
+  merely set by the caller that wants it. Otherwise a recycled element carries
+  the overlay's styling onto the model's own machinery.
+
+Under Kepler the chain begins at the Earth–Moon barycentre rather than at the
+Earth, because that is what the Earth's *orbit* carries; the two differ by some
+4700 km. The alternative is to begin on the marker and end 4700 km off the body,
+and ending on the body is the claim being made. Copernicus has no barycentre and
+no such caveat.
+
 ### 13.3b The Moon is only exaggerated at compressed scale
 
 `moonDrawnRadius()` takes the scale mode, and at **true scale it returns the
