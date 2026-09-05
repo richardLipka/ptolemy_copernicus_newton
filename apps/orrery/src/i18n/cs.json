@@ -312,6 +312,7 @@
   "calc.newton.twoBody": "Řešení pro dvě tělesa — odvozená Keplerova elipsa",
   "calc.newton.integrated": "Všech devět těles, integrovaně (tato aplikace)",
   "notes.toggle": "Zobrazit vysvětlivky",
+  "settings.label": "Nastavení",
   "bodies.label": "Tělesa",
   "ghost.all": "Všechny modely naráz",
   "welcome.title": "Čtyři způsoby, jak předpovědět planetu",
@@ -347,5 +348,6 @@
   "track.title": "Kde se {{body}} objevuje noc co noc",
   "track.window": "zobrazeno {{days}} dní, cyklus {{cycle}}",
   "track.none": "Vyberte těleso a zobrazí se dráha, kterou opisuje mezi hvězdami.",
-  "track.hint": "Svisle běží délka, vodorovně čas. Je to záznam, jaký si vede pozorovatel: poloha tělesa mezi hvězdami noc co noc. Tam, kde se křivka vrací, je těleso ve zpětném pohybu. Kroužky značí oba stacionární body. Ptolemaiův epicykl i Koperníkova pohyblivá Země vznikly proto, aby napodobily právě tento tvar."
+  "track.hint": "Svisle běží délka, vodorovně čas. Je to záznam, jaký si vede pozorovatel: poloha tělesa mezi hvězdami noc co noc. Tam, kde se křivka vrací, je těleso ve zpětném pohybu. Kroužky značí oba stacionární body. Ptolemaiův epicykl i Koperníkova pohyblivá Země vznikly proto, aby napodobily právě tento tvar.",
+  "view.sphere.label": "Nebeská sféra"
 }

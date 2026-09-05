@@ -55,6 +55,11 @@
     /* How far the floating panels sit from the edge, and how wide they run. */
     --dock-gap: clamp(0.5rem, 1.1vw, 1rem);
     --dock-width: clamp(13rem, 20vw, 18.5rem);
+    /*
+     * The right dock carries the readouts and wants more room than the left,
+     * which holds only controls. Equal by default; the wide layout splits them.
+     */
+    --dock-width-right: var(--dock-width);
 
     /*
      * Height of the band of sky.

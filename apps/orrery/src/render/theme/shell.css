@@ -45,7 +45,8 @@
    */
   .stage__field {
     position: absolute;
-    inset: calc(var(--dock-gap) * 2 + 2.1rem) calc(var(--dock-width) + var(--dock-gap) * 2);
+    inset: calc(var(--dock-gap) * 2 + 2.1rem) calc(var(--dock-width-right) + var(--dock-gap) * 2)
+      calc(var(--dock-gap) * 2 + 2.1rem) calc(var(--dock-width) + var(--dock-gap) * 2);
     display: grid;
     place-items: center;
     pointer-events: none;
@@ -72,7 +73,7 @@
     position: absolute;
     top: calc(var(--dock-gap) * 2 + 2.1rem);
     left: calc(var(--dock-width) + var(--dock-gap) * 2);
-    right: calc(var(--dock-width) + var(--dock-gap) * 2);
+    right: calc(var(--dock-width-right) + var(--dock-gap) * 2);
     z-index: 2;
   }
 
@@ -104,7 +105,7 @@
     position: absolute;
     bottom: var(--dock-gap);
     left: calc(var(--dock-width) + var(--dock-gap) * 2);
-    right: calc(var(--dock-width) + var(--dock-gap) * 2);
+    right: calc(var(--dock-width-right) + var(--dock-gap) * 2);
     z-index: 2;
     overflow: hidden;
     border: var(--line-fine) solid var(--panel-edge);
@@ -160,13 +161,56 @@
     scrollbar-width: thin;
   }
 
-  /* The slim bar of global switches, hugging the corner. */
+  /*
+   * The slim bar of global switches, hugging the corner.
+   *
+   * Above the other docks, not level with them. Every dock is z-index 2, so
+   * they paint in DOM order and this one is first — which buried the settings
+   * menu under the selected-body panel however high the menu's own z-index
+   * went, because that index only ranks it inside this dock's own stacking
+   * context. A popover has to outrank what it covers.
+   */
   .dock--top-right {
     inset-inline-end: var(--dock-gap);
     inset-block-start: var(--dock-gap);
     width: auto;
     flex-direction: row;
     align-items: center;
+    z-index: 6;
+  }
+
+  /*
+   * The settings menu, hanging under the cog.
+   *
+   * Absolute rather than part of the dock's flow: the bar is a row, and a menu
+   * flowed into it would sit beside the buttons instead of under them. It takes
+   * the panel's own surface so every theme dresses it without a rule of its own.
+   */
+  .settings-menu {
+    position: absolute;
+    inset-block-start: calc(100% + var(--dock-gap));
+    inset-inline-end: 0;
+    z-index: 6;
+    width: max-content;
+    min-width: 12rem;
+    max-width: min(20rem, 80vw);
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .settings__group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.22rem;
+  }
+
+  .settings__label {
+    font-family: var(--face-display);
+    font-size: var(--size-label);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
   }
 
   /*
@@ -181,6 +225,7 @@
    * clock.
    */
   .dock--right {
+    width: var(--dock-width-right);
     inset-inline-end: var(--dock-gap);
     inset-block-start: calc(var(--dock-gap) * 2 + 2.1rem);
     inset-block-end: calc(var(--dock-gap) * 2 + var(--clock-reserve));
@@ -246,46 +291,20 @@
     }
 
     /*
-     * The left dock: two columns placed by hand, not by multicol.
+     * The left dock stays one column and simply gets no wider.
      *
-     * Multicol balances, which means it picks the break — and it kept choosing
-     * the middle of the run of controls that belong together. The columns are
-     * real elements now (see `renderControls`): the working sequence on the
-     * left, read straight down, and the zodiac settings on their own at the
-     * right, being the one group that is not part of that sequence.
+     * It was briefly two, with the zodiac settings alone in the second — and
+     * then those went behind the cog with everything else nobody sets twice,
+     * leaving one short panel beside a scrolling one. One column of four panels
+     * fits without scrolling once the masthead is slim and the overlay switches
+     * are chips, and the width it gives back goes to the map.
      *
-     * The masthead spans both. The row beneath it is `minmax(0, 1fr)` so the
-     * columns are bounded by the dock rather than by their contents, which is
-     * what lets the taller one scroll inside itself while the zodiac panel and
-     * the title stay put. The dock itself no longer scrolls.
+     * The right dock is the one that still widens here: it holds the readouts,
+     * and they are the thing that wants the room.
      */
-    .dock--left {
-      display: grid;
-      /*
-       * Not an even split. The left column carries four panels and the right
-       * one, so an even split left the working sequence scrolling with half
-       * the dock standing empty beside it. The wider it is, the fewer of its
-       * toggle labels wrap, and the shorter it gets.
-       */
-      grid-template-columns: 1.45fr 1fr;
-      grid-template-rows: auto minmax(0, 1fr);
-      gap: var(--dock-gap);
-      overflow: hidden;
-    }
-
-    .dock--left > .masthead {
-      grid-column: 1 / -1;
-    }
-
-    .dock-column {
-      display: flex;
-      flex-direction: column;
-      gap: var(--dock-gap);
-      min-width: 0;
-      min-height: 0;
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      scrollbar-width: thin;
+    :root {
+      --dock-width: clamp(14rem, 15vw, 17rem);
+      --dock-width-right: clamp(20rem, 21vw, 26rem);
     }
 
     .dock--right > * > .panel {
@@ -353,9 +372,10 @@
 
   .masthead__title {
     font-family: var(--face-display);
-    font-size: var(--size-title);
+    /* A size down from --size-title: it names the app, it is not a headline. */
+    font-size: var(--size-heading);
     margin: 0;
-    line-height: 1.15;
+    line-height: 1.2;
   }
 
   .masthead__subtitle {
@@ -703,24 +723,27 @@
    * left a ragged edge whenever a label wrapped or the fourth toggle was absent.
    * An odd one out spans both columns so the block always ends square.
    */
+  /*
+   * The overlay switches, as a wrapped row of chips.
+   *
+   * They were seven full-width buttons and the tallest panel on screen at
+   * 335px. Nothing about them wants a column each: they are independent
+   * on/off marks, most of which are left alone once set, and a wrapped row
+   * says that better while costing a third of the height.
+   */
   .toggle-grid {
-    display: grid;
-    /*
-     * Two up where there is room for two, one up where there is not.
-     *
-     * A hard repeat(2, ...) gave each button about 70px once the docks split
-     * into columns, and Czech labels do not fit in 70px: break-word had to
-     * step in and was cutting them mid-syllable - Konstru/kce, Obrazc/e
-     * souhvez/di. auto-fit drops the block to a single full-width column
-     * before it comes to that, and restores the pair as soon as the dock is
-     * wide enough to hold one.
-     */
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.5rem), 1fr));
-    gap: 0.35rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.26rem;
   }
 
-  .toggle-grid > :last-child:nth-child(odd) {
-    grid-column: 1 / -1;
+  .toggle-grid button:not(.icon-button) {
+    flex: 0 1 auto;
+    font-size: var(--size-label);
+    letter-spacing: 0.02em;
+    padding: 0.2rem 0.5rem;
+    hyphens: auto;
+    overflow-wrap: break-word;
   }
 
   /*
@@ -1386,6 +1409,18 @@
     .dock--top-right {
       flex-direction: row;
       justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    /*
+     * The docks go static here, so an absolutely positioned menu would hang off
+     * the page rather than off the bar it belongs to. In the stacked layout it
+     * simply flows underneath, which is what a narrow screen wants anyway.
+     */
+    .settings-menu {
+      position: static;
+      width: 100%;
+      max-width: none;
     }
   }
 }

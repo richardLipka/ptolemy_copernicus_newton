@@ -10,9 +10,8 @@
 import { BODIES, BODY_IDS, type BodyId } from '@orrery/core/bodies';
 import { MODES, type EngineId, type ModeId } from '@orrery/core/engines/types';
 import { dateFromJd } from '@orrery/core/time';
-import type { ZodiacScheme } from '@orrery/core/zodiac';
 import { formatNumber, t } from '../i18n/i18n';
-import type { GhostSelection, ScaleMode, SphereCentre, Store } from '../state/store';
+import type { GhostSelection, ScaleMode, Store } from '../state/store';
 import {
   COMPARISON_ENGINES,
   buildRecentredHarness,
@@ -199,68 +198,6 @@ export function renderControls(container: HTMLElement, store: Store): void {
   // sentence instead of as the body they name.
   bodyPanel.appendChild(note(t('bodies.focusHint')));
 
-  // --- view -------------------------------------------------------------
-
-  const viewPanel = panel(t('view.zodiac.label'));
-
-  const schemeRow = el('div', 'segmented');
-  const schemes: { id: ZodiacScheme; label: string }[] = [
-    { id: 'signs', label: t('view.zodiac.signs') },
-    { id: 'constellations', label: t('view.zodiac.constellations') },
-  ];
-  for (const scheme of schemes) {
-    schemeRow.appendChild(
-      toggleButton(scheme.label, state.zodiacScheme === scheme.id, () =>
-        store.setZodiacScheme(scheme.id),
-      ),
-    );
-  }
-  viewPanel.appendChild(schemeRow);
-
-  // What the sphere is drawn around. Concentric with the map is the traditional
-  // orrery arrangement; around the observer is where the sky actually belongs,
-  // and is the only way to get straight sight-lines in a heliocentric view.
-  const centreRow = el('div', 'segmented');
-  const centres: { id: SphereCentre; label: string }[] = [
-    { id: 'frame', label: t('view.sphere.frame') },
-    { id: 'observer', label: t('view.sphere.observer') },
-  ];
-  for (const centre of centres) {
-    centreRow.appendChild(
-      toggleButton(centre.label, state.sphereCentre === centre.id, () =>
-        store.setSphereCentre(centre.id),
-      ),
-    );
-  }
-  viewPanel.appendChild(centreRow);
-  viewPanel.appendChild(
-    note(state.sphereCentre === 'observer'
-        ? t('view.sphere.observerHint')
-        : t('view.sphere.frameHint')),
-  );
-
-  const scaleRow = el('div', 'segmented');
-  const scales: { id: ScaleMode; label: string }[] = [
-    { id: 'compressed', label: t('view.compressedScale') },
-    { id: 'true', label: t('view.trueScale') },
-  ];
-  for (const scale of scales) {
-    scaleRow.appendChild(
-      toggleButton(scale.label, state.scaleMode === scale.id, () =>
-        store.setScaleMode(scale.id),
-      ),
-    );
-  }
-  viewPanel.appendChild(scaleRow);
-  viewPanel.appendChild(note(t('view.scaleHint')));
-
-  // The wheel has no visible affordance, so it needs saying — as does the way
-  // back. Deliberately static: putting the live magnification here would tie the
-  // controls to a value that changes on every wheel tick, and rebuilding the
-  // panels through a gesture is exactly the trap the clock readout fell into.
-  viewPanel.appendChild(note(t('view.zoomHint')));
-
-
   // --- harness ----------------------------------------------------------
   //
   // Everything drawn over the bodies themselves, each switchable on its own.
@@ -316,6 +253,31 @@ export function renderControls(container: HTMLElement, store: Store): void {
   }
 
   harnessPanel.appendChild(toggles);
+
+  /*
+   * Scale sits with the overlays rather than in a panel of its own.
+   *
+   * It is not a preference to be set once and forgotten — swapping a compressed
+   * map for an honest one is a thing a lecturer does mid-sentence — so it stays
+   * on screen while the zodiac choices went behind the cog. And it belongs
+   * here: like the switches above it, it changes what the map shows without
+   * touching what the model computes.
+   */
+  const scaleRow = el('div', 'segmented');
+  const scales: { id: ScaleMode; label: string }[] = [
+    { id: 'compressed', label: t('view.compressedScale') },
+    { id: 'true', label: t('view.trueScale') },
+  ];
+  for (const scale of scales) {
+    scaleRow.appendChild(
+      toggleButton(scale.label, state.scaleMode === scale.id, () =>
+        store.setScaleMode(scale.id),
+      ),
+    );
+  }
+  harnessPanel.appendChild(scaleRow);
+  harnessPanel.appendChild(note(t('view.scaleHint')));
+  harnessPanel.appendChild(note(t('view.zoomHint')));
 
   if (state.showOrbits) {
     // Status rather than explanation — how much history exists right now — so it
@@ -478,27 +440,20 @@ export function renderControls(container: HTMLElement, store: Store): void {
   }
 
   /*
-   * Two explicit columns rather than the CSS multicol this used to be.
+   * One column, read straight down: which model, held still about what, showing
+   * what, of which body.
    *
-   * Multicol balances: it chooses where the break falls, and it kept putting
-   * the split in the middle of the run of controls that belong together. The
-   * left column is now the working sequence read straight down — which model,
-   * held still about what, showing what, of which body. The zodiac settings are
-   * the one thing that is not part of that sequence, so they take the second
-   * column on their own.
+   * It was briefly two, with the zodiac settings alone in the second — but
+   * those have gone behind the cog with the other things nobody sets twice, and
+   * a column holding one short panel beside a scrolling one was the worse half
+   * of the trade. One column also lets the dock be narrower, which is what buys
+   * the map its space back.
    *
    * Appended here rather than as each panel is built, because the order wanted
    * on screen is not the order they are cheapest to build in: "what to show" is
    * constructed last and belongs third.
-   *
-   * Below the wide breakpoint both columns are `display: contents`, and the
-   * panels stack in exactly this order.
    */
-  const columnMain = el('div', 'dock-column dock-column--main');
-  const columnSide = el('div', 'dock-column dock-column--side');
-  columnMain.append(modelPanel, vantagePanel, harnessPanel, bodyPanel);
-  columnSide.append(viewPanel);
-  container.append(columnMain, columnSide);
+  container.append(modelPanel, vantagePanel, harnessPanel, bodyPanel);
 }
 
 

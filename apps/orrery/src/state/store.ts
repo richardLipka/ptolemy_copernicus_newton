@@ -183,6 +183,14 @@ export interface State {
   theme: ThemeId;
   /** The calculation and demonstrations overlay, opened on demand. */
   showCalculation: boolean;
+  /**
+   * The settings menu behind the top bar's cog.
+   *
+   * Language, look, and how the zodiac ring is drawn: eleven buttons that are
+   * set once and then never touched, which used to sit on screen permanently —
+   * five of them for the theme alone. They shape nothing about the model.
+   */
+  showSettings: boolean;
   /** The first-run welcome, shown until dismissed once. */
   showWelcome: boolean;
   /** Whether the controls' explanatory prose is shown. */
@@ -234,6 +242,7 @@ export class Store {
       locale: getLocale(),
       theme: readStoredTheme(),
       showCalculation: false,
+      showSettings: false,
       showWelcome: !hasBeenWelcomed(),
       showNotes: readStoredNotes(),
       julianDate: this.clock.julianDate,
@@ -468,6 +477,11 @@ export class Store {
   setCalculationOpen(showCalculation: boolean): void {
     if (showCalculation === this.state.showCalculation) return;
     this.patch({ showCalculation });
+  }
+
+  setSettingsOpen(showSettings: boolean): void {
+    if (showSettings === this.state.showSettings) return;
+    this.patch({ showSettings });
   }
 
   /** Dismissing the welcome is permanent; this browser has now seen it. */

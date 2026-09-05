@@ -312,6 +312,7 @@
   "calc.newton.twoBody": "Two-body solution — Kepler's ellipse, derived",
   "calc.newton.integrated": "All nine bodies, integrated (this app)",
   "notes.toggle": "Show explanations",
+  "settings.label": "Settings",
   "bodies.label": "Bodies",
   "ghost.all": "All models at once",
   "welcome.title": "Four ways of predicting a planet",
@@ -347,5 +348,6 @@
   "track.title": "Where {{body}} appears, night after night",
   "track.window": "{{days}} days shown, cycle {{cycle}}",
   "track.none": "Select a body to plot the track it traces against the stars.",
-  "track.hint": "Longitude runs up the plot, time across it. This is the record an observer keeps: a body's place among the stars, night after night. Where the curve doubles back, the body is retrograde. The rings mark the two stations. Ptolemy's epicycle and Copernicus's moving Earth were both built to reproduce this one shape."
+  "track.hint": "Longitude runs up the plot, time across it. This is the record an observer keeps: a body's place among the stars, night after night. Where the curve doubles back, the body is retrograde. The rings mark the two stations. Ptolemy's epicycle and Copernicus's moving Earth were both built to reproduce this one shape.",
+  "view.sphere.label": "Celestial sphere"
 }

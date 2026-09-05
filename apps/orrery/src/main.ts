@@ -214,15 +214,21 @@ const skyStrip = createSkyStrip(skyHost, store);
 let dateInput: HTMLInputElement | null = null;
 let clockReadout: HTMLElement | null = null;
 
+/*
+ * The title, and only the title.
+ *
+ * The subtitle spelled out PTOLEMY · COPERNICUS · KEPLER · NEWTON directly
+ * above four buttons reading Ptolemy, Copernicus, Kepler and Newton. It cost
+ * two lines at the top of the dock to say what the next control says better, so
+ * it is the tooltip now and the heading is set a size down.
+ */
 function renderMasthead(): void {
   masthead.replaceChildren();
   const title = document.createElement('h1');
   title.className = 'masthead__title';
   title.textContent = t('app.title');
-  const subtitle = document.createElement('p');
-  subtitle.className = 'masthead__subtitle';
-  subtitle.textContent = t('app.subtitle');
-  masthead.append(title, subtitle);
+  masthead.title = t('app.subtitle');
+  masthead.append(title);
 }
 
 // --- update budgets ------------------------------------------------------
@@ -280,6 +286,8 @@ function controlsSignature(): string {
     // The prose itself hides via CSS, but the top bar's toggle has to redraw
     // to show which way it is set.
     state.showNotes,
+    // The cog's own pressed state, and whether its menu is on screen.
+    state.showSettings,
     state.playing,
     state.rateDaysPerSecond,
   ].join('|');
@@ -644,6 +652,21 @@ root.addEventListener(
  * Ignored while a control has focus, or space would toggle the button under the
  * cursor and the arrows would walk a select through its options.
  */
+/*
+ * A menu that opens on a click closes on the next one somewhere else.
+ *
+ * Captured on the document rather than bound to a backdrop, because a backdrop
+ * over the map would swallow the drag and wheel gestures the instrument lives
+ * on. The cog is excluded so its own click is not counted twice — the toggle
+ * would close what it had just opened.
+ */
+document.addEventListener('pointerdown', (event: PointerEvent) => {
+  if (!store.get().showSettings) return;
+  const target = event.target as Element | null;
+  if (target?.closest('.settings-menu') || target?.closest('[data-settings-toggle]')) return;
+  store.setSettingsOpen(false);
+});
+
 window.addEventListener('keydown', (event: KeyboardEvent) => {
   if (event.key === 'Escape') {
     if (store.get().showWelcome) {
@@ -652,6 +675,10 @@ window.addEventListener('keydown', (event: KeyboardEvent) => {
     }
     if (store.get().showCalculation) {
       store.setCalculationOpen(false);
+      return;
+    }
+    if (store.get().showSettings) {
+      store.setSettingsOpen(false);
       return;
     }
   }

@@ -1467,28 +1467,62 @@ draws and insists on a real wording for all of it in both languages — `t` fall
 back to English silently, so the dictionaries are checked as data rather than
 through it.
 
-### 13.0d The left dock's two columns are placed, not balanced
+### 13.0d Weight: what is on screen at once, and what is behind a cog
 
-CSS multicol balances, which means it picks where the break falls — and it kept
-choosing the middle of the run of controls that belong together. The columns are
-real elements now (`.dock-column`, built in `renderControls`): the working
-sequence on the left, read straight down as **model → stationary point → what to
-show → bodies**, and the zodiac settings alone on the right, being the one group
-that is not part of that sequence.
+The map is the subject and it was the smallest thing on screen. Measured at
+1440x900 before this pass: the instrument took **12% of the screen** against
+**45%** for the docks, with **49 buttons, 10 panels, 12 readouts and 109
+bordered elements** all visible at once, and **21% of every panel's height**
+going to its own title, padding and border.
 
-The masthead spans both. The row beneath it is `minmax(0, 1fr)`, so the columns
-are bounded by the dock rather than by their own contents — which is what lets
-the taller one scroll inside itself while the title and the zodiac panel stay
-put. The dock itself no longer scrolls.
+Four things were compounding, and each got the same answer — take it off screen
+or make it smaller, never redraw it prettier:
 
-The split is `1.45fr 1fr` rather than even. Four panels against one made an even
-split leave the working column scrolling with half the dock empty beside it, and
-the wider that column is the fewer of its toggle labels wrap, so it gets shorter
-as well. It still scrolls below about 1000px of viewport height, which is the
-honest cost of asking for four panels in one column.
+- **Nothing was ever hidden.** Eighteen of the 49 buttons were set once and then
+  never touched: five themes, two languages, the zodiac scheme, the sphere
+  centre. They now live behind the cog (`topBar.ts`), which is the whole of
+  `showSettings`. Scale stayed out in the open on purpose — swapping a
+  compressed map for an honest one is a thing a lecturer does mid-sentence — and
+  moved in beside the overlay switches, where it belongs: like them it changes
+  what the map shows without touching what the model computes.
+- **The overlay switches were the tallest panel on screen**, seven full-width
+  buttons at 335px. They are independent on/off marks, so they are a wrapped row
+  of chips now.
+- **The masthead spent two lines** saying PTOLEMY · COPERNICUS · KEPLER · NEWTON
+  directly above four buttons reading exactly that. The subtitle is the tooltip
+  and the heading is a size down: 130px to 56px.
+- **The left dock was as wide as the right** though it holds only controls while
+  the right holds readouts. They have separate widths now (`--dock-width` and
+  `--dock-width-right`), and the space the left gives up goes to the map.
 
-Below the wide breakpoint both wrappers are `display: contents` and the panels
-stack in that same order, so the DOM order is the reading order at every width.
+After: **15.8%** for the instrument against **32.7%** for the docks, **39**
+buttons, **9** panels. The map's diameter went from 447px to **511px** — a
+third more area — without a line of the drawing code changing, because the
+circle is sized by the shorter side of the field and the field simply got
+wider.
+
+The one thing that fought back: the settings menu is a popover inside
+`.dock--top-right`, and every dock is `z-index: 2`, so they paint in DOM order
+and the top-right one is first. The menu was buried under the selected-body
+panel however high its own z-index went, because that index only ranks it
+*inside* its own dock's stacking context. The dock itself had to outrank the
+others.
+
+### 13.0e The left dock is one column
+
+It reads straight down as **model → stationary point → what to show → bodies**,
+which is the order the work is done in.
+
+It was briefly two columns — CSS multicol balances, so it picked the break
+itself and kept choosing the middle of that sequence, and hand-placed columns
+put the zodiac settings alone in the second. Then those went behind the cog with
+everything else nobody sets twice, leaving one short panel beside a scrolling
+one. One column is both lighter and narrower, and the width it gives back is
+what the map gained.
+
+Four panels come to about 900px, so the dock still scrolls below roughly 1000px
+of viewport height. That is the honest cost of the sequence being four panels
+long.
 
 ### 13.3a The recentred harness — what a heliocentric model turns into
 
