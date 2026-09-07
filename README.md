@@ -98,6 +98,26 @@ quietly regress.
   planet is retrograde; that shape is the single phenomenon both Ptolemy's
   epicycle and Copernicus's moving Earth were built to reproduce, and switching
   model redraws it.
+- **Watch a heliocentric model turn into Ptolemy's.** Under Copernicus or Kepler,
+  hold something other than the Sun still and a **Composition** overlay becomes
+  available. It draws the model's own two orbits, chained end to end — where the
+  stationary body goes, then where the selected body goes from there — and their
+  sum lands exactly on the planet the engine had already placed. What that chain
+  looks like on screen is a deferent carrying an epicycle. The overlay computes
+  nothing of its own; it just declines to do the subtraction in one step.
+
+  The only rule is that the larger orbit is the deferent, and it reproduces the
+  *Almagest*'s own split without being told to. Hold the **Earth** still and pick
+  **Venus**: the Sun carries the epicycle, which is exactly how Ptolemy lays out
+  an inferior planet — and how Tycho laid out everything. Pick **Mars** instead
+  and the deferent is Mars's own orbit, the epicycle riding it is the Earth's
+  orbit reversed, and nothing at all sits at the joint. That is Ptolemy's
+  superior planet, and it is why his epicycle arm always stayed parallel to the
+  direction of the Sun: the arm *is* the Earth's orbit, in a model that did not
+  know the Earth had one.
+
+  The point is not that Ptolemy was right. It is that the disagreement was never
+  about the geometry — only about which body to hold still.
 - **See the machinery.** In Ptolemy and Copernicus modes, select a body and the
   construction appears: deferent, epicycle, the arms carrying them, and the
   **equant** — the off-centre point about which the epicycle's centre sweeps
@@ -179,8 +199,10 @@ quietly regress.
 
 ## Five looks
 
-The map runs full-bleed with the controls floating over it, and the top-right bar
-switches language and theme. Your choice of both is remembered.
+The map runs full-bleed with the controls floating over it. Language, theme and
+the zodiac scheme live together behind the gear in the top-right corner, with the
+things you change often — model, stationary point, what to draw — left out on the
+panels where they belong. Your choice of language and theme is remembered.
 
 - **Parchment** — brass instrument on paper, c. 1750. Engraved hairlines, hard
   edges, no depth, because a printed plate has none.
@@ -234,7 +256,7 @@ npm install && npm run dev
 Other commands:
 
 ```bash
-npm test          # ~400 tests, mostly of the orbital mathematics
+npm test          # ~510 tests, mostly of the orbital mathematics
 npm run typecheck # strict TypeScript, no emit
 npm run build     # static output in apps/orrery/dist/
 ```
@@ -323,10 +345,12 @@ always between Earth and the Sun, the superior planets always beyond it.
 
 That is also what lets the app re-run the observation that settled the argument.
 Select Venus and switch between Ptolemy and Newton: penned inside the Sun's
-shell, Ptolemy's Venus never exceeds 44% lit, so the model says crescent where
-the sky says full. Note the direction of the two verdicts — Ptolemy's longitudes
-*beat* Copernicus's, so the case could not be made on where the planets appear.
-It was made on how they are lit.
+shell, Ptolemy's Venus never exceeds 44% lit — 43.8% at its fullest — so the
+model says crescent where the sky says full. That is why the case was settled on
+how the planets are *lit* rather than on where they appear: in longitude the two
+systems sit in the same bracket, far too close for any pre-telescopic observation
+to separate them, and Ptolemy's own tables were no worse in practice than the
+Copernican ones anybody actually used.
 
 Ptolemy comes in three sub-modes. Two share his geometry and differ only in where
 the angles come from: **modern mean longitudes**, which isolate the error in his
@@ -397,6 +421,17 @@ při stejném heliocentrickém uspořádání. Nerozhodl střed, ale tvar dráhy
   pohybuje rovnoměrně; u Koperníka **excentr s posunutým středem a malý epicykl**,
   jímž nahradil ekvant; u Keplera elipsa s **oběma ohnisky** — v jednom je Slunce,
   ve druhém není nic — a průvodič; u Newtona vektory sil a rychlosti.
+- **Sledovat, jak se z heliocentrického modelu stane ten Ptolemaiův** — u Koperníka
+  a Keplera lze při jiném nehybném bodě než Slunci zapnout překrytí **Skládání**.
+  Vykreslí dvě dráhy, které model už zná, navázané za sebou; jejich součet padne
+  přesně tam, kam těleso postavil sám model. Výsledný obrazec je deferent nesoucí
+  epicykl. Platí jediné pravidlo — větší dráha je deferent — a to samo od sebe
+  reprodukuje dělení, které dělá už *Almagest*: se Zemí ve středu nese u Venuše
+  epicykl Slunce (tak to má Ptolemaios u vnitřních planet a Tycho u všech),
+  zatímco u Marsu je deferentem dráha Marsu a epicyklem obrácená dráha Země,
+  v jejich kloubu neleží nic — a právě proto zůstávalo Ptolemaiovo rameno epicyklu
+  rovnoběžné se směrem ke Slunci. Nejde o to, že by měl Ptolemaios pravdu, ale
+  o to, že spor nikdy nebyl o geometrii, nýbrž o to, které těleso zastavit.
 - **Porovnat dva modely naráz** — druhý model se vykreslí slabě vedle aktivního.
 - **Číst oblohu** — záměrné přímky z místa pozorování míří na pás zvěrokruhu
   a ukazují, kde těleso *vypadá*, na rozdíl od toho, kde *je*. Pás lze přepnout
@@ -412,4 +447,5 @@ npm install && npm run dev
 ```
 
 Aplikace je plně lokalizovaná do češtiny a angličtiny; výchozím jazykem je
-čeština.
+čeština. Jazyk, vzhled a volbu zvěrokruhu najdete pod ozubeným kolem vpravo
+nahoře, ostatní ovládání zůstává na panelech kolem mapy.

@@ -255,50 +255,34 @@
     width: auto;
   }
 
-  /*
-   * Until the dock is wide enough to hold two columns the wrappers are not
-   * there at all, and the panels stack in the dock's own flow in DOM order.
-   */
-  .dock-column {
-    display: contents;
-  }
-
   /* Docks must not swallow clicks where they have no panel. */
   .dock:empty {
     display: none;
   }
 
   /*
-   * --- wide viewports: two columns a side ---------------------------------
+   * --- wide viewports: give the right dock the spare width -----------------
    *
    * The instrument is a circle, and on any screen wider than it is tall the
    * circle is sized by the *height*. A 1920x1080 window draws a 949px map into
-   * a field 1264px wide and simply wastes the remaining 315px. Meanwhile both
-   * docks are scrolling.
+   * a field 1264px wide and simply wastes the remaining 315px, while the docks
+   * beside it scroll. So the docks take that width instead — bounded, so the
+   * field never becomes narrower than it is tall, which is the point at which
+   * widening would start costing the map rather than the margin.
    *
-   * So the docks take that width instead. They widen and split in two, the map
-   * keeps the diameter it already had — its limit was never horizontal — and
-   * roughly 2400px of panel stops needing a scrollbar to reach. Multicol rather
-   * than grid because the panels differ in height and should flow to wherever
-   * there is room, not line up in rows against a neighbour they have nothing to
-   * do with.
+   * This went through two arrangements that are worth not repeating. Multicol
+   * balanced the left dock and kept choosing to break in the middle of the run
+   * of controls that belong together; hand-placed grid columns fixed that but
+   * left the zodiac panel alone in a short second column. Both are gone: the
+   * settings that nobody sets twice went behind the cog, and what remains fits
+   * one column.
    *
-   * Panels are addressed by class rather than as children: the hosts between
-   * them are display:contents, so > * would set a margin on a box that is not
-   * there. Nothing nests a panel inside a panel, which is what makes that safe.
+   * Panels are addressed by class rather than as children — the hosts between
+   * them are display:contents, so `> *` would set a property on a box that is
+   * not there. Nothing nests a panel inside a panel, which is what makes that
+   * safe.
    */
   @media (min-width: 84rem) {
-    /*
-     * Bounded so the map keeps the diameter it had at one column. The circle is
-     * sized by the shorter side of the field, so the docks may take width right
-     * up to the point where the field stops being wider than it is tall — past
-     * that they would start costing the instrument, which is the one thing on
-     * screen that must not shrink to make room for the writing around it.
-     */
-    :root {
-      --dock-width: clamp(22rem, 21vw, 28rem);
-    }
-
     /*
      * The left dock stays one column and simply gets no wider.
      *

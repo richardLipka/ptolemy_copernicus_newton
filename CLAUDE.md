@@ -904,41 +904,50 @@ through a 34px window the height of that bar. It looked like a panel that had
 lost its contents rather than one that had been crushed, which is why it stood
 for a while.
 
-**Two columns a side, once there is room.** The instrument is a circle, so on any
+**The spare width goes to the right dock.** The instrument is a circle, so on any
 screen wider than it is tall its size is set by the *height* — a 1920×1080 window
 drew a 949px map into a field 1264px wide and wasted the rest, while both docks
-scrolled. Past 84rem the docks take that spare width instead: they widen, split
-into two columns, and some 2400px of panel stops needing a scrollbar to reach.
-The dock width is bounded so the field never becomes narrower than it is tall,
-which is the point at which widening would begin costing the map.
+scrolled. Past 84rem that width is redistributed: the right dock, which carries
+the readouts and is the thing that wants room, widens to `--dock-width-right`,
+and the left settles at a narrower `--dock-width` than it has below the
+breakpoint. Both are bounded so the field never becomes narrower than it is tall,
+which is the point at which widening would begin costing the map. At 1920×1080
+the map keeps all 949px and neither dock scrolls.
 
-Three rules keep that from breaking, each of which it broke first:
+**The left dock got there by losing content, not by gaining columns.** Two
+arrangements were tried and both are worth not repeating. Multicol balanced the
+column and kept choosing to break in the middle of the run of controls that
+belong together. Hand-placed grid columns fixed the break but left the zodiac
+panel alone in a short second column beside a scrolling one. What actually solved
+it was moving the settings nobody sets twice — language, theme, zodiac scheme,
+the comparison model — behind the cog, after which what remained fits one column.
 
-- **No panel may exceed the column height** — `max-height: 100%`, with a
-  scrollbar of its own if it comes to that. `break-inside: avoid` is a preference
-  and not a guarantee: a panel that does not fit is split regardless. The
-  selected-body panel is 876px of readouts against a 656px column on a 900px
-  screen, and it was being cut in half, its remainder taking the second column
-  and shunting the events panel into a third one off the side of the dock.
+Three rules survive from that work, because each of them was a real defect:
+
+- **A panel may not exceed the height it is given** — `max-height`/`min-height: 0`
+  with a scrollbar of its own. The selected-body panel is 876px of readouts
+  against a 656px slot on a 900px screen, and under multicol it was being cut in
+  half, its remainder taking the next column and shunting the events panel off
+  the side of the dock.
 - **The events feed is bounded** — `.event-list`, 46vh. It is the one panel whose
   height is set by how much sky there is rather than by how much there is to say,
   and left alone it decided the height of everything around it.
 - **Anything with an intrinsic width has to be told it may shrink.** A grid item
   defaults to `min-width: auto`, and a `select` reports its longest *option* as
   its content — 244px of "Almagest — Ptolemaiovy tabulky" inside a 172px field,
-  quietly pushing its panel wider than the column. Toggle labels are the same
-  case, and now drop to one per row rather than breaking Czech words mid-syllable.
+  quietly pushing its panel wider than the space it had. Toggle labels are the
+  same case, and drop to one per row rather than breaking Czech mid-syllable.
 
-Below 84rem the docks stay a single column and still scroll, by roughly half what
-they did before. Fitting them there would mean a map small enough to defeat the
-purpose of having one.
+Below 84rem the docks share one width and the left one scrolls. Fitting it there
+would mean a map small enough to defeat the purpose of having one.
 
 **Panel type is a step smaller than the map's**, set on `.dock` rather than
 lowered globally. A zodiac label is read at a glance from across a lecture room;
 a panel is read up close by someone who has already decided to look at it. Sized
 alike the panels shout, and the column runs off the bottom of the screen.
 
-**Themes.** Five looks, chosen from the top bar and remembered in localStorage:
+**Themes.** Five looks, chosen from the settings menu under the cog and
+remembered in localStorage:
 
 | id | |
 |---|---|
@@ -968,10 +977,18 @@ Files: `tokens.css` (contract and fallbacks), `theme-*.css` (one per look),
 `@layer tokens, structure, components, theme` fixes the precedence.
 
 **Contrast** was measured rather than eyeballed, on the body surface: body text
-10.0–15.2:1 across all four themes, engraved ring hairlines 4.2–6.2:1, ring
+10.0–17.8:1 across the five themes, engraved ring hairlines 2.7–6.2:1, ring
 labels 6.3–14.1:1. Atelier's muted text was darkened from the inherited value,
 which only reached 3.4:1 against a near-white ground; Orrery keeps the original,
 since preserving that look is the point of having both.
+
+The hairline figure is the one to watch, and Flightdeck is why it moved. That
+theme holds its chrome deliberately dim so the bodies can be the brightest thing
+on screen (§10), and the ring it draws comes to **2.7:1** against its own ground
+— under the 3:1 a graphical object of that kind wants, where the other four sit
+between 4.2 and 6.2. It is legible in practice because the ring is a continuous
+figure rather than a detail to be picked out, but it is a real shortfall and it
+is the first thing to fix if that palette is revisited.
 
 **Zoom** is the mouse wheel, and needs no centre of its own. Every element on the
 instrument is positioned in units of `--unit`, and the frame origin sits at the
@@ -1767,8 +1784,9 @@ the one thing a scale bar must never do. It sits on a small panel-coloured chip
 because the edge pointers run along the same bottom strip of the field and the
 two would otherwise overlap illegibly at high magnification.
 
-Verified across all four themes (the chip and ink resolve to sensible contrast
-pairs in each) and at mobile width, where the target shrinks with the viewport.
+Verified across all five themes — ink against chip runs 9.1:1 on LCARS to
+16.9:1 on Flightdeck — and at mobile width, where the target shrinks with the
+viewport.
 
 ### 13.3e Ptolemy's distances are in his own unit, not in AU
 
