@@ -2,3 +2,7 @@ node_modules/
 dist/
 *.local
 .DS_Store
+
+# Release artefacts, built from dist/ and attached to the GitHub release
+# rather than carried in the tree.
+*.zip
