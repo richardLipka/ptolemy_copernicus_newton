@@ -110,3 +110,71 @@ describe('ringGeometry', () => {
     expect(scale).toBeGreaterThan(1);
   });
 });
+
+/*
+ * The exporter is a second renderer, and the failure mode of having two is that
+ * one of them learns a new trick.
+ *
+ * That is exactly what happened: the composition overlay was added to
+ * `orrery.ts` and the SVG exporter knew nothing about it, so a map saved with it
+ * switched on came back without it — and with the construction switch off, came
+ * back with no machinery at all, because the export gated the whole block on
+ * `showConstruction` where the live layer gates on either switch.
+ *
+ * Neither half of that is reachable from a unit test: `buildMapSvg` needs
+ * `getComputedStyle` for the palette, and the environment here is plain Node.
+ * What *is* reachable is the thing that actually went wrong — the two files
+ * disagreeing about which view-model selectors get drawn. Source-level, and
+ * crude, but it fails on the commit that introduces the divergence rather than
+ * whenever somebody next opens the file.
+ */
+describe('the exporter draws everything the live renderer draws', () => {
+  /*
+   * Named one by one rather than fished out of a wildcard: the pattern has to
+   * be a literal for Vite to inline it at all, and two exact paths say plainly
+   * which files this rule is about.
+   */
+  const only = (modules: Record<string, unknown>): string => {
+    const values = Object.values(modules);
+    if (values.length !== 1) throw new Error('expected exactly one source file');
+    return values[0] as string;
+  };
+
+  const liveSource = only(
+    import.meta.glob('../orrery/orrery.ts', { query: '?raw', import: 'default', eager: true }),
+  );
+  const exportSource = only(
+    import.meta.glob('./mapSvg.ts', { query: '?raw', import: 'default', eager: true }),
+  );
+
+  /** The `build*` selectors a file imports, which is what it can draw from. */
+  const drawnWith = (text: string): string[] => {
+    const match = text.match(
+      /import\s*\{([^}]*)\}\s*from\s*['"][^'"]*state\/selectors['"]/,
+    );
+    if (!match) return [];
+    return match[1]!
+      .split(',')
+      .map((name) => name.trim().replace(/^type\s+/, ''))
+      .filter((name) => name.startsWith('build'))
+      .sort();
+  };
+
+  it('found both renderers', () => {
+    expect(drawnWith(liveSource).length).toBeGreaterThan(2);
+    expect(drawnWith(exportSource).length).toBeGreaterThan(2);
+  });
+
+  it('leaves no view-model behind', () => {
+    const live = drawnWith(liveSource);
+    const exported = drawnWith(exportSource);
+    expect(live.filter((name) => !exported.includes(name))).toEqual([]);
+  });
+
+  it('gates the harness on either switch, as the live layer does', () => {
+    const exporter = exportSource;
+    // Both switches reach the export, not just the construction one.
+    expect(exporter).toMatch(/state\.showConstruction\s*\|\|\s*state\.showRecentredHarness/);
+    expect(exporter).toContain('buildRecentredHarness(state, selected)');
+  });
+});

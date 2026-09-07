@@ -32,6 +32,7 @@ import { bodyName, formatNumber, t } from '../../i18n/i18n';
 import {
   buildConstruction,
   buildDynamicsView,
+  buildRecentredHarness,
   buildView,
   projectRadius,
   projectTrail,
@@ -145,10 +146,21 @@ function circleTag(
   );
 }
 
-function polylineTag(points: { x: number; y: number }[], stroke: string, width: number, opacity = 1): string {
+function polylineTag(
+  points: { x: number; y: number }[],
+  stroke: string,
+  width: number,
+  opacity = 1,
+  dasharray?: string,
+): string {
   if (points.length < 2) return '';
   const path = points.map((p) => `${num(p.x)},${num(p.y)}`).join(' ');
-  return `<polyline points="${path}" fill="none" stroke="${stroke}" stroke-width="${num(width, 2)}" opacity="${num(opacity)}" stroke-linejoin="round"/>`;
+  return (
+    `<polyline points="${path}" fill="none" stroke="${stroke}" stroke-width="${num(width, 2)}" ` +
+    `opacity="${num(opacity)}"` +
+    (dasharray ? ` stroke-dasharray="${dasharray}"` : '') +
+    ' stroke-linejoin="round"/>'
+  );
 }
 
 function textTag(
@@ -447,7 +459,7 @@ export function buildMapSvg({ width, height, state, trails }: MapSvgOptions): st
 
   // --- construction harness, or Newton's vectors --------------------------
 
-  if (state.showConstruction && state.selectedBody) {
+  if ((state.showConstruction || state.showRecentredHarness) && state.selectedBody) {
     const selected = state.selectedBody;
     const family = BODIES[selected].satellite ? BODIES[selected].parent : selected;
     const harnessBodies: BodyId[] = [selected];
@@ -476,7 +488,7 @@ export function buildMapSvg({ width, height, state, trails }: MapSvgOptions): st
       apsidal: 1,
     };
 
-    for (const body of harnessBodies) {
+    for (const body of state.showConstruction ? harnessBodies : []) {
       const construction = buildConstruction(state, body);
       if (!construction) continue;
 
@@ -520,6 +532,72 @@ export function buildMapSvg({ width, height, state, trails }: MapSvgOptions): st
           parts.push(circleTag(at, 4.5, 'none', palette.brassBright, 1.5));
         } else {
           parts.push(circleTag(at, 4.5, 'none', palette.brassDark, 1));
+        }
+      }
+    }
+
+    /*
+     * The composition overlay, on its own switch and dashed throughout.
+     *
+     * The live map draws this into the same pooled layer as the machinery above
+     * and tells the two apart with `data-overlay`, which resolves in CSS to a
+     * repeating gradient. An exported line has no CSS, so the dash pattern is
+     * written out here — and it has to be, because solid it would be
+     * indistinguishable from the model's own deferent sitting under it.
+     *
+     * The lengths match `layout.css`: 3-on-3-off for the curves, 5-on-5-off for
+     * the arms that carry the chain, and the apsidal line faintest of all. No
+     * markers, for the same reason the live overlay has none — the figure is
+     * the two curves and the joint between them, and a third kind of dot in the
+     * middle of the map only crowds it.
+     */
+    if (state.showRecentredHarness) {
+      const recentred = buildRecentredHarness(state, selected);
+      if (recentred) {
+        const overlayColor = (role: string): string =>
+          role === 'epicycle' || role === 'deferent-arm' || role === 'epicycle-arm'
+            ? palette.brassBright
+            : role === 'apsidal'
+              ? palette.brassDark
+              : palette.brass;
+        const isArm = (role: string): boolean =>
+          role === 'deferent-arm' || role === 'epicycle-arm';
+
+        for (const curve of recentred.curves) {
+          // Split on the same 0.6 map-radius jump the live renderer skips, so a
+          // curve that wraps the far side of the map is not closed across it.
+          let run: { x: number; y: number }[] = [];
+          for (let i = 0; i < curve.points.length; i++) {
+            if (i > 0) {
+              const gap = Math.hypot(
+                curve.points[i]!.x - curve.points[i - 1]!.x,
+                curve.points[i]!.y - curve.points[i - 1]!.y,
+              );
+              if (gap > 0.6) {
+                parts.push(
+                  polylineTag(run, overlayColor(curve.role), 1, curve.role === 'apsidal' ? 0.45 : 0.85, '3 3'),
+                );
+                run = [];
+              }
+            }
+            run.push(project(curve.points[i]!));
+          }
+          parts.push(
+            polylineTag(run, overlayColor(curve.role), 1, curve.role === 'apsidal' ? 0.45 : 0.85, '3 3'),
+          );
+        }
+
+        for (const arm of recentred.arms) {
+          parts.push(
+            lineTag(
+              project(arm.from),
+              project(arm.to),
+              overlayColor(arm.role),
+              isArm(arm.role) ? 1.5 : 1,
+              arm.role === 'apsidal' ? 0.45 : 0.85,
+              isArm(arm.role) ? '5 5' : '3 3',
+            ),
+          );
         }
       }
     }
