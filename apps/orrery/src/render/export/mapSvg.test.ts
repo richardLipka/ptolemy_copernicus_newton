@@ -1,21 +1,19 @@
 /**
- * The projection export builds its picture from, held to figures read back
- * from the running app.
+ * The map exporter, held to figures read back from the running app and to the
+ * geometry invariants the live renderer enforces.
  *
- * `mapProjection` and `ringGeometry` are the only parts of `mapSvg.ts` that
- * touch no DOM — everything else asks `getComputedStyle` for the current
- * theme's colours, which this suite's plain-Node environment cannot supply
- * (see `vitest.config.ts`). What is tested here is exactly the part that
- * decides *where* things land, which is also the part a silent regression
- * would be hardest to notice in: a wrong colour is obvious on screen, a wrong
- * scale quietly draws every body a few pixels from where the live map puts it.
+ * `mapProjection` and `ringGeometry` are pure; `buildMapSvg` accepts an
+ * optional `palette` so the full SVG output can be verified in plain Node
+ * without `getComputedStyle` — catching regressions in sight-line scaling,
+ * overlay gating, and vector visibility before they reach a saved file.
  */
 
 import { describe, expect, it } from 'vitest';
 
-import { mapProjection, ringGeometry } from './mapSvg';
-import type { OrreryView } from '../../state/selectors';
+import { jdFromCalendar } from '@orrery/core/time';
+import { buildView, type OrreryView } from '../../state/selectors';
 import type { State } from '../../state/store';
+import { buildMapSvg, mapProjection, ringGeometry, type MapPalette } from './mapSvg';
 
 describe('mapProjection matches the running app', () => {
   it('reproduces a measured configuration', () => {
@@ -176,5 +174,175 @@ describe('the exporter draws everything the live renderer draws', () => {
     // Both switches reach the export, not just the construction one.
     expect(exporter).toMatch(/state\.showConstruction\s*\|\|\s*state\.showRecentredHarness/);
     expect(exporter).toContain('buildRecentredHarness(state, selected)');
+  });
+});
+
+const TEST_PALETTE: MapPalette = {
+  surface: '#e8dcc0',
+  brassDark: '#7d6236',
+  brass: '#b08d57',
+  brassBright: '#d4b16a',
+  inkSoft: '#5a4a35',
+  inkFaint: '#665539',
+  textStrong: '#2e2317',
+  parchment: '#f5ecd4',
+  accentDark: '#7d6236',
+  shadowFill: 'rgba(24, 18, 10, 0.82)',
+  velocityTint: '#3f6f8f',
+  netForceTint: '#2e2317',
+  body: (id) => `#body-${id}`,
+};
+
+function makeState(overrides: Partial<State> = {}): State {
+  return {
+    mode: 'kepler',
+    engineId: 'keplerian',
+    ghostEngineId: null,
+    frameOrigin: 'sun',
+    observationPoint: 'earth',
+    selectedBody: null,
+    zodiacScheme: 'signs',
+    sphereCentre: 'frame',
+    scaleMode: 'compressed',
+    zoom: 1,
+    panX: 0,
+    panY: 0,
+    showOrbits: false,
+    showSightLines: false,
+    showStarFigures: false,
+    showConstruction: false,
+    showRecentredHarness: false,
+    showTrack: false,
+    showSky: false,
+    skyField: 40,
+    locale: 'en',
+    theme: 'orrery',
+    showCalculation: false,
+    showSettings: false,
+    showWelcome: false,
+    showNotes: false,
+    julianDate: jdFromCalendar(2026, 6, 15),
+    playing: false,
+    rateDaysPerSecond: 1,
+    ...overrides,
+  };
+}
+
+describe('buildMapSvg output invariants', () => {
+  it('lands observer-centred sight-lines and pips on the scaled zodiac ring', () => {
+    const state = makeState({
+      sphereCentre: 'observer',
+      scaleMode: 'compressed',
+      showSightLines: true,
+    });
+    const view = buildView(state);
+    const geometry = ringGeometry(state, view);
+    // Compressed scale observing from an off-centre Earth must grow the ring.
+    expect(geometry.scale).toBeGreaterThan(1);
+
+    const svg = buildMapSvg({
+      width: 800,
+      height: 800,
+      state,
+      trails: [],
+      palette: TEST_PALETTE,
+    });
+
+    const ringMatches = [
+      ...svg.matchAll(
+        /<circle cx="([^"]+)" cy="([^"]+)" r="([^"]+)" fill="none" stroke="#7d6236" stroke-width="1\.00" opacity="0\.75"\/>/g,
+      ),
+    ];
+    expect(ringMatches.length).toBe(2);
+    const innerRing = {
+      cx: Number(ringMatches[0]![1]),
+      cy: Number(ringMatches[0]![2]),
+      r: Number(ringMatches[0]![3]),
+    };
+
+    const pipMatches = [
+      ...svg.matchAll(
+        /<circle cx="([^"]+)" cy="([^"]+)" r="2\.50" fill="#f5ecd4" stroke="#body-[^"]+"/g,
+      ),
+    ];
+    expect(pipMatches.length).toBeGreaterThan(0);
+
+    for (const match of pipMatches) {
+      const px = Number(match[1]);
+      const py = Number(match[2]);
+      const dist = Math.hypot(px - innerRing.cx, py - innerRing.cy);
+      // Coordinates round to 0.01 px, so distance to the ring stays well under 0.05 px.
+      expect(Math.abs(dist - innerRing.r)).toBeLessThan(0.05);
+    }
+  });
+
+  it('omits Newton vectors when construction is off even if composition is on', () => {
+    const off = makeState({
+      mode: 'newton',
+      engineId: 'nbody',
+      frameOrigin: 'earth',
+      selectedBody: 'mars',
+      showConstruction: false,
+      showRecentredHarness: true,
+    });
+    const svgOff = buildMapSvg({
+      width: 800,
+      height: 800,
+      state: off,
+      trails: [],
+      palette: TEST_PALETTE,
+    });
+    expect(svgOff).not.toContain('<polygon');
+    expect(svgOff).not.toContain(`stroke="${TEST_PALETTE.velocityTint}"`);
+
+    const on = makeState({
+      mode: 'newton',
+      engineId: 'nbody',
+      frameOrigin: 'earth',
+      selectedBody: 'mars',
+      showConstruction: true,
+      showRecentredHarness: false,
+    });
+    const svgOn = buildMapSvg({
+      width: 800,
+      height: 800,
+      state: on,
+      trails: [],
+      palette: TEST_PALETTE,
+    });
+    expect(svgOn).toContain('<polygon');
+    expect(svgOn).toContain(`stroke="${TEST_PALETTE.velocityTint}"`);
+  });
+
+  it('draws the dashed composition overlay even when model construction is off', () => {
+    const state = makeState({
+      mode: 'kepler',
+      engineId: 'keplerian',
+      frameOrigin: 'earth',
+      selectedBody: 'mars',
+      showConstruction: false,
+      showRecentredHarness: true,
+    });
+    const svg = buildMapSvg({
+      width: 800,
+      height: 800,
+      state,
+      trails: [],
+      palette: TEST_PALETTE,
+    });
+    expect(svg).toContain('stroke-dasharray="3 3"');
+    expect(svg).toContain('stroke-dasharray="5 5"');
+    // Kepler's hollow focus rings belong to `showConstruction`, not the composition overlay.
+    const focusRing = `r="4.50" fill="none" stroke="${TEST_PALETTE.brassBright}"`;
+    expect(svg).not.toContain(focusRing);
+
+    const withModel = buildMapSvg({
+      width: 800,
+      height: 800,
+      state: { ...state, showConstruction: true },
+      trails: [],
+      palette: TEST_PALETTE,
+    });
+    expect(withModel).toContain(focusRing);
   });
 });

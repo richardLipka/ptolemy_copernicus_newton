@@ -79,7 +79,7 @@ interface Projector {
   unitPx: number;
 }
 
-interface Palette {
+export interface MapPalette {
   surface: string;
   brassDark: string;
   brass: string;
@@ -95,7 +95,7 @@ interface Palette {
   body: (id: BodyId) => string;
 }
 
-function readPalette(): Palette {
+function readPalette(): MapPalette {
   return {
     surface: resolveThemeColor('--surface'),
     brassDark: resolveThemeColor('--brass-dark'),
@@ -277,10 +277,17 @@ export interface MapSvgOptions {
   height: number;
   state: State;
   trails: readonly TrailSample[];
+  /** Optional pre-resolved colours, for tests or off-DOM callers. */
+  palette?: MapPalette;
 }
 
-export function buildMapSvg({ width, height, state, trails }: MapSvgOptions): string {
-  const palette = readPalette();
+export function buildMapSvg({
+  width,
+  height,
+  state,
+  trails,
+  palette = readPalette(),
+}: MapSvgOptions): string {
   const view = buildView(state);
   const { sphere, scale: ringScale, extent: ringExtent } = ringGeometry(state, view);
 
@@ -433,6 +440,10 @@ export function buildMapSvg({ width, height, state, trails }: MapSvgOptions): st
   if (state.showSightLines) {
     const observerCentred = state.sphereCentre === 'observer';
     const sphereForIntercept = observerCentred ? view.observerPoint : { x: 0, y: 0 };
+    // Match `orrery.ts`: the ring layer scales by `ringScale`, so the inner
+    // radius in map-radius units scales with it; unscaled `RING_INNER` leaves
+    // sight-lines and pips floating inside the ring whenever `ringScale > 1`.
+    const sightRingInner = ringInner * ringScale;
 
     for (const body of view.bodies) {
       if (body.isObserver) continue;
@@ -440,7 +451,7 @@ export function buildMapSvg({ width, height, state, trails }: MapSvgOptions): st
       const isSelected = state.selectedBody === body.id;
       if (satellite && !isSelected) continue;
 
-      const ray = ringIntercept(body.apparentLongitude, ringInner);
+      const ray = ringIntercept(body.apparentLongitude, sightRingInner);
       const target = { x: sphereForIntercept.x + ray.x, y: sphereForIntercept.y + ray.y };
       const tint = palette.body(body.id);
       const emphasis = state.selectedBody ? (isSelected ? 1 : 0.35) : 1;
@@ -602,7 +613,12 @@ export function buildMapSvg({ width, height, state, trails }: MapSvgOptions): st
       }
     }
 
-    const vectors: ProjectedVector[] | null = buildDynamicsView(state, selected);
+    // Newton's vectors belong to the construction switch alone, matching
+    // `orrery.ts` — toggling Composition on in Kepler and switching to Newton
+    // with Construction off must not leak hidden vectors into the export.
+    const vectors: ProjectedVector[] | null = state.showConstruction
+      ? buildDynamicsView(state, selected)
+      : null;
     if (vectors) {
       for (const vector of vectors) {
         const tint =
