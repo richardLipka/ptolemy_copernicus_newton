@@ -181,6 +181,15 @@ export interface State {
   activeTrialId: string | null;
   /** Whether the 5 outer-planet moon chips are expanded in the left rail. */
   showMoons: boolean;
+  /** Dual-chair split view: two independent models/frames on one shared clock. */
+  splitView: boolean;
+  splitMode: ModeId;
+  splitEngineId: EngineId;
+  splitFrameOrigin: BodyId;
+  splitShowRecentredHarness: boolean;
+  splitZoom: number;
+  splitPanX: number;
+  splitPanY: number;
   /**
    * How wide that band is, degrees of longitude — the band's own zoom.
    *
@@ -221,6 +230,8 @@ export class Store {
   readonly clock: SimulationClock;
   /** Where the bodies have been. Orbits are drawn from this, not predicted. */
   readonly trails = new TrailLog();
+  /** Independent trail log for the secondary split-view pane. */
+  readonly splitTrails = new TrailLog();
   private state: State;
   private readonly listeners = new Set<Listener>();
 
@@ -257,6 +268,14 @@ export class Store {
       activePopover: null,
       activeTrialId: null,
       showMoons: false,
+      splitView: false,
+      splitMode: 'ptolemy',
+      splitEngineId: 'ptolemaic-epicyclic',
+      splitFrameOrigin: 'earth',
+      splitShowRecentredHarness: false,
+      splitZoom: 1,
+      splitPanX: 0,
+      splitPanY: 0,
       skyField: DEFAULT_SKY_FIELD,
       locale: getLocale(),
       theme: readStoredTheme(),
@@ -340,6 +359,7 @@ export class Store {
     }
 
     this.trails.reset();
+    this.splitTrails.reset();
     this.patch({
       mode,
       engineId,
@@ -359,6 +379,7 @@ export class Store {
 
   clearTrails(): void {
     this.trails.reset();
+    this.splitTrails.reset();
     this.emit();
   }
 
@@ -416,12 +437,15 @@ export class Store {
 
   setScaleMode(scaleMode: ScaleMode): void {
     this.trails.invalidateProjection();
+    this.splitTrails.invalidateProjection();
     // Leaving true scale drops the ceiling from a thousand to twenty, so a deep
     // lunar zoom has to come back with it or the compressed view opens somewhere
     // absurd.
+    const cap = maxZoomFor(scaleMode);
     this.patch({
       scaleMode,
-      zoom: Math.min(this.state.zoom, maxZoomFor(scaleMode)),
+      zoom: Math.min(this.state.zoom, cap),
+      splitZoom: Math.min(this.state.splitZoom, cap),
     });
   }
 
@@ -506,6 +530,94 @@ export class Store {
     this.patch({ activeTrialId: null });
   }
 
+  // --- dual-chair split view --------------------------------------------
+
+  toggleSplitView(): void {
+    if (this.state.splitView) {
+      this.patch({ splitView: false });
+      return;
+    }
+
+    const counterpart: { mode: ModeId; engineId: EngineId; origin: BodyId } =
+      this.state.mode === 'ptolemy'
+        ? { mode: 'kepler', engineId: 'keplerian', origin: 'sun' }
+        : { mode: 'ptolemy', engineId: 'ptolemaic-epicyclic', origin: 'earth' };
+
+    this.splitTrails.reset();
+    this.patch({
+      splitView: true,
+      splitMode: counterpart.mode,
+      splitEngineId: counterpart.engineId,
+      splitFrameOrigin: counterpart.origin,
+      splitShowRecentredHarness: false,
+      splitZoom: 1,
+      splitPanX: 0,
+      splitPanY: 0,
+      activePopover: null,
+      showSettings: false,
+    });
+  }
+
+  setSplitMode(splitMode: ModeId): void {
+    const splitEngineId = MODES[splitMode].engines[0]!;
+    this.splitTrails.reset();
+    this.patch({ splitMode, splitEngineId });
+  }
+
+  setSplitEngine(splitEngineId: EngineId): void {
+    this.splitTrails.reset();
+    this.patch({ splitEngineId });
+  }
+
+  setSplitFrameOrigin(splitFrameOrigin: BodyId): void {
+    this.splitTrails.invalidateProjection();
+    this.patch({ splitFrameOrigin, splitPanX: 0, splitPanY: 0 });
+  }
+
+  toggleSplitRecentredHarness(): void {
+    this.patch({ splitShowRecentredHarness: !this.state.splitShowRecentredHarness });
+  }
+
+  swapSplitPanes(): void {
+    const s = this.state;
+    const ghost = s.ghostEngineId === s.splitEngineId ? null : s.ghostEngineId;
+    this.trails.reset();
+    this.splitTrails.reset();
+    this.patch({
+      mode: s.splitMode,
+      engineId: s.splitEngineId,
+      ghostEngineId: ghost,
+      frameOrigin: s.splitFrameOrigin,
+      showRecentredHarness: s.splitShowRecentredHarness,
+      panX: 0,
+      panY: 0,
+      splitMode: s.mode,
+      splitEngineId: s.engineId,
+      splitFrameOrigin: s.frameOrigin,
+      splitShowRecentredHarness: s.showRecentredHarness,
+      splitPanX: 0,
+      splitPanY: 0,
+    });
+  }
+
+  zoomSplitBy(factor: number): void {
+    this.setSplitZoom(this.state.splitZoom * factor);
+  }
+
+  setSplitZoom(zoom: number): void {
+    const clamped = Math.min(maxZoomFor(this.state.scaleMode), Math.max(MIN_ZOOM, zoom));
+    if (clamped === this.state.splitZoom) return;
+    this.patch({ splitZoom: clamped });
+  }
+
+  panSplitBy(dx: number, dy: number): void {
+    this.patch({ splitPanX: this.state.splitPanX + dx, splitPanY: this.state.splitPanY + dy });
+  }
+
+  resetSplitZoom(): void {
+    this.patch({ splitZoom: 1, splitPanX: 0, splitPanY: 0 });
+  }
+
   /** Widen or narrow the band of sky. See `skyField`. */
   setSkyField(skyField: number): void {
     const clamped = Math.min(MAX_SKY_FIELD, Math.max(MIN_SKY_FIELD, skyField));
@@ -569,6 +681,7 @@ export class Store {
     this.clock.setJd(clampJd(demonstration.jd));
     this.clock.pause();
     this.trails.reset();
+    this.splitTrails.reset();
 
     const evidenceTab = demonstration.openEvidence ?? null;
     const engineId = MODES[demonstration.mode].engines[0]!;
@@ -608,6 +721,9 @@ export class Store {
       zoom: 1,
       panX: 0,
       panY: 0,
+      splitZoom: 1,
+      splitPanX: 0,
+      splitPanY: 0,
       julianDate: this.clock.julianDate,
       playing: false,
     });
@@ -633,6 +749,7 @@ export class Store {
   setJulianDate(jd: number): void {
     this.clock.setJd(jd);
     this.trails.reset();
+    this.splitTrails.reset();
     this.patch({ julianDate: this.clock.julianDate });
   }
 
@@ -723,9 +840,12 @@ export class Store {
     // Ask before computing. This runs on every tick, and evaluating an engine
     // to hand the log a sample it will discard is the most expensive thing the
     // clock could do sixty times a second.
-    if (!this.trails.wants(jd)) return;
-
-    this.trails.record(jd, ENGINES[this.state.engineId].positionsAt(jd));
+    if (this.trails.wants(jd)) {
+      this.trails.record(jd, ENGINES[this.state.engineId].positionsAt(jd));
+    }
+    if (this.state.splitView && this.splitTrails.wants(jd)) {
+      this.splitTrails.record(jd, ENGINES[this.state.splitEngineId].positionsAt(jd));
+    }
   }
 
   jumpToDate(date: Date): void {

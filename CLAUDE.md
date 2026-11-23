@@ -240,7 +240,7 @@ packages/core/src/           # @orrery/core — pure math, no DOM lib
   vec.ts                     # small vector math helpers
   engines/
     types.ts                 # Engine interface, mode registry
-    registry.ts              # all eight engines by id + REFERENCE_ENGINE_ID
+    registry.ts              # all eight engines (with 16-entry jd cache) + REFERENCE_ENGINE_ID
     vsop87.ts                # reference ephemeris; basis for Ptolemy reframe
     vsop87Data.ts            # GENERATED — see packages/core/scripts/generate-vsop87.mjs
     keplerian.ts             # osculating elements; Kepler mode, n-body seed
@@ -275,7 +275,7 @@ apps/orrery/src/             # @orrery/app — vanilla DOM frontend
     urlState.ts              # shareable hash encoding/decoding
     preferences.ts           # localStorage persistence (welcome, notes)
   render/
-    orrery/                  # composite map + zodiac ring + sight-lines + hover hints
+    orrery/                  # composite map (OrrerySource adapter for single or split panes) + hover hints
     evidence/                # unified bottom Evidence Drawer + Model Capability Scorecard
     sky/                     # multi-model band-of-sky strip (true-scale Sun at ≤12°)
     track/                   # multi-model longitude-against-time strip
@@ -283,7 +283,7 @@ apps/orrery/src/             # @orrery/app — vanilla DOM frontend
     event-panel/             # upcoming events with async spread badges + Event Finder
     export/                  # vector SVG & raster PNG exporters (map + phase)
     theme/                   # CSS custom-property tokens & 5 theme files
-  ui/                        # topBar (models, compare, trials, CZ/EN, export, prefs),
+  ui/                        # topBar (models, compare, trials, split, CZ/EN, export, prefs),
                              #   controls (symmetric left rail + ? help), timeDock (bottom-centre pill),
                              #   trials (launch + banner), calculationOverlay, welcome, exportButtons, dom helpers
   i18n/                      # cs.json (default), en.json, i18n.ts, wikiLinks.ts
@@ -2414,6 +2414,49 @@ overlay without needing `getComputedStyle`. Only theme resolution via
 `getComputedStyle` and canvas PNG rasterisation remain manual checks in the
 running app — see `vitest.config.ts`'s own note that this suite is plain Node
 throughout.
+
+### 13.7c Dual-Chair Split View & Runtime Performance
+
+Wide viewports (`> 68rem`) offer **`◫ Split`** (`splitView` in `store.ts`) to
+run two independent maps side by side on one shared clock — e.g. **Newton · Sun**
+beside **Ptolemy · Earth**, or **Kepler · Earth (Composition)** beside
+**Ptolemy · Earth**.
+
+- **Zero renderer duplication (`OrrerySource`):** `createOrrery(container, source)`
+  accepts a minimal `{ get(), trails, selectBody() }` interface rather than the
+  concrete `Store`. The primary pane passes `store` directly; the secondary pane
+  passes a thin adapter backed by `store.splitTrails` that overrides only
+  `mode`, `engineId`, `frameOrigin`, `showRecentredHarness`, `ghostEngineId`
+  (`null`), `zoom`, `panX`, and `panY`. Time, observation point, selected body,
+  scale, zodiac, and the bottom Evidence Drawer stay shared.
+- **Per-pane gestures & swap:** wheel zoom, drag pan, and double-click reset
+  route by container (`.stage__pane--secondary` vs primary), and `swapSplitPanes()`
+  exchanges primary and secondary configurations atomically.
+
+Five concrete performance safeguards keep dual-pane 60 fps playback and idle
+views lean:
+
+1. **Bounded per-engine `positionsAt(jd)` cache (`engines/registry.ts`):** a
+   16-entry FIFO `Map<number, PositionSet>` per engine eliminates redundant
+   evaluations within a frame (trail logging, primary map, harness, split pane,
+   ghosts, sky band, and inspector readouts all query the same `jd`). Measured
+   in Node over 600 steady-state Split View + Compare All + Sky Strip + Info
+   Panel frames: **134.10 ms → 44.54 ms** (**0.2235 → 0.0742 ms/frame**, **3.0×
+   faster**); 500 repeated VSOP87 lookups across 5 dates dropped **69.31 ms →
+   1.58 ms** (**43.9× faster**).
+2. **N-body same-`jd` early exit & snapshot cache (`engines/nbody.ts`):**
+   `advanceTo()` short-circuits when `|target - currentJd| <= 1e-9` and
+   `statesAt(jd)` caches the last snapshot so `dynamics()` and `positionsAt()`
+   at one instant share a single state read.
+3. **Harness signature guard (`render/orrery/orrery.ts`):** `updateHarness()`
+   tracks `[julianDate, engineId, frameOrigin, scaleMode, selectedBody,
+   showConstruction, showRecentredHarness]` and skips rebuilding 150–400 pooled
+   DOM segment transforms on every pan, zoom, popover, or observer change.
+4. **On-demand `requestAnimationFrame` (`main.ts`):** the animation loop runs
+   strictly while `store.get().playing` is `true` and cancels on pause, bringing
+   idle CPU usage to zero.
+5. **Gated secondary updates (`main.ts`):** `splitOrrery.update()` and
+   `splitOrrery.rebuildRing()` never run while `splitView` is `false`.
 
 ### 13.8 Still assumed, not confirmed
 

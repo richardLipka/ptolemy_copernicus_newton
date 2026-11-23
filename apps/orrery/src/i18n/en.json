@@ -440,5 +440,13 @@
   "recentred.note.deferent.body": "First leg of the recentred sum: the orbit of {{legOf}} drawn directly about {{originOf}}. Because {{leg}} has the larger orbit, it becomes the deferent — reproducing Ptolemy's layout for a superior planet.",
   "recentred.note.epicycle.sunJoint": "Second leg of the recentred sum: the orbit of {{legOf}} riding on the Sun at the end of the deferent. Held from Earth, this is Tycho's geometry and Ptolemy's layout for an inferior planet.",
   "recentred.note.epicycle.emptyJoint": "Second leg of the recentred sum: the reversed orbit of {{legOf}} riding on an empty joint. This is why Ptolemy's epicycle arm stayed parallel to the Sun — the arm is the Earth's own orbit in disguise.",
-  "recentred.note.apsidal": "Line of apsides of the leading orbit ({{legOf}}), carried intact into the recentred frame."
+  "recentred.note.apsidal": "Line of apsides of the leading orbit ({{legOf}}), carried intact into the recentred frame.",
+  "toolbar.split": "Split",
+  "split.hint": "Compare two models and stationary points side by side on one shared clock",
+  "split.close": "Close split view",
+  "split.swap": "Swap left and right views",
+  "split.primaryLabel": "{{model}} · {{origin}}",
+  "split.paneModel": "Right pane model",
+  "split.paneOrigin": "Right pane stationary point",
+  "trials.action.splitView": "Side by side"
 }

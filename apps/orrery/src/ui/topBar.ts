@@ -205,7 +205,9 @@ function renderExportPopover(store: Store): HTMLElement {
         ];
       },
       () => {
-        const field = document.querySelector<HTMLElement>('.stage__field');
+        const field =
+          document.querySelector<HTMLElement>('.stage__pane--primary .stage__canvas') ??
+          document.querySelector<HTMLElement>('.stage__field');
         return { width: field?.clientWidth || 800, height: field?.clientHeight || 800 };
       },
     ),
@@ -329,6 +331,14 @@ export function renderTopBar(container: HTMLElement, store: Store): void {
       activeHighlight: state.activeTrialId !== null,
     }),
   );
+
+  const splitBtn = toggleButton(`◫ ${t('toolbar.split')}`, state.splitView, () =>
+    store.toggleSplitView(),
+  );
+  splitBtn.className = 'command-bar__btn command-bar__split';
+  splitBtn.title = t('split.hint');
+  if (state.splitView) splitBtn.dataset.active = 'on';
+  inquiryGroup.appendChild(splitBtn);
 
   const workingBtn = el('button', 'command-bar__btn', `∑ ${t('toolbar.working')}`);
   workingBtn.type = 'button';

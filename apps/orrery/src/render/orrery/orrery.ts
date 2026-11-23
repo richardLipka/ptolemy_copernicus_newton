@@ -12,7 +12,8 @@ import { BODIES, BODY_IDS, type BodyId } from '@orrery/core/bodies';
 import { DEG, normalizeDeg } from '@orrery/core/vec';
 import { divisionsFor, precessionSinceJ2000 } from '@orrery/core/zodiac';
 import { formatNumber, t } from '../../i18n/i18n';
-import type { Store } from '../../state/store';
+import type { State } from '../../state/store';
+import type { TrailLog } from '../../state/trails';
 import {
   buildConstruction,
   buildRecentredHarness,
@@ -127,6 +128,12 @@ const div = (className: string): HTMLDivElement => {
   return element;
 };
 
+export interface OrrerySource {
+  get(): Readonly<State>;
+  readonly trails: TrailLog;
+  selectBody(bodyId: BodyId | null): void;
+}
+
 export interface OrreryRenderer {
   update(): void;
   rebuildRing(): void;
@@ -134,7 +141,7 @@ export interface OrreryRenderer {
   unitPx(): number;
 }
 
-export function createOrrery(container: HTMLElement, store: Store): OrreryRenderer {
+export function createOrrery(container: HTMLElement, store: OrrerySource): OrreryRenderer {
   const instrument = div('instrument');
   container.appendChild(instrument);
 
@@ -143,14 +150,20 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
   let fieldPx = 600;
   let viewWidthPx = 600;
   let viewHeightPx = 600;
+  let ready = false;
 
   const fitToContainer = (): void => {
     const { width, height } = container.getBoundingClientRect();
+    if (width <= 0 || height <= 0) return;
     const field = Math.max(120, Math.min(width, height) * 0.97);
+    const changed = width !== viewWidthPx || height !== viewHeightPx;
     fieldPx = field;
     viewWidthPx = width;
     viewHeightPx = height;
     instrument.style.setProperty('--field', `${field}px`);
+    // Refresh viewport-dependent offscreen pointers and scale bar immediately,
+    // including when the simulation clock is paused.
+    if (ready && changed) update();
   };
   new ResizeObserver(fitToContainer).observe(container);
   fitToContainer();
@@ -429,13 +442,28 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
   const vectorShafts: HTMLDivElement[] = [];
   const vectorHeads: HTMLDivElement[] = [];
 
+  /** Signature of the last harness draw, so pan/zoom/popover frames skip rebuilding 150-400 segments. */
+  let lastHarnessKey = '';
+
   /**
-   * Draw the selected body's machinery. Rebuilt every frame from pooled
-   * elements, because the epicycle rides round the deferent and the arms turn
-   * with it — a static harness would be a diagram, not a mechanism.
+   * Draw the selected body's machinery. Rebuilt from pooled elements whenever
+   * time, engine, frame, scale, selection or harness toggles change — skipped
+   * completely during pan, zoom, and UI popover updates.
    */
   function updateHarness(): void {
     const state = store.get();
+    const harnessKey = [
+      state.julianDate,
+      state.engineId,
+      state.frameOrigin,
+      state.scaleMode,
+      state.selectedBody ?? '',
+      state.showConstruction,
+      state.showRecentredHarness,
+    ].join('|');
+    if (harnessKey === lastHarnessKey) return;
+    lastHarnessKey = harnessKey;
+
     let usedSegments = 0;
     let usedMarkers = 0;
 
@@ -1068,6 +1096,7 @@ export function createOrrery(container: HTMLElement, store: Store): OrreryRender
 
   rebuildRing();
   update();
+  ready = true;
 
   /*
    * --unit is `width / 2 * zoom`, so it can be recovered from the laid-out

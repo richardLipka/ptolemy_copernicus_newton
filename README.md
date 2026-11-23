@@ -178,6 +178,13 @@ quietly regress.
   any rival model — or all four at once — as colour-coded ghosts on the map, in
   Observer's sky, and on the Sky track, so Ptolemy's 2.8° at Mars or bare
   circles' 13.5° is a visible gap rather than an abstract number.
+- **Sit in two chairs at once (Split View).** Click **`◫ Split`** in the top bar
+  (or **Side by side** inside a guided trial) to open two synchronized maps on
+  one shared clock — for instance **Newton · Sun** beside **Ptolemy · Earth**,
+  or **Kepler · Earth (Composition)** beside **Ptolemy · Earth**. Each pane has
+  its own model, stationary point, trail log, pan, and zoom while sharing time,
+  selected body, observer, and the evidence drawer, with one-click swap (`⇄`)
+  between left and right views.
 - **Watch the light and the scale.** The app opens with **Venus pre-selected**
   and puts a clickable **4-model phase disc strip** plus a **4-model distance &
   scale table** at the top of the right-hand inspector. On Venus and Mercury, an
@@ -210,14 +217,14 @@ quietly regress.
 ## Layout and five looks
 
 The map runs full-bleed inside a Stage-First layout: a single-row **Top Command
-Bar** holds the four models, **Compare**, **★ Trials**, **∑ Working**, a
-dedicated **`CZ | EN`** language switch, global `ⓘ` explanations, **Export**,
-and `⚙` for theme and zodiac scheme. Symmetric settings sit on the **left**
-(with per-panel `?` explanations on demand), the tabbed **Details | Events**
-inspector sits on the **right**, playback and date controls float in a compact
-**bottom-center** pill, the unified **Evidence Drawer** docks cleanly above it,
-and credits sit quietly in the **bottom-right** corner. Your choice of language
-and theme is remembered.
+Bar** holds the four models, **Compare**, **★ Trials**, **`◫ Split`** (dual-chair
+side-by-side mode on wide viewports), **∑ Working**, a dedicated **`CZ | EN`**
+language switch, global `ⓘ` explanations, **Export**, and `⚙` for theme and
+zodiac scheme. Symmetric settings sit on the **left** (with per-panel `?`
+explanations on demand), the tabbed **Details | Events** inspector sits on the
+**right**, playback and date controls float in a compact **bottom-center** pill,
+the unified **Evidence Drawer** docks cleanly above it, and credits sit quietly
+in the **bottom-right** corner. Your choice of language and theme is remembered.
 
 - **Parchment** — brass instrument on paper, c. 1750. Engraved hairlines, hard
   edges, no depth, because a printed plate has none.
@@ -270,7 +277,7 @@ npm install && npm run dev
 Other commands:
 
 ```bash
-npm test          # 536 tests, covering orbital mathematics, trials, i18n and view logic
+npm test          # 543 tests, covering orbital mathematics, caching, split view, trials, i18n and view logic
 npm run typecheck # strict TypeScript, no emit
 npm run build     # static output in apps/orrery/dist/
 ```
@@ -449,6 +456,12 @@ při stejném heliocentrickém uspořádání. Nerozhodl střed, ale tvar dráhy
 - **Porovnat dva nebo všechny čtyři modely naráz** — tlačítko **Porovnat**
   v horní liště vykreslí ostatní modely na mapě, v pohledu na oblohu i v dráze
   na obloze.
+- **Sedět na dvou židlích zároveň (Dvojitý pohled)** — tlačítko **`◫ Dvojitý
+  pohled`** v horní liště (nebo **Vedle sebe** v rozhodujících zkouškách) otevře
+  dvě synchronizované mapy na jedněch hodinách — například **Newton · Slunce**
+  vedle **Ptolemaios · Země** nebo **Kepler · Země (Skládání)** vedle
+  **Ptolemaios · Země**. Každá polovina má vlastní model, nehybný bod, záznam
+  stop, posun i přiblížení a obě lze jedním kliknutím prohodit (`⇄`).
 - **Spustit osm rozhodujících zkoušek** — tlačítko **★ Zkoušky** v horní liště
   přenese mapu rovnou do historických okamžiků rozdělených na *Tatáž realita,
   jiný mechanismus* (skládání Marsu 2027, opozice Marsu 1602) a *Co novější

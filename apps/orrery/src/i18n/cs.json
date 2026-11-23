@@ -440,5 +440,13 @@
   "recentred.note.deferent.body": "První rameno přestředěného součtu: dráha {{legOf}} vynesená přímo kolem {{originOf}}. Protože má {{leg}} větší dráhu, stává se deferentem — přesně jako u Ptolemaiovy vnější planety.",
   "recentred.note.epicycle.sunJoint": "Druhé rameno přestředěného součtu: dráha {{legOf}} nesená Sluncem na konci deferentu. Při pohledu ze Země jde o Tychonovo uspořádání i Ptolemaiův model vnitřní planety.",
   "recentred.note.epicycle.emptyJoint": "Druhé rameno přestředěného součtu: obrácená dráha {{legOf}} nesená prázdným kloubem. Právě proto zůstávalo Ptolemaiovo rameno epicyklu rovnoběžné se směrem ke Slunci — je to totiž samotná dráha Země.",
-  "recentred.note.apsidal": "Přímka apsid vedoucí dráhy ({{legOf}}), přenesená beze změny do přestředěné soustavy."
+  "recentred.note.apsidal": "Přímka apsid vedoucí dráhy ({{legOf}}), přenesená beze změny do přestředěné soustavy.",
+  "toolbar.split": "Dvojitý pohled",
+  "split.hint": "Porovnejte dva modely a dva nehybné body vedle sebe na společných hodinách",
+  "split.close": "Zavřít dvojitý pohled",
+  "split.swap": "Prohodit levý a pravý pohled",
+  "split.primaryLabel": "{{model}} · {{origin}}",
+  "split.paneModel": "Model pravého pohledu",
+  "split.paneOrigin": "Nehybný bod pravého pohledu",
+  "trials.action.splitView": "Vedle sebe"
 }

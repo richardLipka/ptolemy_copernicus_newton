@@ -123,6 +123,10 @@ export class NBodySimulation {
   private accelerations: Float64Array;
   private currentJd: number;
 
+  /** Cached state vectors at `lastStatesJd` so dynamics/position reads share one snapshot. */
+  private lastStatesJd = Number.NaN;
+  private lastStates: StateVectors | null = null;
+
   /** Snapshots keyed by checkpoint index, so seeking never restarts from the epoch. */
   private readonly checkpoints = new Map<number, Snapshot>();
 
@@ -274,6 +278,7 @@ export class NBodySimulation {
   /** Integrate to `targetJd`, reusing the nearest checkpoint. */
   advanceTo(targetJd: number): void {
     const target = Math.min(MAX_JD, Math.max(MIN_JD, targetJd));
+    if (Math.abs(target - this.currentJd) <= 1e-9) return;
 
     const candidate = this.bestStartingPoint(target);
     if (
@@ -337,7 +342,12 @@ export class NBodySimulation {
    * places a body with is not a curve but a pair of vectors.
    */
   statesAt(jd: number): StateVectors {
-    this.advanceTo(jd);
+    const target = Math.min(MAX_JD, Math.max(MIN_JD, jd));
+    if (this.lastStates && Math.abs(target - this.lastStatesJd) <= 1e-9) {
+      return this.lastStates;
+    }
+
+    this.advanceTo(target);
 
     const positions = new Map<BodyId, Vec3>();
     const velocities = new Map<BodyId, Vec3>();
@@ -357,7 +367,9 @@ export class NBodySimulation {
         ),
       );
     }
-    return { positions, velocities };
+    this.lastStatesJd = this.currentJd;
+    this.lastStates = { positions, velocities };
+    return this.lastStates;
   }
 
   /**

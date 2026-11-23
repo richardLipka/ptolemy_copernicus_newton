@@ -29,17 +29,44 @@ import {
   ptolemaicReframeEngine,
 } from './ptolemaic.js';
 import { vsop87Engine } from './vsop87.js';
-import type { Engine, EngineId } from './types.js';
+import type { Engine, EngineId, PositionSet } from './types.js';
+
+/**
+ * Small bounded per-engine cache keyed by exact Julian Date.
+ *
+ * One animation frame touches the same `jd` repeatedly — trail logging,
+ * plan-view projection, harness construction, split-view pane, sky band, and
+ * inspector readouts all ask `ENGINES[id].positionsAt(jd)` for the identical
+ * instant. Retaining the last 16 snapshots per engine eliminates redundant
+ * trigonometric/VSOP87/integrator evaluations while bounding memory tightly.
+ */
+function withPositionCache(engine: Engine, capacity = 16): Engine {
+  const cache = new Map<number, PositionSet>();
+  return {
+    ...engine,
+    positionsAt(jd: number): PositionSet {
+      const cached = cache.get(jd);
+      if (cached !== undefined) return cached;
+      const computed = engine.positionsAt(jd);
+      if (cache.size >= capacity) {
+        const oldest = cache.keys().next().value;
+        if (oldest !== undefined) cache.delete(oldest);
+      }
+      cache.set(jd, computed);
+      return computed;
+    },
+  };
+}
 
 export const ENGINES: Record<EngineId, Engine> = {
-  keplerian: keplerianEngine,
-  vsop87: vsop87Engine,
-  circular: circularEngine,
-  copernican: copernicanEngine,
-  'ptolemaic-reframe': ptolemaicReframeEngine,
-  'ptolemaic-epicyclic': ptolemaicEpicyclicEngine,
-  'ptolemaic-almagest': ptolemaicAlmagestEngine,
-  nbody: nbodyEngine,
+  keplerian: withPositionCache(keplerianEngine),
+  vsop87: withPositionCache(vsop87Engine),
+  circular: withPositionCache(circularEngine),
+  copernican: withPositionCache(copernicanEngine),
+  'ptolemaic-reframe': withPositionCache(ptolemaicReframeEngine),
+  'ptolemaic-epicyclic': withPositionCache(ptolemaicEpicyclicEngine),
+  'ptolemaic-almagest': withPositionCache(ptolemaicAlmagestEngine),
+  nbody: withPositionCache(nbodyEngine),
 };
 
 /** The reference ephemeris every other model is measured against. */

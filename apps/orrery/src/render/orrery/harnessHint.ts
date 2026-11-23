@@ -20,7 +20,7 @@
 
 import type { BodyId } from '@orrery/core/bodies';
 import type { HarnessRole } from '../../state/harnessMeasures';
-import type { Store } from '../../state/store';
+import type { State } from '../../state/store';
 import { el } from '../../ui/dom';
 import { linkify } from '../../i18n/wikiLinks';
 import { harnessNote, type HarnessNote } from './harnessNotes';
@@ -76,7 +76,7 @@ const sameTarget = (a: Target | null, b: Target | null): boolean =>
 export function createHarnessHint(
   container: HTMLElement,
   layer: HTMLElement,
-  store: Store,
+  store: { get(): Readonly<State> },
 ): HarnessHint {
   const card = el('div', 'harness-hint');
   card.setAttribute('role', 'tooltip');

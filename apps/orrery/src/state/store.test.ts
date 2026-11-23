@@ -510,3 +510,88 @@ describe('Phase 2 & 3 layout and evidence state', () => {
     }
   });
 });
+
+describe('Phase 4 dual-chair split view', () => {
+  it('opens with a contrasting world-system and stationary point', () => {
+    // Opening mode is Newton (Sun-centred) -> counterpart is Ptolemy (Earth-centred).
+    store.toggleSplitView();
+    let state = store.get();
+    expect(state.splitView).toBe(true);
+    expect(state.splitMode).toBe('ptolemy');
+    expect(state.splitEngineId).toBe('ptolemaic-epicyclic');
+    expect(state.splitFrameOrigin).toBe('earth');
+
+    // Close, switch primary to Ptolemy, reopen -> counterpart is Kepler (Sun-centred).
+    store.toggleSplitView();
+    expect(store.get().splitView).toBe(false);
+    store.setMode('ptolemy');
+    store.toggleSplitView();
+    state = store.get();
+    expect(state.splitView).toBe(true);
+    expect(state.splitMode).toBe('kepler');
+    expect(state.splitEngineId).toBe('keplerian');
+    expect(state.splitFrameOrigin).toBe('sun');
+  });
+
+  it('keeps secondary pane model, frame, zoom, pan and trails independent while sharing time', () => {
+    store.toggleSplitView();
+    store.setSplitMode('copernicus');
+    store.setSplitFrameOrigin('mars');
+    store.zoomSplitBy(2.5);
+    store.panSplitBy(0.3, -0.2);
+
+    const state = store.get();
+    expect(state.mode).toBe('newton');
+    expect(state.frameOrigin).toBe('sun');
+    expect(state.zoom).toBe(1);
+    expect(state.panX).toBe(0);
+    expect(state.splitMode).toBe('copernicus');
+    expect(state.splitEngineId).toBe('copernican');
+    expect(state.splitFrameOrigin).toBe('mars');
+    expect(state.splitZoom).toBeCloseTo(2.5, 9);
+    expect(state.splitPanX).toBeCloseTo(0.3, 9);
+    expect(state.splitPanY).toBeCloseTo(-0.2, 9);
+
+    // Stepping/playing records into both trail logs simultaneously.
+    store.play();
+    store.tick(2);
+    expect(store.trails.size).toBeGreaterThan(0);
+    expect(store.splitTrails.size).toBeGreaterThan(0);
+
+    // Jumping dates clears both trail logs.
+    store.setJulianDate(jdFromCalendar(1610, 10, 15));
+    expect(store.trails.size).toBe(0);
+    expect(store.splitTrails.size).toBe(0);
+  });
+
+  it('swaps primary and secondary configurations cleanly and drops self-ghosts', () => {
+    store.setMode('kepler');
+    store.setFrameOrigin('earth');
+    store.toggle('showRecentredHarness');
+    store.setGhostEngine('ptolemaic-epicyclic');
+    store.toggleSplitView(); // secondary becomes Ptolemy · Earth
+
+    store.swapSplitPanes();
+    const state = store.get();
+    expect(state.mode).toBe('ptolemy');
+    expect(state.engineId).toBe('ptolemaic-epicyclic');
+    expect(state.frameOrigin).toBe('earth');
+    expect(state.showRecentredHarness).toBe(false);
+    expect(state.ghostEngineId).toBeNull();
+
+    expect(state.splitMode).toBe('kepler');
+    expect(state.splitEngineId).toBe('keplerian');
+    expect(state.splitFrameOrigin).toBe('earth');
+    expect(state.splitShowRecentredHarness).toBe(true);
+  });
+
+  it('clamps secondary zoom alongside primary zoom when leaving true scale', () => {
+    store.setScaleMode('true');
+    store.toggleSplitView();
+    store.setSplitZoom(500);
+    expect(store.get().splitZoom).toBe(500);
+
+    store.setScaleMode('compressed');
+    expect(store.get().splitZoom).toBe(MAX_ZOOM);
+  });
+});

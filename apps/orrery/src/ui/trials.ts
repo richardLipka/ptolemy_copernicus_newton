@@ -37,6 +37,12 @@ function actionsForTrial(trial: Demonstration, store: Store): TrialAction[] {
   switch (trial.id) {
     case 'mars-composition-2027':
       actions.push(switchAction(state.mode === 'ptolemy' ? 'kepler' : 'ptolemy'));
+      if (!state.splitView) {
+        actions.push({
+          label: `◫ ${t('trials.action.splitView')}`,
+          run: () => store.toggleSplitView(),
+        });
+      }
       actions.push({
         label: t('trials.action.openScorecard'),
         run: () => store.setEvidenceTab('scorecard'),
@@ -45,6 +51,12 @@ function actionsForTrial(trial: Demonstration, store: Store): TrialAction[] {
 
     case 'mars-opposition-1602':
       actions.push(switchAction(state.mode === 'kepler' ? 'copernicus' : 'kepler'));
+      if (!state.splitView) {
+        actions.push({
+          label: `◫ ${t('trials.action.splitView')}`,
+          run: () => store.toggleSplitView(),
+        });
+      }
       if (state.evidenceTab !== 'track') {
         actions.push({
           label: t('evidence.track'),
@@ -55,6 +67,12 @@ function actionsForTrial(trial: Demonstration, store: Store): TrialAction[] {
 
     case 'venus-phases-1610':
       actions.push(switchAction(state.mode === 'ptolemy' ? 'kepler' : 'ptolemy'));
+      if (!state.splitView) {
+        actions.push({
+          label: `◫ ${t('trials.action.splitView')}`,
+          run: () => store.toggleSplitView(),
+        });
+      }
       if (state.evidenceTab !== 'sky') {
         actions.push({
           label: t('trials.action.openSky'),

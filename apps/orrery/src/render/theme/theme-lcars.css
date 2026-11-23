@@ -149,6 +149,21 @@
       border: 2px solid var(--accent-dark);
     }
 
+    & #app[data-split='on'] .stage__pane,
+    & .stage__pane {
+      border-color: var(--accent-dark);
+    }
+
+    & .pane-bar {
+      background: #14141a;
+      border-bottom: 2px solid var(--accent-dark);
+    }
+
+    & .pane-bar__label {
+      color: var(--accent-bright);
+      letter-spacing: 0.14em;
+    }
+
     & .tablist__tab {
       background: transparent;
       color: var(--text-muted);

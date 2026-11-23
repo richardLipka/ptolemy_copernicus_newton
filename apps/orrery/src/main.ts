@@ -23,8 +23,9 @@ import './render/theme/layout.css';
 import favMark from './assets/fav.svg?raw';
 import kivMark from './assets/kiv.svg?raw';
 
+import { BODY_IDS } from '@orrery/core/bodies';
 import { ENGINES } from '@orrery/core/engines/registry';
-import type { EngineId } from '@orrery/core/engines/types';
+import { MODES, type EngineId, type ModeId } from '@orrery/core/engines/types';
 import {
   buildLongitudeTrack,
   trackCycleDays,
@@ -37,16 +38,16 @@ import { renderEventPanel } from './render/event-panel/eventPanel';
 import { createEvidenceDrawer } from './render/evidence/evidenceDrawer';
 import { renderScorecard } from './render/evidence/scorecard';
 import { renderInfoPanel } from './render/info-panel/infoPanel';
-import { createOrrery } from './render/orrery/orrery';
+import { createOrrery, type OrrerySource } from './render/orrery/orrery';
 import { applyTheme } from './render/theme/themes';
 import { renderTrackStrip, type GhostTrackEntry } from './render/track/trackStrip';
 import { applyNotes } from './state/preferences';
-import { COMPARISON_ENGINES } from './state/selectors';
+import { COMPARISON_ENGINES, recentredHarnessAvailable } from './state/selectors';
 import { store, type RightTab } from './state/store';
 import { encodeUrlState, readUrlState, writeUrlState } from './state/urlState';
 import { renderCalculationOverlay } from './ui/calculationOverlay';
 import { renderControls } from './ui/controls';
-import { el, wireRovingFocus } from './ui/dom';
+import { el, select, toggleButton, wireRovingFocus } from './ui/dom';
 import { renderTimeDock } from './ui/timeDock';
 import { renderTopBar } from './ui/topBar';
 import { renderTrialBanner } from './ui/trials';
@@ -69,6 +70,20 @@ commandBarHost.className = 'command-bar-host';
 
 const field = document.createElement('div');
 field.className = 'stage__field';
+
+const primaryPane = el('div', 'stage__pane stage__pane--primary');
+const primaryBar = el('div', 'pane-bar pane-bar--label');
+primaryBar.hidden = true;
+const primaryCanvas = el('div', 'stage__canvas');
+primaryPane.append(primaryBar, primaryCanvas);
+
+const secondaryPane = el('div', 'stage__pane stage__pane--secondary');
+secondaryPane.hidden = true;
+const secondaryBar = el('div', 'pane-bar pane-bar--controls');
+const secondaryCanvas = el('div', 'stage__canvas');
+secondaryPane.append(secondaryBar, secondaryCanvas);
+
+field.append(primaryPane, secondaryPane);
 
 const trialBannerHost = document.createElement('div');
 trialBannerHost.className = 'trial-banner-host';
@@ -194,8 +209,108 @@ root.append(
   welcomeHost,
 );
 
-const orrery = createOrrery(field, store);
+const splitSource: OrrerySource = {
+  get: () => {
+    const s = store.get();
+    return {
+      ...s,
+      mode: s.splitMode,
+      engineId: s.splitEngineId,
+      frameOrigin: s.splitFrameOrigin,
+      showRecentredHarness: s.splitShowRecentredHarness,
+      ghostEngineId: null,
+      zoom: s.splitZoom,
+      panX: s.splitPanX,
+      panY: s.splitPanY,
+    };
+  },
+  trails: store.splitTrails,
+  selectBody: (id) => store.selectBody(id),
+};
+
+const orrery = createOrrery(primaryCanvas, store);
+const splitOrrery = createOrrery(secondaryCanvas, splitSource);
 const evidenceDrawer = createEvidenceDrawer(evidenceHost, store);
+
+function renderSplitBars(): void {
+  const state = store.get();
+  if (!state.splitView) {
+    primaryBar.replaceChildren();
+    secondaryBar.replaceChildren();
+    return;
+  }
+
+  const primaryInner = el('div', 'pane-bar__inner');
+  primaryInner.appendChild(
+    el(
+      'span',
+      'pane-bar__label',
+      t('split.primaryLabel', {
+        model: t(`mode.${state.mode}`),
+        origin: t(`body.${state.frameOrigin}`),
+      }),
+    ),
+  );
+  primaryBar.replaceChildren(primaryInner);
+
+  const secondaryInner = el('div', 'pane-bar__inner');
+
+  const modelSelect = select(
+    (Object.keys(MODES) as ModeId[]).map((id) => ({ value: id, label: t(`mode.${id}`) })),
+    state.splitMode,
+    (mode) => store.setSplitMode(mode),
+  );
+  modelSelect.className = 'pane-bar__select';
+  modelSelect.setAttribute('aria-label', t('split.paneModel'));
+  secondaryInner.appendChild(modelSelect);
+
+  const variants = MODES[state.splitMode].engines;
+  if (variants.length > 1) {
+    const variantSelect = select(
+      variants.map((id) => ({ value: id, label: t(`engine.${id}`) })),
+      state.splitEngineId,
+      (id) => store.setSplitEngine(id),
+    );
+    variantSelect.className = 'pane-bar__select';
+    variantSelect.setAttribute('aria-label', t('engine.label'));
+    secondaryInner.appendChild(variantSelect);
+  }
+
+  const originSelect = select(
+    BODY_IDS.map((id) => ({ value: id, label: t(`body.${id}`) })),
+    state.splitFrameOrigin,
+    (id) => store.setSplitFrameOrigin(id),
+  );
+  originSelect.className = 'pane-bar__select';
+  originSelect.setAttribute('aria-label', t('split.paneOrigin'));
+  secondaryInner.appendChild(originSelect);
+
+  if (recentredHarnessAvailable(splitSource.get())) {
+    const compBtn = toggleButton(
+      t('view.recentred'),
+      state.splitShowRecentredHarness,
+      () => store.toggleSplitRecentredHarness(),
+    );
+    compBtn.className = 'pane-bar__btn';
+    secondaryInner.appendChild(compBtn);
+  }
+
+  const swapBtn = el('button', 'pane-bar__btn pane-bar__btn--icon', '⇄');
+  swapBtn.type = 'button';
+  swapBtn.title = t('split.swap');
+  swapBtn.setAttribute('aria-label', t('split.swap'));
+  swapBtn.addEventListener('click', () => store.swapSplitPanes());
+  secondaryInner.appendChild(swapBtn);
+
+  const closeBtn = el('button', 'pane-bar__btn pane-bar__btn--icon', '×');
+  closeBtn.type = 'button';
+  closeBtn.title = t('split.close');
+  closeBtn.setAttribute('aria-label', t('split.close'));
+  closeBtn.addEventListener('click', () => store.toggleSplitView());
+  secondaryInner.appendChild(closeBtn);
+
+  secondaryBar.replaceChildren(secondaryInner);
+}
 
 // Keep CSS stage insets synced to the actual rendered heights of the top bar,
 // bottom-centre time pill, and bottom-right credit so wrapping on mid-size
@@ -255,6 +370,11 @@ function controlsSignature(): string {
     state.activePopover,
     state.activeTrialId,
     state.showMoons,
+    state.splitView,
+    state.splitMode,
+    state.splitEngineId,
+    state.splitFrameOrigin,
+    state.splitShowRecentredHarness,
     state.skyField,
     state.selectedBody,
     state.locale,
@@ -297,6 +417,7 @@ function contextSignature(): string {
 let lastControls = '';
 let lastContext = '';
 let lastRing = '';
+let lastSplitRing = '';
 let lastSelected: string | null = null;
 let lastRightTab: RightTab | null = null;
 let lastEvidenceTab: string | null = null;
@@ -383,7 +504,14 @@ function render(): void {
   const contextChanged = context !== lastContext;
   lastContext = context;
 
+  app.dataset.split = state.splitView ? 'on' : 'off';
+  primaryBar.hidden = !state.splitView;
+  secondaryPane.hidden = !state.splitView;
+
   orrery.update();
+  if (state.splitView) {
+    splitOrrery.update();
+  }
 
   const evidenceOpen = state.evidenceTab !== null;
   evidenceHost.hidden = !evidenceOpen;
@@ -429,6 +557,10 @@ function render(): void {
     lastRing = ring;
     orrery.rebuildRing();
   }
+  if (state.splitView && ring !== lastSplitRing) {
+    lastSplitRing = ring;
+    splitOrrery.rebuildRing();
+  }
 
   const controls = controlsSignature();
   if (controls !== lastControls) {
@@ -436,6 +568,7 @@ function render(): void {
     renderTopBar(commandBarHost, store);
     renderTrialBanner(trialBannerHost, store);
     renderControls(controlsHost, store);
+    renderSplitBars();
     evidenceDrawer.syncHeader();
     syncRightTabs();
     const dock = renderTimeDock(timeDockHost, store);
@@ -497,10 +630,13 @@ function render(): void {
 // --- zoom ----------------------------------------------------------------
 
 const MAP_GESTURE_EXCLUDED =
-  '.dock, .command-bar-host, .command-popover, .overlay, .trial-banner-host, .evidence-host';
+  '.dock, .command-bar-host, .command-popover, .overlay, .trial-banner-host, .evidence-host, .pane-bar';
 
 const overTheMap = (target: EventTarget | null): boolean =>
   !(target as Element | null)?.closest(MAP_GESTURE_EXCLUDED);
+
+const inSecondaryPane = (target: EventTarget | null): boolean =>
+  Boolean((target as Element | null)?.closest('.stage__pane--secondary'));
 
 const ZOOM_SENSITIVITY = 0.0016;
 const DELTA_TO_PIXELS = [1, 16, 400];
@@ -512,14 +648,17 @@ root.addEventListener(
     if (!overTheMap(event.target)) return;
     event.preventDefault();
     const pixels = event.deltaY * (DELTA_TO_PIXELS[event.deltaMode] ?? 1);
-    store.zoomBy(Math.exp(-pixels * ZOOM_SENSITIVITY));
+    const factor = Math.exp(-pixels * ZOOM_SENSITIVITY);
+    if (inSecondaryPane(event.target)) store.zoomSplitBy(factor);
+    else store.zoomBy(factor);
   },
   { passive: false },
 );
 
 root.addEventListener('dblclick', (event: MouseEvent) => {
   if (!overTheMap(event.target)) return;
-  store.resetZoom();
+  if (inSecondaryPane(event.target)) store.resetSplitZoom();
+  else store.resetZoom();
 });
 
 // --- panning -------------------------------------------------------------
@@ -527,11 +666,13 @@ root.addEventListener('dblclick', (event: MouseEvent) => {
 const DRAG_THRESHOLD_PX = 3;
 
 let dragPointer: number | null = null;
+let dragPane: 'primary' | 'secondary' = 'primary';
 let dragX = 0;
 let dragY = 0;
 let dragging = false;
 
-const instrumentEl = (): HTMLElement | null => root.querySelector('.instrument');
+const instrumentElFor = (pane: 'primary' | 'secondary'): HTMLElement | null =>
+  (pane === 'secondary' ? secondaryCanvas : primaryCanvas).querySelector('.instrument');
 
 root.addEventListener('pointerdown', (event: PointerEvent) => {
   const target = event.target as Element | null;
@@ -539,6 +680,7 @@ root.addEventListener('pointerdown', (event: PointerEvent) => {
   if (event.button !== 0) return;
 
   dragPointer = event.pointerId;
+  dragPane = inSecondaryPane(target) ? 'secondary' : 'primary';
   dragX = event.clientX;
   dragY = event.clientY;
   dragging = false;
@@ -553,7 +695,7 @@ root.addEventListener('pointermove', (event: PointerEvent) => {
   if (!dragging) {
     if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
     dragging = true;
-    instrumentEl()?.setAttribute('data-dragging', 'on');
+    instrumentElFor(dragPane)?.setAttribute('data-dragging', 'on');
 
     try {
       root.setPointerCapture(event.pointerId);
@@ -565,8 +707,13 @@ root.addEventListener('pointermove', (event: PointerEvent) => {
   dragX = event.clientX;
   dragY = event.clientY;
 
-  const unit = orrery.unitPx();
-  if (unit > 0) store.panBy(dx / unit, dy / unit);
+  if (dragPane === 'secondary') {
+    const unit = splitOrrery.unitPx();
+    if (unit > 0) store.panSplitBy(dx / unit, dy / unit);
+  } else {
+    const unit = orrery.unitPx();
+    if (unit > 0) store.panBy(dx / unit, dy / unit);
+  }
 });
 
 const endDrag = (event: PointerEvent): void => {
@@ -579,7 +726,7 @@ const endDrag = (event: PointerEvent): void => {
     }
   }
   dragPointer = null;
-  instrumentEl()?.removeAttribute('data-dragging');
+  instrumentElFor(dragPane)?.removeAttribute('data-dragging');
   setTimeout(() => {
     dragging = false;
   }, 0);
@@ -718,16 +865,36 @@ syncUrl();
 
 const MAX_FRAME_SECONDS = 0.1;
 
-let previousTimestamp = performance.now();
+// Schedule animation frames strictly while playing so paused views consume
+// zero idle CPU or battery.
+let rafId: number | null = null;
+let previousTimestamp = 0;
+
 function frame(timestamp: number): void {
+  rafId = null;
+  if (!store.get().playing) return;
   const elapsedSeconds = Math.min(
     (timestamp - previousTimestamp) / 1000,
     MAX_FRAME_SECONDS,
   );
   previousTimestamp = timestamp;
   store.tick(elapsedSeconds);
-  requestAnimationFrame(frame);
+  if (store.get().playing) {
+    rafId = requestAnimationFrame(frame);
+  }
 }
-requestAnimationFrame(frame);
+
+function syncAnimationLoop(): void {
+  if (store.get().playing && rafId === null) {
+    previousTimestamp = performance.now();
+    rafId = requestAnimationFrame(frame);
+  } else if (!store.get().playing && rafId !== null) {
+    cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+}
+
+store.subscribe(syncAnimationLoop);
+syncAnimationLoop();
 
 render();
