@@ -1,18 +1,12 @@
 /**
- * Details of the selected body.
+ * Details of the selected body — compare-first inspector.
  *
- * The phase disc is the same CSS technique as the map markers at a larger size.
- *
- * Select Venus and switch between the epicyclic engine and Newton to re-run the
- * observation that broke the geocentric system. Ptolemy's deferents are scaled
- * to his nested spheres, so Venus is penned inside the Sun's shell and never
- * exceeds 44% lit: the model says crescent where the sky says full.
- *
- * That is the sharper form of the historical point. On *longitude* the two
- * systems were in the same bracket — see `core/engines/accuracy.test.ts` — so
- * the argument could never be settled on where the planets appear. It was
- * settled on how they are *lit*, which is the one thing the angular machinery
- * had never been able to speak to.
+ * Leads with the decisive visual comparisons (4-model live phase strip,
+ * automatic refutation banner for Venus/Mercury, sky error vs VSOP87, and
+ * Ptolemy's dimensionless deferent parts vs AU), exposes interactive machinery
+ * parts that highlight the map on hover and open live measurements on click,
+ * adds Newton's Moon force insight, and tucks secondary optical/physical
+ * specifications behind a native `<details>` disclosure.
  */
 
 import { BODIES, type BodyId } from '@orrery/core/bodies';
@@ -23,17 +17,24 @@ import {
   solarElongation,
 } from '@orrery/core/coordinates';
 import { inDeferentParts } from '@orrery/core/engines/ptolemaicUnits';
-import type { EngineId } from '@orrery/core/engines/types';
-import { illuminationOf, phaseName } from '@orrery/core/illumination';
+import { ENGINES, REFERENCE_ENGINE_ID } from '@orrery/core/engines/registry';
+import type { EngineId, ModeId } from '@orrery/core/engines/types';
+import { illuminationOf, phaseName, type Illumination } from '@orrery/core/illumination';
 import { dateFromJd } from '@orrery/core/time';
+import { angleDiffDeg, length, sub } from '@orrery/core/vec';
 import { t, bodyName, formatExponent, formatNumber, formatShare } from '../../i18n/i18n';
-import { angleDiffDeg } from '@orrery/core/vec';
-import { ENGINES } from '@orrery/core/engines/registry';
-import type { Store } from '../../state/store';
-import { buildView } from '../../state/selectors';
-import { el, note, panel, readout } from '../../ui/dom';
+import { linkify } from '../../i18n/wikiLinks';
+import {
+  harnessCentre,
+  type HarnessRole,
+  type HarnessTarget,
+} from '../../state/harnessMeasures';
+import { buildView, focusViewFor, rawConstruction } from '../../state/selectors';
+import type { State, Store } from '../../state/store';
+import { el, note, readout } from '../../ui/dom';
 import { exportButtonRow } from '../../ui/exportButtons';
 import { buildPhaseSvg } from '../export/phaseSvg';
+import { harnessNote } from '../orrery/harnessNotes';
 
 /** One engine per model, for the side-by-side phase figures. */
 export const PHASE_COMPARISON_ENGINES: readonly EngineId[] = [
@@ -43,80 +44,241 @@ export const PHASE_COMPARISON_ENGINES: readonly EngineId[] = [
   'ptolemaic-epicyclic',
 ];
 
+/** Chronological order for the 4-disc visual phase strip. */
+const PHASE_STRIP_MODELS: readonly { mode: ModeId; engineId: EngineId }[] = [
+  { mode: 'ptolemy', engineId: 'ptolemaic-epicyclic' },
+  { mode: 'copernicus', engineId: 'copernican' },
+  { mode: 'kepler', engineId: 'keplerian' },
+  { mode: 'newton', engineId: 'nbody' },
+];
 
-/*
- * Readings only.
- *
- * The comparison picker and the calculation overlay's button were briefly here,
- * on the argument that both are about the body being looked at. But with
- * nothing selected this panel then held nothing except those two controls,
- * under a heading promising details of a body — a settings drawer wearing the
- * label of a readout. They live behind the cog now; the constellation figures
- * switch went back to the other draw toggles in the left dock.
+/** Persisted across 200ms playback rebuilds so disclosures do not snap shut. */
+let detailsOpen = false;
+let activePartKey: string | null = null;
+let lastPartContext = '';
+
+interface MachineryChip {
+  key: string;
+  role: HarnessRole;
+  label: string;
+  target: HarnessTarget;
+}
+
+function partLabel(role: HarnessRole, variant?: 'occupied' | 'empty'): string {
+  if (role === 'focus') {
+    return variant === 'empty'
+      ? t('harness.part.focus.empty')
+      : t('harness.part.focus.occupied');
+  }
+  switch (role) {
+    case 'deferent':
+      return t('harness.part.deferent');
+    case 'epicycle':
+      return t('harness.part.epicycle');
+    case 'orbit':
+      return t('harness.part.orbit');
+    case 'centre':
+      return t('harness.part.centre');
+    case 'equant':
+      return t('harness.part.equant');
+    case 'deferent-arm':
+      return t('harness.part.deferent-arm');
+    case 'epicycle-arm':
+      return t('harness.part.epicycle-arm');
+    case 'radius':
+      return t('harness.part.radius');
+    case 'apsidal':
+      return t('harness.part.apsidal');
+    case 'velocity':
+      return t('harness.part.velocity');
+    case 'net-force':
+      return t('harness.part.net-force');
+    default:
+      return role;
+  }
+}
+
+/**
+ * Enumerate the machinery parts for `selected` without calling `turnRates`
+ * eagerly — full measurements are computed only for the single expanded chip.
  */
+function collectMachineryChips(state: State, selected: BodyId, hasDynamics: boolean): MachineryChip[] {
+  const chips: MachineryChip[] = [];
+  const seen = new Set<string>();
+  const add = (chip: MachineryChip): void => {
+    if (seen.has(chip.key)) return;
+    seen.add(chip.key);
+    chips.push(chip);
+  };
+
+  const raw = rawConstruction(state, selected);
+  if (raw) {
+    const { construction, positions } = raw;
+    for (const circle of construction.circles) {
+      add({
+        key: circle.role,
+        role: circle.role,
+        label: partLabel(circle.role),
+        target: {},
+      });
+    }
+    if (construction.ellipses && construction.ellipses.length > 0) {
+      add({
+        key: 'orbit',
+        role: 'orbit',
+        label: partLabel('orbit'),
+        target: {},
+      });
+    }
+
+    const origin = positions.get(harnessCentre(state, selected));
+    const foci = construction.markers.filter((m) => m.role === 'focus').map((m) => m.at);
+    const nearestFocus =
+      origin && foci.length > 0
+        ? foci.reduce((best, cand) =>
+            length(sub(cand, origin)) < length(sub(best, origin)) ? cand : best,
+          )
+        : null;
+
+    construction.markers.forEach((marker, idx) => {
+      if (marker.role === 'focus') {
+        const variant = nearestFocus && marker.at === nearestFocus ? 'occupied' : 'empty';
+        add({
+          key: `focus:${variant}`,
+          role: 'focus',
+          label: partLabel('focus', variant),
+          target: { markerIndex: idx },
+        });
+      } else {
+        add({
+          key: marker.role,
+          role: marker.role,
+          label: partLabel(marker.role),
+          target: { markerIndex: idx },
+        });
+      }
+    });
+
+    for (const arm of construction.arms) {
+      add({
+        key: arm.role,
+        role: arm.role,
+        label: partLabel(arm.role),
+        target: {},
+      });
+    }
+  }
+
+  if (hasDynamics) {
+    add({
+      key: 'velocity',
+      role: 'velocity',
+      label: partLabel('velocity'),
+      target: {},
+    });
+    add({
+      key: 'net-force',
+      role: 'net-force',
+      label: partLabel('net-force'),
+      target: {},
+    });
+  }
+
+  return chips;
+}
+
+function buildPhaseDisc(bodyId: BodyId, illumination: Illumination, extraClass: string): HTMLDivElement {
+  const lit = illumination.illuminatedFraction;
+  const disc = el('div', `phase-disc ${extraClass}`);
+  disc.style.setProperty('--tint', `var(--body-${bodyId})`);
+  disc.dataset.side = illumination.waxing ? 'right' : 'left';
+  disc.dataset.shape = lit >= 0.5 ? 'gibbous' : 'crescent';
+  disc.style.setProperty('--lit-width', Math.abs(2 * lit - 1).toFixed(4));
+  disc.append(el('div', 'phase-disc__half'), el('div', 'phase-disc__terminator'));
+  return disc;
+}
+
+function setHarnessHover(role: HarnessRole | null): void {
+  const layer = document.querySelector<HTMLElement>('.harness');
+  if (!layer) return;
+  if (role) layer.dataset.hover = role;
+  else delete layer.dataset.hover;
+}
 
 export function renderInfoPanel(container: HTMLElement, store: Store): void {
   const state = store.get();
   container.replaceChildren();
 
-  const card = panel(t('info.title'));
+  const bodyWrap = el('div', 'info-pane');
 
   if (!state.selectedBody) {
-    // `note--live`, so it survives the explanations switch. It is not prose
-    // about the panel — with nothing selected it is the whole of the panel, and
-    // collapsing it leaves a titled empty box saying nothing at all.
-    card.appendChild(note(t('info.none'), 'note note--live'));
-    container.appendChild(card);
+    bodyWrap.appendChild(note(t('info.none'), 'note note--live'));
+    container.appendChild(bodyWrap);
     return;
   }
 
   const selected: BodyId = state.selectedBody;
+  const partContext = `${selected}|${state.engineId}`;
+  if (partContext !== lastPartContext) {
+    lastPartContext = partContext;
+    activePartKey = null;
+  }
+
   const view = buildView(state);
   const body = view.bodies.find((candidate) => candidate.id === selected);
   if (!body) {
-    container.appendChild(card);
+    container.appendChild(bodyWrap);
     return;
   }
 
-  card.appendChild(el('h3', 'masthead__title', bodyName(selected)));
+  // --- 1. Header row: body swatch, name, motion badge, Focus & Working ---
+
+  const head = el('div', 'info-head');
+  const identity = el('div', 'info-head__id');
+  const swatch = el('span', 'chip__swatch');
+  swatch.style.setProperty('--tint', `var(--body-${selected})`);
+  identity.append(swatch, el('h3', 'info-head__name', bodyName(selected)));
+
+  if (!body.isObserver) {
+    const rate = apparentLongitudeRate(
+      (jd) => ENGINES[state.engineId].positionsAt(jd),
+      state.julianDate,
+      state.observationPoint,
+      selected,
+    );
+    const motion = el(
+      'span',
+      `motion-badge ${rate < 0 ? 'motion-badge--retro' : 'motion-badge--direct'}`,
+      rate < 0 ? t('info.retrograde') : t('info.direct'),
+    );
+    identity.appendChild(motion);
+  }
+
+  const actions = el('div', 'info-head__actions');
+  const focusBtn = el('button', 'info-head__btn', t('info.focus'));
+  focusBtn.type = 'button';
+  focusBtn.addEventListener('click', () => {
+    const targetView = focusViewFor(store.get(), selected);
+    store.setZoom(targetView.zoom);
+    store.panTo(targetView.centreOn.x, targetView.centreOn.y);
+  });
+
+  const workingBtn = el('button', 'info-head__btn', `∑ ${t('info.working')}`);
+  workingBtn.type = 'button';
+  workingBtn.addEventListener('click', () => store.setCalculationOpen(true));
+
+  actions.append(focusBtn, workingBtn);
+  head.append(identity, actions);
+  bodyWrap.appendChild(head);
+
+  // --- 2. 4-Model Phase Disc Strip + Refutation Callout ------------------
 
   if (selected !== 'sun' && !body.isObserver) {
-    const lit = body.illumination.illuminatedFraction;
+    const phaseSection = el('section', 'info-section');
 
-    // The disc, its caption and the three readouts, grouped as one visual unit.
-    // No heading of its own: the card is already titled above, and a second
-    // copy of the body's name is what this grouping briefly introduced. The
-    // exported figure does carry one, drawn by `phaseSvg.ts`, which rebuilds
-    // this content as real shapes rather than reading the element back — see
-    // its file note for why.
-    const phaseCard = el('div', 'phase-card');
+    const phaseHeader = el('div', 'info-section__head');
+    phaseHeader.appendChild(el('span', 'field__label', t('info.phaseByModel')));
 
-    const disc = el('div', 'phase-disc');
-    disc.style.setProperty('--tint', `var(--body-${selected})`);
-    // The lit limb faces the Sun, so it sits on the side the body lies away
-    // from it — the same reason a waxing Moon is lit on the right.
-    disc.dataset.side = body.illumination.waxing ? 'right' : 'left';
-    disc.dataset.shape = lit >= 0.5 ? 'gibbous' : 'crescent';
-    // Width of the terminator ellipse, |cos i| of the disc.
-    disc.style.setProperty('--lit-width', Math.abs(2 * lit - 1).toFixed(4));
-    disc.appendChild(el('div', 'phase-disc__half'));
-    disc.appendChild(el('div', 'phase-disc__terminator'));
-    phaseCard.appendChild(disc);
-
-    phaseCard.appendChild(
-      el(
-        'p',
-        'phase-caption',
-        // "z Marsu", not "z Mars" — the preposition takes the genitive.
-        t('info.asSeenFrom', { body: bodyName(state.observationPoint, 'genitive') }),
-      ),
-    );
-
-    /*
-     * Directly under the disc, because that is the thing being saved. Below the
-     * readouts it read as belonging to the whole panel, and people were not
-     * finding it. Compact, since it is a utility sitting inside a figure.
-     */
     const phaseExport = exportButtonRow(
       (width, height) => buildPhaseSvg({ width, height, state }),
       () => [
@@ -127,125 +289,221 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
       ],
       () => ({ width: 480, height: 420 }),
     );
-    phaseExport.classList.add('export--compact');
-    phaseCard.appendChild(phaseExport);
+    phaseExport.classList.add('export--compact', 'export--inline');
+    phaseHeader.appendChild(phaseExport);
+    phaseSection.appendChild(phaseHeader);
 
-    phaseCard.appendChild(readout(t('info.phase'), t(`phase.${phaseName(body.illumination)}`)));
-    phaseCard.appendChild(
-      readout(t('info.illuminated'), `${formatNumber(lit * 100, 0)} %`),
-    );
-    phaseCard.appendChild(
-      readout(
-        t('info.phaseAngle'),
-        `${formatNumber(body.illumination.phaseAngle, 1)}${t('info.unit.deg')}`,
+    const strip = el('div', 'phase-strip');
+    let ptolemyLit = 0;
+    let keplerLit = 0;
+
+    for (const { mode, engineId } of PHASE_STRIP_MODELS) {
+      const positions = ENGINES[engineId].positionsAt(state.julianDate);
+      const illum = illuminationOf(positions, state.observationPoint, selected);
+      if (mode === 'ptolemy') ptolemyLit = illum.illuminatedFraction;
+      if (mode === 'kepler') keplerLit = illum.illuminatedFraction;
+
+      const item = el('button', 'phase-strip__item');
+      item.type = 'button';
+      item.setAttribute('aria-pressed', String(state.mode === mode));
+      item.append(
+        buildPhaseDisc(selected, illum, 'phase-disc--strip'),
+        el('span', 'phase-strip__model', t(`mode.${mode}`)),
+        el('span', 'phase-strip__pct', `${formatNumber(illum.illuminatedFraction * 100, 0)} %`),
+      );
+      item.addEventListener('click', () => store.setMode(mode));
+      strip.appendChild(item);
+    }
+    phaseSection.appendChild(strip);
+
+    phaseSection.appendChild(
+      el(
+        'p',
+        'phase-caption',
+        `${t(`phase.${phaseName(body.illumination)}`)} · ${formatNumber(body.illumination.phaseAngle, 1)}${t('info.unit.deg')} · ${t('info.asSeenFrom', { body: bodyName(state.observationPoint, 'genitive') })}`,
       ),
     );
-    card.appendChild(phaseCard);
+
+    if (
+      (selected === 'venus' || selected === 'mercury') &&
+      (keplerLit >= 0.5 || keplerLit - ptolemyLit >= 0.2)
+    ) {
+      phaseSection.appendChild(
+        el(
+          'div',
+          'callout callout--refutation',
+          t('info.phaseRefuted', {
+            body: bodyName(selected),
+            max: selected === 'venus' ? '44' : '8',
+            heliocentric: formatNumber(keplerLit * 100, 0),
+          }),
+        ),
+      );
+    }
+
+    bodyWrap.appendChild(phaseSection);
   }
 
-  card.appendChild(
+  // --- 3. Sky position, error vs reference, and scale/distance -----------
+
+  const metricsSection = el('section', 'info-section');
+
+  metricsSection.appendChild(
     readout(
       t('info.apparentPosition'),
       `${formatNumber(body.zodiac.degreesInto, 1)}° ${t(`zodiac.${body.zodiac.division.id}`)}`,
     ),
   );
 
-  /*
-   * Distances read in Ptolemy's own unit while one of his constructions is
-   * running. See core/engines/ptolemaicUnits.ts: the Almagest fixes no absolute
-   * distance at all, only each body's measurements in parts of its own deferent
-   * of 60, so AU here would be an anachronism twice over.
-   *
-   * The reframe mode is excluded on purpose. It is modern positions wearing
-   * geocentric dress rather than anything Ptolemy computed, so AU is exactly
-   * right for it.
-   */
+  if (!body.isObserver && state.engineId !== REFERENCE_ENGINE_ID) {
+    const refPositions = ENGINES[REFERENCE_ENGINE_ID].positionsAt(state.julianDate);
+    const errDeg = Math.abs(
+      angleDiffDeg(
+        apparentLongitude(view.positions, state.observationPoint, selected),
+        apparentLongitude(refPositions, state.observationPoint, selected),
+      ),
+    );
+    metricsSection.appendChild(
+      readout(
+        t('info.errorVsReference'),
+        `${formatNumber(errDeg, 2)}${t('info.unit.deg')}`,
+      ),
+    );
+  }
+
   const inPtolemysUnits =
     state.engineId === 'ptolemaic-epicyclic' || state.engineId === 'ptolemaic-almagest';
   const parts = inPtolemysUnits
     ? (au: number): number | null => inDeferentParts(au, state.julianDate, selected)
     : (): number | null => null;
 
-  /** A length, in whichever unit the running model actually had. */
   const distance = (au: number): string => {
     const asParts = parts(au);
-    // One decimal, always: Czech takes the genitive singular after a decimal,
-    // so "63,2 dílu" is right for every value the readout can show.
     if (asParts !== null) return `${formatNumber(asParts, 1)} ${t('info.unit.parts')}`;
     return `${formatNumber(au, 3)} ${t('info.unit.au')}`;
   };
 
-  /*
-   * No distance from the Sun while Ptolemy is running.
-   *
-   * His construction determines one length and one only: how far a body is from
-   * the Earth, in parts of its own deferent. A Sun-relative distance is not a
-   * quantity the Almagest contains, and the figure this app could compute for it
-   * would depend on where the nested spheres were anchored — a modern choice
-   * made in ptolemaic.ts, not a result of his model. Printing it beside his own
-   * numbers would dress that choice up as one of his findings.
-   */
-  if (!inPtolemysUnits) {
-    card.appendChild(readout(t('info.distanceFromSun'), distance(body.distanceFromSun)));
+  if (!body.isObserver) {
+    const distRow = readout(t('info.distanceFromObserver'), distance(body.distanceFromObserver));
+    if (inPtolemysUnits && parts(body.distanceFromObserver) !== null) {
+      const valueEl = distRow.lastElementChild;
+      if (valueEl) {
+        valueEl.append(' ', el('span', 'pill-flag', t('info.noAbsoluteScale')));
+      }
+      metricsSection.appendChild(distRow);
+      metricsSection.appendChild(note(t('info.ptolemyParts')));
+    } else {
+      metricsSection.appendChild(distRow);
+    }
   }
 
-  if (!body.isObserver) {
-    card.appendChild(
-      readout(t('info.distanceFromObserver'), distance(body.distanceFromObserver)),
-    );
-    // Said next to the figure it qualifies: a reader who does not know that each
-    // body's 60 is a different length will compare these across bodies and draw
-    // a conclusion the Almagest never supported.
-    if (inPtolemysUnits && parts(body.distanceFromObserver) !== null) {
-      card.appendChild(note(t('info.ptolemyParts')));
-    }
-    card.appendChild(
-      readout(
-        t('info.elongation'),
-        `${formatNumber(
-          Math.abs(solarElongation(view.positions, state.observationPoint, selected)),
-          1,
-        )}${t('info.unit.deg')}`,
+  if (state.ghostEngineId && state.ghostEngineId !== 'all' && !body.isObserver) {
+    const ghostPositions = ENGINES[state.ghostEngineId].positionsAt(state.julianDate);
+    const separation = Math.abs(
+      angleDiffDeg(
+        apparentLongitude(ghostPositions, state.observationPoint, selected),
+        apparentLongitude(view.positions, state.observationPoint, selected),
       ),
     );
-    card.appendChild(
-      readout(
-        t('info.angularDiameter'),
-        `${formatNumber(body.illumination.angularDiameter, 1)}${t('info.unit.arcsec')}`,
-      ),
+    metricsSection.appendChild(
+      readout(t('info.modelError'), `${formatNumber(separation, 2)}${t('info.unit.deg')}`),
     );
 
-    const rate = apparentLongitudeRate(
-      (jd) => ENGINES[state.engineId].positionsAt(jd),
-      state.julianDate,
+    const ghostDistance = relativePosition(
+      ghostPositions,
       state.observationPoint,
       selected,
-    );
-    card.appendChild(
-      readout('', rate < 0 ? t('info.retrograde') : t('info.direct')),
-    );
+    ).distance;
+    if (body.distanceFromObserver > 0 && ghostDistance > 0) {
+      metricsSection.appendChild(
+        readout(
+          t('info.modelDistanceRatio'),
+          `${formatNumber(ghostDistance / body.distanceFromObserver, 2)}×`,
+        ),
+      );
+    }
   }
 
-  card.appendChild(
-    readout(
-      t('info.radius'),
-      `${formatNumber(BODIES[selected].radius, 0)} ${t('info.unit.km')}`,
-    ),
-  );
+  bodyWrap.appendChild(metricsSection);
 
-  // Exact force magnitudes, because the drawn vector lengths are deliberately
-  // not proportional — a fourth root, or nothing but the Sun would be visible.
+  // --- 4. Interactive Model Machinery Parts ------------------------------
+
   const dynamics = store.engine.dynamics?.(state.julianDate, selected);
-  if (dynamics) {
-    const table = el('div', 'comparison');
-    table.appendChild(el('div', 'field__label', t('info.forces')));
+  const machinery = collectMachineryChips(state, selected, Boolean(dynamics));
 
-    table.appendChild(
+  if (machinery.length > 0) {
+    const machSection = el('section', 'info-section');
+    machSection.appendChild(el('div', 'field__label', t('info.machineryParts')));
+
+    const chipRow = el('div', 'machinery-chips');
+    let activeChip: MachineryChip | null = null;
+
+    for (const chip of machinery) {
+      const active = activePartKey === chip.key;
+      if (active) activeChip = chip;
+
+      const btn = el('button', 'machinery-chip', chip.label);
+      btn.type = 'button';
+      btn.setAttribute('aria-pressed', String(active));
+      btn.addEventListener('mouseenter', () => setHarnessHover(chip.role));
+      btn.addEventListener('mouseleave', () => setHarnessHover(null));
+      btn.addEventListener('focus', () => setHarnessHover(chip.role));
+      btn.addEventListener('blur', () => setHarnessHover(null));
+      btn.addEventListener('click', () => {
+        activePartKey = activePartKey === chip.key ? null : chip.key;
+        setHarnessHover(activePartKey ? chip.role : null);
+        renderInfoPanel(container, store);
+      });
+      chipRow.appendChild(btn);
+    }
+    machSection.appendChild(chipRow);
+
+    if (activeChip) {
+      const detailNote = harnessNote(state, selected, activeChip.role, activeChip.target);
+      if (detailNote) {
+        const detailCard = el('div', 'machinery-detail');
+        const prose = el('p', 'machinery-detail__body');
+        prose.appendChild(linkify(detailNote.body));
+        detailCard.appendChild(prose);
+
+        for (const item of detailNote.values) {
+          detailCard.appendChild(readout(item.label, item.value));
+        }
+        machSection.appendChild(detailCard);
+      }
+    }
+
+    bodyWrap.appendChild(machSection);
+  }
+
+  // --- 5. Newton Forces + Moon perturbation insight ----------------------
+
+  if (dynamics) {
+    const forceSection = el('section', 'info-section comparison');
+    forceSection.appendChild(el('div', 'field__label', t('info.forces')));
+
+    forceSection.appendChild(
       readout(t('info.speed'), `${formatNumber(dynamics.speedKmPerSecond, 2)} km/s`),
     );
-    table.appendChild(
+    forceSection.appendChild(
       readout(t('info.netForce'), `${formatExponent(dynamics.netNewtons)} N`),
     );
+
+    if (selected === 'moon') {
+      const sunPull = dynamics.pulls.find((p) => p.source === 'sun');
+      const earthPull = dynamics.pulls.find((p) => p.source === 'earth');
+      if (sunPull && earthPull && earthPull.newtons > 0 && sunPull.newtons > earthPull.newtons) {
+        forceSection.appendChild(
+          el(
+            'div',
+            'callout callout--insight',
+            t('info.moonForceInsight', {
+              ratio: formatNumber(sunPull.newtons / earthPull.newtons, 1),
+            }),
+          ),
+        );
+      }
+    }
 
     for (const pull of dynamics.pulls) {
       const row = el('div', 'comparison__row');
@@ -257,87 +515,51 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
           `${formatExponent(pull.newtons)} N · ${formatShare(pull.share)}`,
         ),
       );
-      table.appendChild(row);
+      forceSection.appendChild(row);
     }
 
-    table.appendChild(note(t('info.forceScaleNote')));
-    card.appendChild(table);
+    forceSection.appendChild(note(t('info.forceScaleNote')));
+    bodyWrap.appendChild(forceSection);
   }
 
-  // What each model makes of the phase.
-  //
-  // This is the one reading where the geocentric model fails outright rather
-  // than approximately. With its deferents scaled to the nested spheres, Venus
-  // is penned inside the Sun's shell and never passes half-lit, so at superior
-  // conjunction Ptolemy says crescent where the other two say full — a whole
-  // disc apart. Venus and Mercury are the bodies to select for it.
-  if (selected !== 'sun' && !body.isObserver) {
-    const table = el('div', 'comparison');
-    table.appendChild(el('div', 'field__label', t('info.phaseByModel')));
+  // --- 6. Secondary Physical & Optical Details (native <details>) --------
 
-    for (const engineId of PHASE_COMPARISON_ENGINES) {
-      const positions = ENGINES[engineId].positionsAt(state.julianDate);
-      const lit = illuminationOf(positions, state.observationPoint, selected)
-        .illuminatedFraction;
+  const disclosure = el('details', 'details-disclosure');
+  disclosure.open = detailsOpen;
+  disclosure.addEventListener('toggle', () => {
+    detailsOpen = disclosure.open;
+  });
+  disclosure.appendChild(el('summary', 'details-disclosure__summary', t('info.physicalDetails')));
 
-      const row = el('div', 'comparison__row');
-      row.appendChild(el('span', undefined, t(`engine.${engineId}`)));
-      row.appendChild(
-        el('span', 'readout__value', `${formatNumber(lit * 100, 0)} %`),
-      );
-      if (engineId === state.engineId) row.classList.add('comparison__row--active');
-      table.appendChild(row);
-    }
-
-    card.appendChild(table);
+  const detailsBody = el('div', 'details-disclosure__body');
+  if (!inPtolemysUnits) {
+    detailsBody.appendChild(readout(t('info.distanceFromSun'), distance(body.distanceFromSun)));
   }
-
-  /*
-   * With a ghost model selected, how far the two disagree.
-   *
-   * Reported as an *angle*, not as a distance. A linear separation conflates two
-   * quite different disagreements, and since the deferents were scaled to
-   * Ptolemy's nested spheres the distance term swamps everything: Mars showed
-   * 677 million km of "error" where the two models place it only 4.3° apart. The
-   * angle is the observable quantity, the one the accuracy tests measure, and
-   * the one the historical argument turned on.
-   *
-   * The distance disagreement is worth seeing too, but as a ratio and clearly
-   * labelled as such — it is precisely what no pre-telescopic observation could
-   * test, and therefore what let the two systems coexist for so long.
-   */
-  // Only for a single named ghost: 'all' has no one counterpart to measure
-  // against, and the map is already showing the whole spread.
-  if (state.ghostEngineId && state.ghostEngineId !== 'all' && !body.isObserver) {
-    const ghostPositions = ENGINES[state.ghostEngineId].positionsAt(state.julianDate);
-
-    const separation = Math.abs(
-      angleDiffDeg(
-        apparentLongitude(ghostPositions, state.observationPoint, selected),
-        apparentLongitude(view.positions, state.observationPoint, selected),
-      ),
-    );
-    card.appendChild(
+  if (!body.isObserver) {
+    detailsBody.appendChild(
       readout(
-        t('info.modelError'),
-        `${formatNumber(separation, 2)}${t('info.unit.deg')}`,
+        t('info.elongation'),
+        `${formatNumber(
+          Math.abs(solarElongation(view.positions, state.observationPoint, selected)),
+          1,
+        )}${t('info.unit.deg')}`,
       ),
     );
-
-    const ghostDistance = relativePosition(
-      ghostPositions,
-      state.observationPoint,
-      selected,
-    ).distance;
-    if (body.distanceFromObserver > 0 && ghostDistance > 0) {
-      card.appendChild(
-        readout(
-          t('info.modelDistanceRatio'),
-          `${formatNumber(ghostDistance / body.distanceFromObserver, 2)}×`,
-        ),
-      );
-    }
+    detailsBody.appendChild(
+      readout(
+        t('info.angularDiameter'),
+        `${formatNumber(body.illumination.angularDiameter, 1)}${t('info.unit.arcsec')}`,
+      ),
+    );
   }
+  detailsBody.appendChild(
+    readout(
+      t('info.radius'),
+      `${formatNumber(BODIES[selected].radius, 0)} ${t('info.unit.km')}`,
+    ),
+  );
+  disclosure.appendChild(detailsBody);
+  bodyWrap.appendChild(disclosure);
 
-  container.appendChild(card);
+  container.appendChild(bodyWrap);
 }

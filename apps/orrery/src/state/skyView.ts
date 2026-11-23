@@ -20,10 +20,12 @@
 import { BODIES, BODY_IDS, type BodyId } from '@orrery/core/bodies';
 import { relativePosition, type SphericalPosition } from '@orrery/core/coordinates';
 import { ENGINES } from '@orrery/core/engines/registry';
+import type { EngineId } from '@orrery/core/engines/types';
 import { illuminationOf, type Illumination } from '@orrery/core/illumination';
 import { starsWithin } from '@orrery/core/stars';
 import { DEG, angleDiffDeg, normalizeDeg } from '@orrery/core/vec';
 import { divisionsFor, precessionSinceJ2000, type ZodiacDivision } from '@orrery/core/zodiac';
+import { COMPARISON_ENGINES } from './selectors';
 import type { State } from './store';
 
 /** Anything drawn in the band carries the two angles that place it. */
@@ -50,6 +52,11 @@ export interface SkyBodyMark extends SkyMark {
   illumination: Illumination;
   /** True angular distance from the body the field is centred on, degrees. */
   separation: number;
+}
+
+/** Where a rival model places the target body against the same fixed stars. */
+export interface SkyGhostMark extends SkyBodyMark {
+  engineId: EngineId;
 }
 
 export interface SkyDivisionMark {
@@ -79,6 +86,8 @@ export interface SkyView {
   field: number;
   stars: SkyStarMark[];
   bodies: SkyBodyMark[];
+  /** Rival models' placements and phases of `target` in the same sky patch. */
+  ghosts: SkyGhostMark[];
   divisions: SkyDivisionMark[];
   /**
    * How far the centre of the field is from the Sun, degrees.
@@ -226,6 +235,32 @@ export function buildSkyView(state: State, field: number): SkyView | null {
     if (Math.abs(offset) <= halfWidth) divisions.push({ id: division.id, offset });
   }
 
+  const ghostEngines: EngineId[] =
+    state.ghostEngineId === 'all'
+      ? COMPARISON_ENGINES.filter((id) => id !== state.engineId)
+      : state.ghostEngineId && state.ghostEngineId !== state.engineId
+        ? [state.ghostEngineId]
+        : [];
+
+  const ghosts: SkyGhostMark[] = [];
+  for (const engineId of ghostEngines) {
+    const ghostPositions = ENGINES[engineId].positionsAt(state.julianDate);
+    const position = relativePosition(ghostPositions, observer, target);
+    const offset = angleDiffDeg(position.longitude, centre);
+    if (Math.abs(offset) > halfWidth) continue;
+
+    ghosts.push({
+      engineId,
+      id: target,
+      offset,
+      latitude: position.latitude,
+      longitude: position.longitude,
+      distance: position.distance,
+      illumination: illuminationOf(ghostPositions, observer, target),
+      separation: angularSeparation(position, centrePosition),
+    });
+  }
+
   return {
     target,
     observer,
@@ -235,6 +270,7 @@ export function buildSkyView(state: State, field: number): SkyView | null {
     flatLatitudes: bodies.length > 0 && bodies.every((body) => body.latitude === 0),
     stars,
     bodies,
+    ghosts,
     divisions,
     solarDistance: Math.abs(
       angularSeparation(centrePosition, relativePosition(positions, observer, 'sun')),

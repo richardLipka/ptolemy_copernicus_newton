@@ -199,3 +199,43 @@ describe("the divisions are the ring's own", () => {
     expect(then).not.toBeNull();
   });
 });
+
+describe('multi-model comparison ghosts in the sky band', () => {
+  it('returns no ghosts when comparison is off', () => {
+    const view = viewFor({ ghostEngineId: null })!;
+    expect(view.ghosts).toEqual([]);
+  });
+
+  it('includes a single rival model ghost with its own phase and latitude', () => {
+    // 1610-10-15: Ptolemy puts Venus at 0° latitude and <50% lit; Kepler shows gibbous (>50%) and non-zero latitude.
+    const view = viewFor({
+      mode: 'ptolemy',
+      engineId: 'ptolemaic-epicyclic',
+      ghostEngineId: 'keplerian',
+      selectedBody: 'venus',
+      julianDate: jdFromCalendar(1610, 10, 15),
+    })!;
+
+    expect(view.ghosts).toHaveLength(1);
+    const ghost = view.ghosts[0]!;
+    expect(ghost.engineId).toBe('keplerian');
+    expect(ghost.id).toBe('venus');
+    expect(ghost.illumination.illuminatedFraction).toBeGreaterThan(0.5);
+    expect(Math.abs(ghost.latitude)).toBeGreaterThan(0.1);
+  });
+
+  it('returns all rival comparison engines when comparing all 4 models', () => {
+    const view = viewFor({
+      mode: 'kepler',
+      engineId: 'keplerian',
+      ghostEngineId: 'all',
+      selectedBody: 'mars',
+    })!;
+
+    const ids = view.ghosts.map((g) => g.engineId);
+    expect(ids).not.toContain('keplerian');
+    expect(ids).toContain('ptolemaic-epicyclic');
+    expect(ids).toContain('copernican');
+    expect(ids).toContain('nbody');
+  });
+});

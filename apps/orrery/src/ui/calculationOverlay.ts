@@ -20,7 +20,8 @@ import { DEMONSTRATIONS } from '@orrery/core/demonstrations';
 import { dateFromJd } from '@orrery/core/time';
 import { bodyName, formatDate, formatNumber, t } from '../i18n/i18n';
 import type { Store } from '../state/store';
-import { el, linked, note } from './dom';
+import { el, note } from './dom';
+import { launchTrial } from './trials';
 
 /**
  * Render a magnitude in the reader's locale.
@@ -122,25 +123,6 @@ export function renderCalculationOverlay(container: HTMLElement, store: Store): 
 
   sheet.appendChild(note(t('calc.intro')));
 
-  // --- demonstrations ---------------------------------------------------
-
-  sheet.appendChild(el('h3', 'overlay__section', t('calc.demonstrations')));
-  sheet.appendChild(note(t('calc.demonstrations.intro')));
-
-  const list = el('div', 'demos');
-  for (const demonstration of DEMONSTRATIONS) {
-    const card = el('button', 'demo');
-    card.type = 'button';
-    card.append(
-      el('span', 'demo__date', formatDate(dateFromJd(demonstration.jd))),
-      el('span', 'demo__title', t(`demo.${demonstration.id}`)),
-      linked('span', 'demo__note', t(`demo.${demonstration.id}.note`)),
-    );
-    card.addEventListener('click', () => store.applyDemonstration(demonstration));
-    list.appendChild(card);
-  }
-  sheet.appendChild(list);
-
   // --- the working ------------------------------------------------------
 
   sheet.appendChild(el('h3', 'overlay__section', t('calc.working')));
@@ -166,6 +148,22 @@ export function renderCalculationOverlay(container: HTMLElement, store: Store): 
     sheet.appendChild(columns);
     sheet.appendChild(note(t('calc.working.moral')));
   }
+
+  // Quick trail into the decisive trials at the bottom of the sheet so a reader
+  // studying the arithmetic can jump straight to a historical test.
+  sheet.appendChild(el('h3', 'overlay__section', t('calc.demonstrations')));
+  const list = el('div', 'demos demos--compact');
+  for (const demonstration of DEMONSTRATIONS) {
+    const card = el('button', 'demo');
+    card.type = 'button';
+    card.append(
+      el('span', 'demo__date', formatDate(dateFromJd(demonstration.jd))),
+      el('span', 'demo__title', t(`demo.${demonstration.id}`)),
+    );
+    card.addEventListener('click', () => launchTrial(store, demonstration));
+    list.appendChild(card);
+  }
+  sheet.appendChild(list);
 
   container.appendChild(sheet);
 

@@ -403,3 +403,76 @@ describe('the band of sky zooms on its own', () => {
     expect(store.get().skyField).toBe(12);
   });
 });
+
+describe('Phase 2 & 3 layout and evidence state', () => {
+  it('keeps evidence tabs mutually exclusive and mirrors showSky/showTrack', () => {
+    store.setEvidenceTab('sky');
+    expect(store.get().evidenceTab).toBe('sky');
+    expect(store.get().showSky).toBe(true);
+    expect(store.get().showTrack).toBe(false);
+
+    store.setEvidenceTab('track');
+    expect(store.get().evidenceTab).toBe('track');
+    expect(store.get().showSky).toBe(false);
+    expect(store.get().showTrack).toBe(true);
+
+    store.setEvidenceTab('scorecard');
+    expect(store.get().evidenceTab).toBe('scorecard');
+    expect(store.get().showSky).toBe(false);
+    expect(store.get().showTrack).toBe(false);
+
+    store.setEvidenceTab(null);
+    expect(store.get().evidenceTab).toBeNull();
+    expect(store.get().showSky).toBe(false);
+    expect(store.get().showTrack).toBe(false);
+  });
+
+  it('switches right inspector tabs and top bar popovers cleanly', () => {
+    expect(store.get().rightTab).toBe('inspect');
+    store.setRightTab('events');
+    expect(store.get().rightTab).toBe('events');
+
+    store.setTopPopover('trials');
+    expect(store.get().activePopover).toBe('trials');
+    expect(store.get().showSettings).toBe(false);
+
+    store.setTopPopover('settings');
+    expect(store.get().activePopover).toBe('settings');
+    expect(store.get().showSettings).toBe(true);
+
+    store.setTopPopover(null);
+    expect(store.get().activePopover).toBeNull();
+    expect(store.get().showSettings).toBe(false);
+  });
+
+  it('applies full guided trial scene properties and dismisses cleanly', () => {
+    const venusTrial = DEMONSTRATIONS.find((d) => d.id === 'venus-phases-1610')!;
+    store.setTopPopover('trials');
+    store.setRightTab('events');
+    store.applyDemonstration(venusTrial);
+
+    const state = store.get();
+    expect(state.activeTrialId).toBe('venus-phases-1610');
+    expect(state.activePopover).toBeNull();
+    expect(state.rightTab).toBe('inspect');
+    expect(state.ghostEngineId).toBe('keplerian');
+    expect(state.evidenceTab).toBe('sky');
+    expect(state.showSky).toBe(true);
+
+    store.dismissTrial();
+    expect(store.get().activeTrialId).toBeNull();
+  });
+
+  it('enables the recentered composition harness on the Mars equivalence trial', () => {
+    const marsTrial = DEMONSTRATIONS.find((d) => d.id === 'mars-composition-2027')!;
+    store.applyDemonstration(marsTrial);
+
+    const state = store.get();
+    expect(state.activeTrialId).toBe('mars-composition-2027');
+    expect(state.mode).toBe('kepler');
+    expect(state.frameOrigin).toBe('earth');
+    expect(state.selectedBody).toBe('mars');
+    expect(state.showRecentredHarness).toBe(true);
+    expect(state.ghostEngineId).toBe('ptolemaic-epicyclic');
+  });
+});

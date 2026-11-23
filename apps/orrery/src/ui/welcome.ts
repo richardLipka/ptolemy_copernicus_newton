@@ -45,13 +45,13 @@ export function renderWelcome(container: HTMLElement, store: Store): void {
 
   const actions = el('div', 'welcome__actions');
 
-  // The demonstrations are the best way in, so the primary action goes there
-  // rather than merely dismissing.
+  // The guided trials are the best way in, so the primary action opens them
+  // directly rather than merely dismissing.
   const explore = el('button', undefined, t('welcome.start'));
   explore.type = 'button';
   explore.addEventListener('click', () => {
     store.dismissWelcome();
-    store.setCalculationOpen(true);
+    store.setTopPopover('trials');
   });
 
   const dismiss = el('button', undefined, t('welcome.dismiss'));

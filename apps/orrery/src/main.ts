@@ -1,11 +1,14 @@
 /**
- * Wiring.
+ * Wiring — Stage-First layout.
  *
- * The map is full-bleed and the controls float over it in docks. Two update
- * paths, deliberately separated by cost: the instrument updates in place every
- * animation frame, while the panels rebuild only when something they show
- * actually changes. Event scanning evaluates the engine a few hundred times, so
- * it does not belong on the animation path.
+ * Full-bleed central orrery with:
+ *  - Top full-width Command Bar (models, compare, guided trials, working, notes, export, preferences)
+ *  - Floating non-blocking Trial Banner (top-centre of the stage when a trial is active)
+ *  - Left Settings Rail (Vantage + Equivalence Bridge, What to show, Bodies)
+ *  - Right Inspector (tabbed Details | Events)
+ *  - Unified Bottom Evidence Drawer (Observer's sky | Sky track | Model scorecard)
+ *  - Bottom-Centre compact Time Pill (play/pause, step, clock/date/today, rate)
+ *  - Bottom-Right quiet Credit & institutional marks
  */
 
 import './render/theme/tokens.css';
@@ -20,40 +23,38 @@ import './render/theme/layout.css';
 import favMark from './assets/fav.svg?raw';
 import kivMark from './assets/kiv.svg?raw';
 
-import { createOrrery } from './render/orrery/orrery';
-import { createSkyStrip } from './render/sky/skyStrip';
-import { renderTrackStrip } from './render/track/trackStrip';
+import { ENGINES } from '@orrery/core/engines/registry';
+import type { EngineId } from '@orrery/core/engines/types';
 import {
   buildLongitudeTrack,
   trackCycleDays,
   trackWindowDays,
 } from '@orrery/core/longitudeTrack';
+import { dateFromJd } from '@orrery/core/time';
 import { precessionSinceJ2000 } from '@orrery/core/zodiac';
+import { formatDateTime, setLocale, t } from './i18n/i18n';
 import { renderEventPanel } from './render/event-panel/eventPanel';
+import { createEvidenceDrawer } from './render/evidence/evidenceDrawer';
+import { renderScorecard } from './render/evidence/scorecard';
 import { renderInfoPanel } from './render/info-panel/infoPanel';
+import { createOrrery } from './render/orrery/orrery';
 import { applyTheme } from './render/theme/themes';
-import { renderControls, renderMapExport } from './ui/controls';
+import { renderTrackStrip, type GhostTrackEntry } from './render/track/trackStrip';
+import { applyNotes } from './state/preferences';
+import { COMPARISON_ENGINES } from './state/selectors';
+import { store, type RightTab } from './state/store';
+import { encodeUrlState, readUrlState, writeUrlState } from './state/urlState';
+import { renderCalculationOverlay } from './ui/calculationOverlay';
+import { renderControls } from './ui/controls';
+import { el, wireRovingFocus } from './ui/dom';
 import { renderTimeDock } from './ui/timeDock';
 import { renderTopBar } from './ui/topBar';
-import { renderCalculationOverlay } from './ui/calculationOverlay';
+import { renderTrialBanner } from './ui/trials';
 import { renderWelcome } from './ui/welcome';
-import { el } from './ui/dom';
-import { dateFromJd } from '@orrery/core/time';
-import { formatDateTime, setLocale, t } from './i18n/i18n';
-import { ENGINES } from '@orrery/core/engines/registry';
-import { store } from './state/store';
-import { applyNotes } from './state/preferences';
-import { encodeUrlState, readUrlState, writeUrlState } from './state/urlState';
 
 const root = document.querySelector<HTMLDivElement>('#app');
 if (!root) throw new Error('Missing #app');
 
-/**
- * The same element, in a binding TypeScript will trust inside a closure.
- *
- * The null check above narrows `root` at the top level only; a function body is
- * checked as if it could run at any time, so it sees the wider type.
- */
 const app: HTMLDivElement = root;
 
 setLocale(store.get().locale);
@@ -63,45 +64,70 @@ document.title = t('app.title');
 
 // --- structure -----------------------------------------------------------
 
-/**
- * The region the instrument is measured against.
- *
- * Inset by the dock widths, so the map centres in the gap the user can actually
- * see and the zodiac ring's labels stay clear of the floating panels — even
- * though the drawing itself may pass beneath them.
- */
+const commandBarHost = document.createElement('div');
+commandBarHost.className = 'command-bar-host';
+
 const field = document.createElement('div');
 field.className = 'stage__field';
+
+const trialBannerHost = document.createElement('div');
+trialBannerHost.className = 'trial-banner-host';
+trialBannerHost.hidden = true;
 
 const dockLeft = document.createElement('div');
 dockLeft.className = 'dock dock--left';
 
-const dockTopRight = document.createElement('div');
-dockTopRight.className = 'dock dock--top-right';
+const controlsHost = document.createElement('div');
+controlsHost.style.display = 'contents';
+dockLeft.appendChild(controlsHost);
 
+// Right inspector: one unified card with ARIA tablist (`Details` | `Events`).
 const dockRight = document.createElement('div');
 dockRight.className = 'dock dock--right';
 
-const dockBottomRight = document.createElement('div');
-dockBottomRight.className = 'dock dock--bottom-right';
+const inspectorCard = el('section', 'panel inspector');
+const rightTablist = el('div', 'tablist inspector__tabs');
+rightTablist.setAttribute('role', 'tablist');
+rightTablist.setAttribute('focusgroup', 'tablist nomemory');
+rightTablist.setAttribute('aria-label', t('right.tabs'));
 
-/*
- * Saving the map gets the opposite corner from the clock, and is the one dock
- * meant to be overlooked: it is a utility rather than a control that shapes the
- * view, and it sat in the left column taking the eye every time.
- */
-const dockBottomLeft = document.createElement('div');
-dockBottomLeft.className = 'dock dock--bottom-left';
+const RIGHT_TABS: readonly RightTab[] = ['inspect', 'events'];
+const rightTabButtons = new Map<RightTab, HTMLButtonElement>();
+for (const tab of RIGHT_TABS) {
+  const btn = el('button', 'tablist__tab', t(`right.tab.${tab}`));
+  btn.type = 'button';
+  btn.id = `inspector-tab-${tab}`;
+  btn.setAttribute('role', 'tab');
+  btn.setAttribute('aria-selected', 'false');
+  btn.addEventListener('click', () => store.setRightTab(tab));
+  rightTabButtons.set(tab, btn);
+  rightTablist.appendChild(btn);
+}
+wireRovingFocus(rightTablist, '[role="tab"]', { activateOnFocus: true });
 
-/*
- * renderTimeDock() replaces the *whole* contents of whatever container it is
- * given, every time the controls rebuild (theme, locale, play/pause, rate…).
- * Handing it dockBottomRight directly would wipe the credit line below along
- * with the panel it is meant to sit under, so the clock gets its own host.
- */
+const infoHost = el('div', 'inspector__pane');
+infoHost.setAttribute('role', 'tabpanel');
+infoHost.setAttribute('aria-labelledby', 'inspector-tab-inspect');
+
+const eventsHost = el('div', 'inspector__pane');
+eventsHost.setAttribute('role', 'tabpanel');
+eventsHost.setAttribute('aria-labelledby', 'inspector-tab-events');
+eventsHost.hidden = true;
+
+inspectorCard.append(rightTablist, infoHost, eventsHost);
+dockRight.appendChild(inspectorCard);
+
+// Bottom-centre compact timing pill.
+const dockBottomCenter = document.createElement('div');
+dockBottomCenter.className = 'dock dock--bottom-center';
+
 const timeDockHost = document.createElement('div');
 timeDockHost.style.display = 'contents';
-dockBottomRight.appendChild(timeDockHost);
+dockBottomCenter.appendChild(timeDockHost);
+
+// Bottom-right quiet credit & university marks.
+const dockBottomRight = document.createElement('div');
+dockBottomRight.className = 'dock dock--bottom-right dock--credit';
 
 const credit = el('footer', 'credit');
 credit.append(`${t('footer.copyright', { year: new Date().getFullYear() })} · `);
@@ -116,15 +142,6 @@ homeLink.target = '_blank';
 homeLink.rel = 'noopener noreferrer';
 credit.appendChild(homeLink);
 
-/*
- * The two institutional marks, inlined rather than linked as <img>.
- *
- * Both ship from kiv.zcu.cz as flat white artwork, meant for the dark header
- * they sit in there. This app has four themes, two of them light, so a white
- * mark would be invisible on parchment. Inlining the SVG lets every fill be
- * `currentColor`, and the mark then takes the footer's own ink in whichever
- * theme is running — one asset, four looks, no recolouring code.
- */
 const marks = el('div', 'credit__marks');
 for (const [markup, href, label, extra] of [
   [favMark, 'https://www.fav.zcu.cz/', 'Fakulta aplikovaných věd ZČU', ''],
@@ -142,7 +159,6 @@ for (const [markup, href, label, extra] of [
   link.title = label;
   link.setAttribute('aria-label', label);
   link.innerHTML = markup;
-  // The mark is decorative once the link carries the name.
   link.firstElementChild?.setAttribute('aria-hidden', 'true');
   link.firstElementChild?.setAttribute('focusable', 'false');
   marks.appendChild(link);
@@ -150,111 +166,74 @@ for (const [markup, href, label, extra] of [
 credit.appendChild(marks);
 dockBottomRight.appendChild(credit);
 
+// Unified bottom evidence drawer (Observer's sky | Sky track | Model scorecard).
+const evidenceHost = document.createElement('div');
+evidenceHost.className = 'evidence-host';
+evidenceHost.hidden = true;
+
 /** Wrapper the narrow-viewport rules turn into a stacked column. */
 const dockStack = document.createElement('div');
 dockStack.className = 'dock-stack';
-dockStack.append(dockTopRight, dockRight, dockBottomRight, dockLeft, dockBottomLeft);
+dockStack.append(dockBottomCenter, dockLeft, dockRight, dockBottomRight);
 
-root.append(field, dockStack);
-
-const masthead = document.createElement('header');
-masthead.className = 'masthead panel';
-dockLeft.appendChild(masthead);
-
-const controlsHost = document.createElement('div');
-controlsHost.style.display = 'contents';
-dockLeft.appendChild(controlsHost);
-
-const infoHost = document.createElement('div');
-infoHost.style.display = 'contents';
-const eventsHost = document.createElement('div');
-eventsHost.style.display = 'contents';
-dockRight.append(infoHost, eventsHost);
-
-/**
- * The overlay lives outside the docks, so it can cover the whole stage and is
- * not caught by the dock rules that stop wheel and double-click events.
- */
 const overlayHost = document.createElement('div');
 overlayHost.className = 'overlay';
 overlayHost.hidden = true;
-root.appendChild(overlayHost);
 
-/** The welcome sits above everything, including the calculation overlay. */
 const welcomeHost = document.createElement('div');
 welcomeHost.className = 'overlay overlay--welcome';
 welcomeHost.hidden = true;
-root.appendChild(welcomeHost);
 
-/*
- * The longitude strip sits above the map, inside the stage rather than a dock:
- * it is a second view of the same instant, not a control, and it spans the full
- * width the map has.
- */
-const trackHost = document.createElement('div');
-trackHost.className = 'track-host';
-trackHost.hidden = true;
-root.appendChild(trackHost);
-
-/*
- * The band of sky sits opposite it, along the bottom, for the same reason: it
- * is a second view of this instant rather than a control. The two answer
- * different questions — the strip above is a record over time, this is the sky
- * at one moment — and either can be on without the other.
- */
-const skyHost = document.createElement('div');
-skyHost.className = 'sky-host';
-skyHost.hidden = true;
-root.appendChild(skyHost);
+root.append(
+  commandBarHost,
+  field,
+  trialBannerHost,
+  evidenceHost,
+  dockStack,
+  overlayHost,
+  welcomeHost,
+);
 
 const orrery = createOrrery(field, store);
-const skyStrip = createSkyStrip(skyHost, store);
+const evidenceDrawer = createEvidenceDrawer(evidenceHost, store);
+
+// Keep CSS stage insets synced to the actual rendered heights of the top bar,
+// bottom-centre time pill, and bottom-right credit so wrapping on mid-size
+// screens never creates gaps or overlaps.
+const observeHeight = (element: HTMLElement, variable: string): void => {
+  new ResizeObserver(() => {
+    const height = Math.ceil(element.getBoundingClientRect().height);
+    if (height > 0) app.style.setProperty(variable, `${height}px`);
+  }).observe(element);
+};
+observeHeight(commandBarHost, '--bar-height');
+observeHeight(dockBottomCenter, '--time-pill-height');
+observeHeight(dockBottomRight, '--credit-reserve');
 
 /** Handed back by the time dock so the clock can update without a rebuild. */
 let dateInput: HTMLInputElement | null = null;
 let clockReadout: HTMLElement | null = null;
 
-/*
- * The title, and only the title.
- *
- * The subtitle spelled out PTOLEMY · COPERNICUS · KEPLER · NEWTON directly
- * above four buttons reading Ptolemy, Copernicus, Kepler and Newton. It cost
- * two lines at the top of the dock to say what the next control says better, so
- * it is the tooltip now and the heading is set a size down.
- */
-function renderMasthead(): void {
-  masthead.replaceChildren();
-  const title = document.createElement('h1');
-  title.className = 'masthead__title';
-  title.textContent = t('app.title');
-  masthead.title = t('app.subtitle');
-  masthead.append(title);
+function syncRightTabs(): void {
+  const active = store.get().rightTab;
+  rightTablist.setAttribute('aria-label', t('right.tabs'));
+  for (const tab of RIGHT_TABS) {
+    const btn = rightTabButtons.get(tab)!;
+    const selected = active === tab;
+    btn.textContent = t(`right.tab.${tab}`);
+    btn.setAttribute('aria-selected', String(selected));
+    btn.toggleAttribute('focusgroupstart', selected);
+  }
+  infoHost.hidden = active !== 'inspect';
+  eventsHost.hidden = active !== 'events';
 }
 
 // --- update budgets ------------------------------------------------------
 
-/**
- * Rebuild budgets, in wall-clock milliseconds.
- *
- * Throttling against simulated time does not work: the rate control makes
- * simulated days pass arbitrarily fast, so a "once per simulated day" budget
- * becomes once per frame at 400 days/s. Real elapsed time is the only measure
- * that holds however fast the clock is spun.
- */
 const INFO_BUDGET_MS = 200;
 const EVENT_BUDGET_MS = 600;
-
-/** How far the date may drift before the event window is rescanned, days. */
 const EVENT_RESCAN_DAYS = 25;
 
-/**
- * What the interactive panels depend on — deliberately *not* the date.
- *
- * These hold the only interactive elements in the app, and replacing a button
- * mid-gesture swallows the click meant for it. Nothing here may vary with time,
- * or the transport controls would be torn down under the pointer while the clock
- * ran, which is exactly how the stop button once came to appear broken.
- */
 function controlsSignature(): string {
   const state = store.get();
   return [
@@ -270,37 +249,22 @@ function controlsSignature(): string {
     state.showSightLines,
     state.showStarFigures,
     state.showConstruction,
-    // The recentred harness appears and vanishes with the frame origin and the
-    // selection, both of which are already here, but its own pressed state is
-    // not — without it the button would not redraw when toggled.
     state.showRecentredHarness,
-    // The two strips as well. Their buttons carry a pressed state like every
-    // other toggle, and the band's field selector only exists while the band
-    // does — neither can redraw if the signature cannot see them change.
-    state.showTrack,
-    state.showSky,
+    state.evidenceTab,
+    state.rightTab,
+    state.activePopover,
+    state.activeTrialId,
+    state.showMoons,
     state.skyField,
     state.selectedBody,
     state.locale,
     state.theme,
-    // The prose itself hides via CSS, but the top bar's toggle has to redraw
-    // to show which way it is set.
     state.showNotes,
-    // The cog's own pressed state, and whether its menu is on screen.
-    state.showSettings,
     state.playing,
     state.rateDaysPerSecond,
   ].join('|');
 }
 
-/**
- * The overlay's own dependencies.
- *
- * It shows four models' working for the selected body, so it must follow the
- * selection and the date — but rebuilding it per frame would evaluate four
- * engines on the animation path, hence the same wall-clock budget the info
- * panel uses.
- */
 function overlaySignature(): string {
   const state = store.get();
   return [
@@ -316,7 +280,6 @@ const OVERLAY_BUDGET_MS = 250;
 let lastOverlay = '';
 let lastOverlayAt = 0;
 
-/** What the read-only panels depend on, excluding the date. */
 function contextSignature(): string {
   const state = store.get();
   return [
@@ -335,34 +298,25 @@ let lastControls = '';
 let lastContext = '';
 let lastRing = '';
 let lastSelected: string | null = null;
+let lastRightTab: RightTab | null = null;
+let lastEvidenceTab: string | null = null;
 
 let lastInfoAt = 0;
+let lastScorecardAt = 0;
 let lastEventAt = 0;
 let lastEventScanJd = Number.NaN;
-/** Whether the event panel has been drawn at least once. */
 let eventsRendered = false;
 
-/**
- * Redraw the longitude strip when anything it depends on moves.
- *
- * Rebuilt on a signature rather than every frame: it samples the engine 240
- * times, which is far too much to do at 60Hz, and none of its inputs change
- * during ordinary playback except the date. The date only shifts the playhead
- * and the window, so it is quantised to whole days — a strip spanning two years
- * cannot show a difference finer than that anyway.
- */
 let lastTrackSignature = '';
 
 function renderTrack(): void {
   const state = store.get();
-  trackHost.hidden = !state.showTrack;
-  // The field is inset to match, so the strip never covers the zodiac ring —
-  // the ResizeObserver in orrery.ts refits the map on its own.
-  app.dataset.track = state.showTrack ? 'on' : 'off';
-  if (!state.showTrack || !state.selectedBody) {
-    if (state.showTrack) {
-      trackHost.replaceChildren(el('p', 'note track-host__empty', t('track.none')));
-    }
+  if (state.evidenceTab !== 'track') return;
+
+  if (!state.selectedBody) {
+    evidenceDrawer.trackPane.replaceChildren(
+      el('p', 'note note--live track-host__empty', t('track.none')),
+    );
     lastTrackSignature = '';
     return;
   }
@@ -371,6 +325,7 @@ function renderTrack(): void {
     state.selectedBody,
     state.observationPoint,
     state.engineId,
+    state.ghostEngineId,
     state.zodiacScheme,
     state.locale,
     Math.round(state.julianDate),
@@ -382,7 +337,25 @@ function renderTrack(): void {
   const target = state.selectedBody;
   const windowDays = trackWindowDays(observer, target);
 
-  renderTrackStrip(trackHost, {
+  const ghostEngines: EngineId[] =
+    state.ghostEngineId === 'all'
+      ? COMPARISON_ENGINES.filter((id) => id !== state.engineId)
+      : state.ghostEngineId && state.ghostEngineId !== state.engineId
+        ? [state.ghostEngineId]
+        : [];
+
+  const ghostTracks: GhostTrackEntry[] = ghostEngines.map((engineId) => ({
+    engineId,
+    track: buildLongitudeTrack(
+      ENGINES[engineId].positionsAt,
+      state.julianDate,
+      observer,
+      target,
+      windowDays,
+    ),
+  }));
+
+  renderTrackStrip(evidenceDrawer.trackPane, {
     track: buildLongitudeTrack(
       ENGINES[state.engineId].positionsAt,
       state.julianDate,
@@ -390,12 +363,12 @@ function renderTrack(): void {
       target,
       windowDays,
     ),
+    ghostTracks,
     target,
     observer,
     julianDate: state.julianDate,
     cycleDays: trackCycleDays(observer, target),
     zodiacScheme: state.zodiacScheme,
-    // The same offset the ring applies, so the two agree about where a sign is.
     precession:
       state.zodiacScheme === 'signs' ? -precessionSinceJ2000(state.julianDate) : 0,
   });
@@ -409,25 +382,39 @@ function render(): void {
   lastContext = context;
 
   orrery.update();
-  renderTrack();
 
-  /*
-   * The band is updated every frame rather than on a signature, unlike the
-   * strip above it. It has to be: what it is for is running the clock and
-   * watching a planet creep against the fixed stars and then turn back on
-   * itself, and a signature coarse enough to be worth having would lose exactly
-   * that. It updates about forty elements in place, which is affordable.
-   */
-  skyHost.hidden = !state.showSky;
-  app.dataset.sky = state.showSky ? 'on' : 'off';
-  if (state.showSky) skyStrip.update();
+  const evidenceOpen = state.evidenceTab !== null;
+  evidenceHost.hidden = !evidenceOpen;
+  app.dataset.evidence = evidenceOpen ? 'on' : 'off';
+  if (state.evidenceTab) {
+    app.dataset.evidenceTab = state.evidenceTab;
+  } else {
+    delete app.dataset.evidenceTab;
+  }
+
+  const evidenceSwitched = state.evidenceTab !== lastEvidenceTab;
+  lastEvidenceTab = state.evidenceTab;
+
+  if (state.evidenceTab === 'sky') {
+    evidenceDrawer.skyStrip.update();
+  } else if (state.evidenceTab === 'track') {
+    renderTrack();
+  } else if (
+    state.evidenceTab === 'scorecard' &&
+    (evidenceSwitched ||
+      contextChanged ||
+      state.selectedBody !== lastSelected ||
+      now - lastScorecardAt > INFO_BUDGET_MS)
+  ) {
+    lastScorecardAt = now;
+    renderScorecard(evidenceDrawer.scorecardPane, store);
+  }
 
   const reading = formatDateTime(dateFromJd(state.julianDate));
   if (clockReadout && clockReadout.textContent !== reading) {
     clockReadout.textContent = reading;
   }
 
-  // Updated in place rather than rebuilt, so typing into it is not interrupted.
   if (dateInput && document.activeElement !== dateInput) {
     const value = dateFromJd(state.julianDate).toISOString().slice(0, 10);
     if (dateInput.value !== value) dateInput.value = value;
@@ -442,10 +429,11 @@ function render(): void {
   const controls = controlsSignature();
   if (controls !== lastControls) {
     lastControls = controls;
-    renderMasthead();
-    renderTopBar(dockTopRight, store);
+    renderTopBar(commandBarHost, store);
+    renderTrialBanner(trialBannerHost, store);
     renderControls(controlsHost, store);
-    renderMapExport(dockBottomLeft, store);
+    evidenceDrawer.syncHeader();
+    syncRightTabs();
     const dock = renderTimeDock(timeDockHost, store);
     dateInput = dock.dateInput;
     clockReadout = dock.clock;
@@ -464,74 +452,54 @@ function render(): void {
     renderWelcome(welcomeHost, store);
   }
 
-  if (contextChanged || state.selectedBody !== lastSelected || now - lastInfoAt > INFO_BUDGET_MS) {
+  const rightTabSwitched = state.rightTab !== lastRightTab;
+  lastRightTab = state.rightTab;
+
+  if (
+    state.rightTab === 'inspect' &&
+    (rightTabSwitched ||
+      contextChanged ||
+      state.selectedBody !== lastSelected ||
+      now - lastInfoAt > INFO_BUDGET_MS)
+  ) {
     lastInfoAt = now;
     lastSelected = state.selectedBody;
     renderInfoPanel(infoHost, store);
+  } else if (state.selectedBody !== lastSelected) {
+    lastSelected = state.selectedBody;
   }
 
-  // Event scanning evaluates the engine several hundred times, so it is driven
-  // by how far the date has actually moved rather than by every change to it.
-  //
-  // The first pass ignores the budget. The budget is measured from process
-  // start, so an app that boots in under EVENT_BUDGET_MS would skip its only
-  // render and — with the clock paused and nothing else changing — never show
-  // the panel at all.
-  const drifted =
-    Number.isNaN(lastEventScanJd) ||
-    Math.abs(state.julianDate - lastEventScanJd) > EVENT_RESCAN_DAYS;
-  const withinBudget = eventsRendered && now - lastEventAt <= EVENT_BUDGET_MS;
-  if ((contextChanged || drifted) && !withinBudget) {
-    eventsRendered = true;
-    lastEventAt = now;
-    lastEventScanJd = state.julianDate;
-    renderEventPanel(eventsHost, store, {
-      onJump: (jd) => {
-        // Keep the current list intact so an inline comparison opened for an
-        // event >25 days ahead is not wiped by an immediate rescan.
-        lastEventScanJd = jd;
-        store.setJulianDate(jd);
-      },
-    });
+  if (state.rightTab === 'events') {
+    const drifted =
+      Number.isNaN(lastEventScanJd) ||
+      Math.abs(state.julianDate - lastEventScanJd) > EVENT_RESCAN_DAYS;
+    const withinBudget = eventsRendered && !rightTabSwitched && now - lastEventAt <= EVENT_BUDGET_MS;
+    if ((!eventsRendered || contextChanged || drifted) && !withinBudget) {
+      eventsRendered = true;
+      lastEventAt = now;
+      lastEventScanJd = state.julianDate;
+      renderEventPanel(eventsHost, store, {
+        onJump: (jd) => {
+          lastEventScanJd = jd;
+          store.setJulianDate(jd);
+        },
+      });
+    }
   }
 }
 
 // --- zoom ----------------------------------------------------------------
 
-/**
- * What the map's own gestures apply to.
- *
- * The wheel, the double-click and the drag are all bound to the whole app
- * rather than to the instrument, because the instrument's box is smaller than
- * the area its drawing covers once magnified and binding to it would leave dead
- * zones. The cost is that everything else on the stage has to be excluded by
- * hand, and anything added later is included by default until someone
- * remembers — which is how both strips came to zoom and pan the map when the
- * pointer was over them. They are second views of this instant with gestures of
- * their own; the band's wheel is its field, and the strip is not a thing the
- * map's zoom means anything about.
- */
-const MAP_GESTURE_EXCLUDED = '.dock, .overlay, .sky-host, .track-host';
+const MAP_GESTURE_EXCLUDED =
+  '.dock, .command-bar-host, .command-popover, .overlay, .trial-banner-host, .evidence-host';
 
 const overTheMap = (target: EventTarget | null): boolean =>
   !(target as Element | null)?.closest(MAP_GESTURE_EXCLUDED);
 
-/**
- * How sharply the wheel bites. Applied to an exponential, so a notch multiplies
- * rather than adds and zooming feels the same at every magnification.
- */
 const ZOOM_SENSITIVITY = 0.0016;
-
-/** Rough pixel equivalents, for wheels that report lines or pages. */
 const DELTA_TO_PIXELS = [1, 16, 400];
-
-/** What one press of the zoom key multiplies by. See the key handler. */
 const KEY_ZOOM_STEP = 1.5;
 
-/**
- * Wheel zoom for the map. See `overTheMap` for what it deliberately misses:
- * a dock has panels to scroll, and the band of sky zooms itself.
- */
 root.addEventListener(
   'wheel',
   (event: WheelEvent) => {
@@ -543,10 +511,6 @@ root.addEventListener(
   { passive: false },
 );
 
-/**
- * Double-click clears the magnification *and* the drag, since neither the wheel
- * nor a pan offers an obvious way back to the fitted view.
- */
 root.addEventListener('dblclick', (event: MouseEvent) => {
   if (!overTheMap(event.target)) return;
   store.resetZoom();
@@ -554,13 +518,6 @@ root.addEventListener('dblclick', (event: MouseEvent) => {
 
 // --- panning -------------------------------------------------------------
 
-/**
- * How far the pointer must travel before a press becomes a drag, in pixels.
- *
- * Without it every click on a planet would pan the map by the two or three
- * pixels a hand moves while pressing a button, and selecting Mars would nudge
- * the sky each time.
- */
 const DRAG_THRESHOLD_PX = 3;
 
 let dragPointer: number | null = null;
@@ -571,7 +528,6 @@ let dragging = false;
 const instrumentEl = (): HTMLElement | null => root.querySelector('.instrument');
 
 root.addEventListener('pointerdown', (event: PointerEvent) => {
-  // Docks scroll, overlays are read; neither should move the map underneath.
   const target = event.target as Element | null;
   if (!overTheMap(target)) return;
   if (event.button !== 0) return;
@@ -593,16 +549,10 @@ root.addEventListener('pointermove', (event: PointerEvent) => {
     dragging = true;
     instrumentEl()?.setAttribute('data-dragging', 'on');
 
-    // Keep receiving moves even when the pointer leaves the element, so a drag
-    // that runs off the map does not stick. Guarded because capture throws
-    // NotFoundError if the pointer is no longer active — which can happen
-    // between a move and its handler — and an exception here would abort the
-    // rest of this handler and drop the frame's pan.
     try {
       root.setPointerCapture(event.pointerId);
     } catch {
-      // Without capture the drag still works; it just ends if the pointer
-      // leaves the element.
+      // Without capture the drag still works.
     }
   }
 
@@ -613,22 +563,17 @@ root.addEventListener('pointermove', (event: PointerEvent) => {
   if (unit > 0) store.panBy(dx / unit, dy / unit);
 });
 
-// An arrow rather than a declaration: a hoisted function is analysed above the
-// `if (!root) throw` guard, so TypeScript loses the non-null narrowing there.
 const endDrag = (event: PointerEvent): void => {
   if (dragPointer !== event.pointerId) return;
   if (dragging && root.hasPointerCapture(event.pointerId)) {
     try {
       root.releasePointerCapture(event.pointerId);
     } catch {
-      // Already released, or the pointer is gone. Either way there is nothing
-      // left to let go of.
+      // Already released.
     }
   }
   dragPointer = null;
   instrumentEl()?.removeAttribute('data-dragging');
-  // Cleared on the next tick so the click this pointerup generates can still be
-  // suppressed — a drag that ends over Mars must not also select it.
   setTimeout(() => {
     dragging = false;
   }, 0);
@@ -647,45 +592,32 @@ root.addEventListener(
   true,
 );
 
-// --- keyboard ------------------------------------------------------------
+// --- keyboard & popover light-dismiss ------------------------------------
 
-/**
- * Transport keys, for the lectern.
- *
- * This is a teaching tool that gets driven from the front of a room, where
- * hunting for a small button on a projected screen is its own small disaster.
- * Space plays, the arrows step a day.
- *
- * Ignored while a control has focus, or space would toggle the button under the
- * cursor and the arrows would walk a select through its options.
- */
-/*
- * A menu that opens on a click closes on the next one somewhere else.
- *
- * Captured on the document rather than bound to a backdrop, because a backdrop
- * over the map would swallow the drag and wheel gestures the instrument lives
- * on. The cog is excluded so its own click is not counted twice — the toggle
- * would close what it had just opened.
- */
 document.addEventListener('pointerdown', (event: PointerEvent) => {
-  if (!store.get().showSettings) return;
+  if (!store.get().activePopover) return;
   const target = event.target as Element | null;
-  if (target?.closest('.settings-menu') || target?.closest('[data-settings-toggle]')) return;
-  store.setSettingsOpen(false);
+  if (target?.closest('.command-popover') || target?.closest('[data-popover-trigger]')) return;
+  store.setTopPopover(null);
 });
 
 window.addEventListener('keydown', (event: KeyboardEvent) => {
   if (event.key === 'Escape') {
-    if (store.get().showWelcome) {
+    const current = store.get();
+    if (current.showWelcome) {
       store.dismissWelcome();
       return;
     }
-    if (store.get().showCalculation) {
+    if (current.showCalculation) {
       store.setCalculationOpen(false);
       return;
     }
-    if (store.get().showSettings) {
-      store.setSettingsOpen(false);
+    if (current.activePopover) {
+      store.setTopPopover(null);
+      return;
+    }
+    if (current.activeTrialId) {
+      store.dismissTrial();
       return;
     }
   }
@@ -694,6 +626,8 @@ window.addEventListener('keydown', (event: KeyboardEvent) => {
   if (active instanceof HTMLInputElement || active instanceof HTMLSelectElement) return;
   if (event.altKey || event.ctrlKey || event.metaKey) return;
 
+  const inRovingGroup = Boolean(active?.closest('[role="tablist"], [role="toolbar"]'));
+
   switch (event.key) {
     case ' ':
       if (active instanceof HTMLButtonElement) return;
@@ -701,22 +635,15 @@ window.addEventListener('keydown', (event: KeyboardEvent) => {
       store.togglePlay();
       break;
     case 'ArrowLeft':
+      if (inRovingGroup) return;
       event.preventDefault();
       store.stepDays(-1);
       break;
     case 'ArrowRight':
+      if (inRovingGroup) return;
       event.preventDefault();
       store.stepDays(1);
       break;
-    /*
-     * Zoom by the keyboard as well as the wheel.
-     *
-     * At true scale the ceiling is a thousand times, and the wheel's
-     * exponential needs some forty notches to climb it — far enough that the
-     * lunar orbit is technically reachable and practically not. A key that
-     * multiplies by half again gets there in seventeen presses, and auto-repeat
-     * makes it one held key.
-     */
     case '+':
     case '=':
       event.preventDefault();
@@ -734,30 +661,8 @@ window.addEventListener('keydown', (event: KeyboardEvent) => {
 
 // --- shareable configuration --------------------------------------------
 
-/**
- * Keep the address bar showing the current arrangement, and honour one that
- * arrives in a link.
- *
- * The guard matters: writing the hash fires `hashchange`, which would read it
- * straight back and re-hydrate the store on every click. Comparing against what
- * was last written breaks that loop while still letting a genuine navigation —
- * the back button, or a pasted link — through.
- */
 let lastWrittenHash = '';
 let lastUrlWriteAt = 0;
-
-/**
- * Least time between URL writes while the clock is running, milliseconds.
- *
- * The date advances every frame during playback, and browsers rate-limit
- * `replaceState` — Safari throttles it outright and logs a warning.
- *
- * The throttle applies *only* while playing. A creeping date that nobody is
- * copying can wait; a deliberate jump — stepping a day, pressing Today, picking
- * a date, pausing — is exactly the moment someone might reach for the address
- * bar, and must land at once. Without that distinction the URL was left showing
- * whatever date the last throttled write happened to catch.
- */
 const URL_DATE_BUDGET_MS = 500;
 
 function currentUrlState() {
@@ -777,7 +682,6 @@ function syncUrl(): void {
   const encoded = encodeUrlState(next);
   if (encoded === lastWrittenHash) return;
 
-  // Was anything but the date touched? Those go out immediately.
   const configurationChanged =
     encodeUrlState({ ...next, julianDate: undefined }) !==
     encodeUrlState({ ...readUrlState(lastWrittenHash), julianDate: undefined });
@@ -798,30 +702,14 @@ window.addEventListener('hashchange', () => {
   store.hydrate(readUrlState());
 });
 
-// A link's configuration is applied before the first render, so the app never
-// flashes its defaults on the way to what was actually shared.
 const shared = readUrlState();
 if (Object.keys(shared).length > 0) store.hydrate(shared);
 
 store.subscribe(syncUrl);
 store.subscribe(render);
 
-// Write it once at startup too, so the address bar describes the arrangement
-// from the outset rather than only after the reader has touched something.
 syncUrl();
 
-/**
- * Longest real interval a single frame may represent, seconds.
- *
- * Browsers suspend animation frames in a hidden tab, so the first frame after
- * one is revealed reports the entire time it spent hidden. Left unclamped, that
- * whole interval is multiplied by the time rate: a minute in another tab at 400
- * days a second would jump the clock by sixty-five years and, worse, do it in
- * one step the n-body integrator would have to swallow whole.
- *
- * Clamping means simulated time pauses while the tab is away rather than
- * catching up, which is also the more useful behaviour.
- */
 const MAX_FRAME_SECONDS = 0.1;
 
 let previousTimestamp = performance.now();

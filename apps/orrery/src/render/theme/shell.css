@@ -1,11 +1,12 @@
 /*
- * The shell: a full-bleed map with the controls floating over it.
- *
- * Docks are absolutely positioned against the stage rather than laid out in a
- * grid, so the instrument gets the whole viewport and the panels sit on top of
- * it. The map is sized to an inset *field* (see .stage__field) so the zodiac
- * ring and its labels stay clear of the docks even though the drawing itself
- * extends underneath them.
+ * The shell — Stage-First layout:
+ *  - Full-width single-row Top Command Bar
+ *  - Floating non-blocking Trial Banner (top-centre of stage)
+ *  - Left Settings Rail (Vantage + Equivalence, What to show, Bodies)
+ *  - Right Tabbed Inspector (Details | Events)
+ *  - Unified Bottom Evidence Drawer (Observer's sky | Sky track | Model scorecard)
+ *  - Bottom-Centre floating Time Pill
+ *  - Bottom-Right quiet Credit & institutional marks
  */
 
 @layer structure {
@@ -34,19 +35,29 @@
     position: relative;
     height: 100%;
     overflow: hidden;
+    --bar-height: 2.65rem;
+    --time-pill-height: 2.55rem;
+    --credit-reserve: 4.2rem;
+    --evidence-height: clamp(12.2rem, 25vh, 17rem);
   }
 
-  /*
-   * The region the instrument is measured against.
-   *
-   * Inset by the dock widths so the ring is never hidden behind a panel. The
-   * ResizeObserver in orrery.ts watches this element, not the stage, which is
-   * what keeps the map centred in the *visible* gap between the docks.
-   */
+  /* --- Top Command Bar --------------------------------------------------- */
+
+  .command-bar-host {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    z-index: 7;
+  }
+
+  /* --- Central map stage ------------------------------------------------- */
+
   .stage__field {
     position: absolute;
-    inset: calc(var(--dock-gap) * 2 + 2.1rem) calc(var(--dock-width-right) + var(--dock-gap) * 2)
-      calc(var(--dock-gap) * 2 + 2.1rem) calc(var(--dock-width) + var(--dock-gap) * 2);
+    inset-block-start: calc(var(--bar-height) + var(--dock-gap));
+    inset-inline-end: calc(var(--dock-width-right) + var(--dock-gap) * 2);
+    inset-block-end: calc(var(--time-pill-height) + var(--dock-gap) * 2);
+    inset-inline-start: calc(var(--dock-width) + var(--dock-gap) * 2);
     display: grid;
     place-items: center;
     pointer-events: none;
@@ -56,147 +67,321 @@
     pointer-events: auto;
   }
 
-  /*
-   * The longitude strip, along the top of the gap between the docks.
-   *
-   * Inset the same way .stage__field is, so it lines up with the map beneath
-   * rather than sliding under the panels. When it is showing, the field's own
-   * top inset grows by the same amount and the map shrinks to fit — the
-   * ResizeObserver in orrery.ts picks that up with no help from here.
-   */
-  #app {
-    /* How much room the strip takes when it is showing. */
-    --track-height: 13.5rem;
+  #app[data-evidence='on'] .stage__field {
+    inset-block-end: calc(
+      var(--time-pill-height) + var(--evidence-height) + var(--dock-gap) * 3
+    );
   }
 
-  .track-host {
+  /* --- Floating non-blocking Trial Banner -------------------------------- */
+
+  .trial-banner-host {
     position: absolute;
-    top: calc(var(--dock-gap) * 2 + 2.1rem);
-    left: calc(var(--dock-width) + var(--dock-gap) * 2);
-    right: calc(var(--dock-width-right) + var(--dock-gap) * 2);
-    z-index: 2;
+    inset-block-start: calc(var(--bar-height) + var(--dock-gap));
+    inset-inline-start: calc(var(--dock-width) + var(--dock-gap) * 2);
+    inset-inline-end: calc(var(--dock-width-right) + var(--dock-gap) * 2);
+    z-index: 4;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
   }
 
-  .track-host[hidden] {
+  .trial-banner-host[hidden] {
     display: none;
   }
 
-  #app[data-track='on'] .stage__field {
-    top: calc(var(--dock-gap) * 3 + 2.1rem + var(--track-height));
-  }
+  /* --- Unified Bottom Observer's Evidence Drawer ------------------------- */
 
-  .track-host__empty {
-    padding: 0.9rem 1rem;
-    border: var(--line-fine) solid var(--panel-border);
-    border-radius: var(--panel-radius);
-    background: var(--panel-bg);
-    text-align: center;
-  }
-
-  /*
-   * The band of sky, along the bottom of the stage.
-   *
-   * Opposite the longitude strip and inset the same way, because the two are
-   * the same kind of thing: a second view of this instant spanning the width
-   * the map spans, rather than a control. The map's field is lifted to make
-   * room, exactly as it is pushed down for the strip above.
-   */
-  .sky-host {
+  .evidence-host {
     position: absolute;
-    bottom: var(--dock-gap);
-    left: calc(var(--dock-width) + var(--dock-gap) * 2);
-    right: calc(var(--dock-width-right) + var(--dock-gap) * 2);
-    z-index: 2;
+    inset-block-end: calc(var(--time-pill-height) + var(--dock-gap) * 2);
+    inset-inline-start: calc(var(--dock-width) + var(--dock-gap) * 2);
+    inset-inline-end: calc(var(--dock-width-right) + var(--dock-gap) * 2);
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    max-height: var(--evidence-height);
     overflow: hidden;
     border: var(--line-fine) solid var(--panel-edge);
     border-radius: var(--panel-radius);
     background: var(--panel-surface);
     box-shadow: var(--panel-shadow);
+    backdrop-filter: blur(var(--panel-blur));
   }
 
-  .sky-host[hidden] {
+  .evidence-host[hidden] {
     display: none;
   }
 
-  #app[data-sky='on'] .stage__field {
-    bottom: calc(var(--dock-gap) * 2 + var(--sky-height) + 1.6rem);
+  .evidence-host .sky {
+    --sky-height: clamp(6.4rem, 14vh, 10.5rem);
   }
 
-  /* --- docks ------------------------------------------------------------- */
+  /* --- Docks ------------------------------------------------------------- */
 
   .dock {
     position: absolute;
     z-index: 2;
-    /* What the clock and the credit line below it need; see .dock--right. */
-    --clock-reserve: 16rem;
     display: flex;
     flex-direction: column;
     gap: var(--dock-gap);
     width: var(--dock-width);
-    max-height: calc(100% - var(--dock-gap) * 2);
+    max-height: calc(100% - var(--bar-height) - var(--dock-gap) * 2);
 
-    /*
-     * The panels read a step smaller than the map does.
-     *
-     * Scoped here rather than lowered globally, because the two sets of type
-     * have opposite jobs: a zodiac label on the instrument is read at a glance
-     * from across a lecture room, while a dock is read deliberately, up close,
-     * by someone who has already decided to look at it. Sized alike, the
-     * panels shout and — the practical half — the column runs off the bottom
-     * of the screen. Everything below inherits from these three.
-     */
     --size-label: clamp(0.6rem, 0.57rem + 0.12vw, 0.69rem);
     --size-body: clamp(0.72rem, 0.69rem + 0.15vw, 0.83rem);
     --size-heading: clamp(0.83rem, 0.79rem + 0.17vw, 0.95rem);
     --size-title: clamp(0.98rem, 0.9rem + 0.36vw, 1.2rem);
   }
 
+  /* Left Settings Rail */
   .dock--left {
     inset-inline-start: var(--dock-gap);
-    inset-block-start: var(--dock-gap);
-    /* Clear of the save-an-image corner below it. */
-    inset-block-end: calc(var(--dock-gap) * 2 + 2rem);
+    inset-block-start: calc(var(--bar-height) + var(--dock-gap));
+    inset-block-end: var(--dock-gap);
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
   }
 
-  /*
-   * The slim bar of global switches, hugging the corner.
-   *
-   * Above the other docks, not level with them. Every dock is z-index 2, so
-   * they paint in DOM order and this one is first — which buried the settings
-   * menu under the selected-body panel however high the menu's own z-index
-   * went, because that index only ranks it inside this dock's own stacking
-   * context. A popover has to outrank what it covers.
-   */
-  .dock--top-right {
+  /* Right Inspector Rail */
+  .dock--right {
+    width: var(--dock-width-right);
     inset-inline-end: var(--dock-gap);
-    inset-block-start: var(--dock-gap);
-    width: auto;
-    flex-direction: row;
-    align-items: center;
-    z-index: 6;
+    inset-block-start: calc(var(--bar-height) + var(--dock-gap));
+    inset-block-end: calc(var(--dock-gap) * 2 + var(--credit-reserve));
   }
 
-  /*
-   * The settings menu, hanging under the cog.
-   *
-   * Absolute rather than part of the dock's flow: the bar is a row, and a menu
-   * flowed into it would sit beside the buttons instead of under them. It takes
-   * the panel's own surface so every theme dresses it without a rule of its own.
-   */
-  .settings-menu {
+  /* Bottom-Centre Timing Pill */
+  .dock--bottom-center {
+    inset-block-end: var(--dock-gap);
+    inset-inline-start: calc(var(--dock-width) + var(--dock-gap) * 2);
+    inset-inline-end: calc(var(--dock-width-right) + var(--dock-gap) * 2);
+    width: auto;
+    max-height: none;
+    z-index: 4;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  /* Bottom-Right Credit Corner */
+  .dock--bottom-right {
+    width: var(--dock-width-right);
+    inset-inline-end: var(--dock-gap);
+    inset-block-end: var(--dock-gap);
+    max-height: var(--credit-reserve);
+    justify-content: flex-end;
+  }
+
+  .dock:empty {
+    display: none;
+  }
+
+  /* Wide screens: give right inspector generous reading room without cramping the circle. */
+  @media (min-width: 84rem) {
+    :root {
+      --dock-width: clamp(14.5rem, 15.5vw, 17.5rem);
+      --dock-width-right: clamp(20.5rem, 21.5vw, 26.5rem);
+    }
+  }
+}
+
+@layer components {
+  /* --- Panels & surfaces ------------------------------------------------- */
+
+  .panel {
+    border: var(--line-fine) solid var(--panel-edge);
+    border-radius: var(--panel-radius);
+    background: var(--panel-surface);
+    box-shadow: var(--panel-shadow);
+    backdrop-filter: blur(var(--panel-blur));
+    padding: var(--panel-pad-block) var(--panel-pad-inline);
+  }
+
+  .panel__title {
+    font-family: var(--face-display);
+    font-size: var(--size-label);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 0.4rem;
+    padding-bottom: 0.24rem;
+    border-bottom: var(--line-hairline) solid var(--accent-dark);
+  }
+
+  /* --- Top Command Bar --------------------------------------------------- */
+
+  .command-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.45rem;
+    min-block-size: 2.6rem;
+    padding: 0.28rem var(--dock-gap);
+    border-bottom: var(--line-fine) solid var(--panel-edge);
+    background: var(--panel-surface);
+    backdrop-filter: blur(var(--panel-blur));
+    box-shadow: var(--panel-shadow);
+    --size-label: clamp(0.62rem, 0.59rem + 0.12vw, 0.72rem);
+    --size-body: clamp(0.74rem, 0.71rem + 0.14vw, 0.84rem);
+  }
+
+  .command-bar__brand {
+    font-family: var(--face-display);
+    font-size: var(--size-heading);
+    letter-spacing: 0.04em;
+    margin: 0 0.25rem 0 0;
+    line-height: 1;
+    white-space: nowrap;
+    color: var(--text-strong);
+  }
+
+  .command-bar__group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-shrink: 0;
+  }
+
+  .command-bar__group--end {
+    margin-inline-start: auto;
+  }
+
+  .command-bar__sep {
+    width: var(--line-hairline);
+    height: 1.35rem;
+    background: var(--accent-dark);
+    opacity: 0.5;
+    flex-shrink: 0;
+  }
+
+  .command-bar button,
+  .command-bar select {
+    min-inline-size: 28px;
+    min-block-size: 28px;
+  }
+
+  .segmented--inline {
+    flex-wrap: nowrap;
+  }
+
+  .segmented--inline .mode-pill {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    white-space: nowrap;
+    padding: 0.16rem 0.55rem;
+  }
+
+  .command-bar__variant {
+    font-size: var(--size-label);
+    max-width: 12.5rem;
+    padding: 0.14rem 0.4rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .command-bar__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: var(--size-label);
+    padding: 0.18rem 0.55rem;
+    white-space: nowrap;
+    max-width: 13rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .command-bar__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.88rem;
+    padding: 0.15rem 0.42rem;
+  }
+
+  .command-bar__btn[data-active='on'],
+  .command-bar__btn[aria-expanded='true'],
+  .command-bar__icon[aria-expanded='true'] {
+    background: var(--accent);
+    color: var(--surface);
+  }
+
+  /* --- Anchored Command Popovers ----------------------------------------- */
+
+  .command-popover {
     position: absolute;
-    inset-block-start: calc(100% + var(--dock-gap));
-    inset-inline-end: 0;
-    z-index: 6;
-    width: max-content;
-    min-width: 12rem;
-    max-width: min(20rem, 80vw);
+    inset-block-start: calc(100% + 0.35rem);
+    z-index: 8;
+    max-height: calc(100vh - var(--bar-height) - 1.5rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
     display: flex;
     flex-direction: column;
-    gap: 0.55rem;
+    gap: 0.45rem;
+    padding: 0.65rem 0.75rem;
+  }
+
+  .command-popover--compare {
+    inset-inline-start: clamp(var(--dock-gap), 28vw, 24rem);
+    width: min(21rem, calc(100vw - var(--dock-gap) * 2));
+  }
+
+  .command-popover--trials {
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    width: min(44rem, calc(100vw - var(--dock-gap) * 2));
+  }
+
+  .command-popover--export {
+    inset-inline-end: calc(var(--dock-gap) + 2.4rem);
+    width: min(20rem, calc(100vw - var(--dock-gap) * 2));
+  }
+
+  .command-popover--settings {
+    inset-inline-end: var(--dock-gap);
+    width: min(22rem, calc(100vw - var(--dock-gap) * 2));
+  }
+
+  .popover-heading {
+    font-family: var(--face-display);
+    font-size: var(--size-heading);
+    color: var(--text-strong);
+  }
+
+  .popover-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.22rem;
+  }
+
+  .popover-option {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-align: start;
+    font-family: var(--face-text);
+    font-size: var(--size-body);
+    letter-spacing: 0;
+    padding: 0.3rem 0.5rem;
+  }
+
+  .trials-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .trials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 0.4rem;
   }
 
   .settings__group {
@@ -213,182 +398,396 @@
     color: var(--text-muted);
   }
 
-  /*
-   * Selected-body detail, directly beneath the switches and stopping above the
-   * clock.
-   *
-   * The reserve has to cover the whole bottom-right dock — the time panel and
-   * the credit line under it, some 238px together — not the time panel alone.
-   * It used to read 8.5rem, which was a hundred pixels short; nothing showed
-   * while the two panels here sat side by side and left the lower half of the
-   * dock empty, and the moment they were stacked to fill it they ran under the
-   * clock.
-   */
-  .dock--right {
-    width: var(--dock-width-right);
-    inset-inline-end: var(--dock-gap);
-    inset-block-start: calc(var(--dock-gap) * 2 + 2.1rem);
-    inset-block-end: calc(var(--dock-gap) * 2 + var(--clock-reserve));
+  /* --- Floating Trial Banner --------------------------------------------- */
+
+  .trial-banner {
+    pointer-events: auto;
+    width: min(38rem, 100%);
+    padding: 0.45rem 0.65rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.28rem;
+  }
+
+  .trial-banner__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .trial-banner__title-group {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.38rem;
+    min-width: 0;
+  }
+
+  .trial-banner__badge {
+    font-family: var(--face-display);
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.08rem 0.4rem;
+    border-radius: 999px;
+    border: var(--line-fine) solid currentColor;
+    white-space: nowrap;
+  }
+
+  .trial-banner__badge--equivalence {
+    color: var(--text-strong);
+    border-color: var(--model-kepler);
+    background: color-mix(in srgb, var(--model-kepler) 20%, var(--panel-surface));
+  }
+
+  .trial-banner__badge--prediction {
+    color: var(--text-strong);
+    border-color: var(--model-ptolemy);
+    background: color-mix(in srgb, var(--model-ptolemy) 20%, var(--panel-surface));
+  }
+
+  .trial-banner__title {
+    font-family: var(--face-display);
+    font-size: var(--size-body);
+    color: var(--text-strong);
+  }
+
+  .trial-banner__date {
+    font-family: var(--face-numeric);
+    font-size: var(--size-label);
+    color: var(--text-muted);
+  }
+
+  .trial-banner__close {
+    min-inline-size: 24px;
+    min-block-size: 24px;
+    padding: 0 0.35rem;
+    font-size: 0.95rem;
+    line-height: 1;
+    flex: 0 0 auto;
+  }
+
+  .trial-banner__note {
+    margin: 0;
+    font-size: 0.72rem;
+    line-height: 1.4;
+    color: var(--text);
+  }
+
+  .trial-banner__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  .trial-banner__action {
+    font-size: var(--size-label);
+    padding: 0.16rem 0.5rem;
+  }
+
+  /* --- Shared ARIA Tablist (Inspector & Evidence Drawer) ----------------- */
+
+  .tablist {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    gap: 0.1rem;
+  }
+
+  .tablist::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tablist__tab {
+    position: relative;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-muted);
+    padding: 0.4rem 0.72rem;
+    min-block-size: 32px;
+    font-family: var(--face-display);
+    font-size: var(--size-label);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+  }
+
+  .tablist__tab:hover:not(:disabled) {
+    background: var(--hover-tint);
+    color: var(--text-strong);
+  }
+
+  .tablist__tab[aria-selected='true'] {
+    background: transparent;
+    color: var(--text-strong);
+  }
+
+  /* Border on a pseudo-element survives forced-colors mode and never shifts layout. */
+  .tablist__tab[aria-selected='true']::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0.35rem;
+    inset-block-end: 0;
+    border-block-end: 2.5px solid var(--accent);
+  }
+
+  /* --- Right Inspector Shell --------------------------------------------- */
+
+  .inspector {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .inspector__tabs {
+    flex: 0 0 auto;
+    padding-inline: 0.3rem;
+    border-bottom: var(--line-hairline) solid var(--accent-dark);
+  }
+
+  .inspector__tabs .tablist__tab {
+    flex: 1 1 0;
+    text-align: center;
+  }
+
+  .inspector__pane {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    padding: var(--panel-pad-block) var(--panel-pad-inline);
+  }
+
+  .inspector__pane[hidden] {
+    display: none;
+  }
+
+  /* --- Unified Bottom Evidence Drawer ------------------------------------ */
+
+  .evidence__header {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.08rem 0.45rem 0;
+    border-bottom: var(--line-hairline) solid var(--accent-dark);
+    flex: 0 0 auto;
+  }
+
+  .evidence__fields {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    margin-inline-start: auto;
+  }
+
+  .evidence__fields[hidden] {
+    display: none;
+  }
+
+  .evidence__field-btn {
+    font-family: var(--face-numeric);
+    font-size: var(--size-label);
+    padding: 0.1rem 0.42rem;
+    min-block-size: 24px;
+  }
+
+  .evidence__close {
+    min-inline-size: 24px;
+    min-block-size: 24px;
+    padding: 0 0.35rem;
+    margin-inline-start: auto;
+    font-size: 0.95rem;
+    line-height: 1;
+  }
+
+  .evidence__fields:not([hidden]) + .evidence__close {
+    margin-inline-start: 0.2rem;
+  }
+
+  .evidence__pane {
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
   }
 
-  /*
-   * The clock, under the readouts and matching their width.
-   *
-   * It used to take the default dock width, which is the *left* one — narrower
-   * since the left column holds only controls. That left the time panel visibly
-   * narrower than the events panel directly above it, and the two read as one
-   * stack of right-hand detail, so they take the same measure.
-   */
-  .dock--bottom-right {
-    width: var(--dock-width-right);
-    inset-inline-end: var(--dock-gap);
-    inset-block-end: var(--dock-gap);
-  }
-
-  /* Saving the map: the quiet corner, opposite the clock. */
-  .dock--bottom-left {
-    inset-inline-start: var(--dock-gap);
-    inset-block-end: var(--dock-gap);
-    width: auto;
-  }
-
-  /* Docks must not swallow clicks where they have no panel. */
-  .dock:empty {
+  .evidence__pane[hidden] {
     display: none;
   }
 
-  /*
-   * --- wide viewports: give the right dock the spare width -----------------
-   *
-   * The instrument is a circle, and on any screen wider than it is tall the
-   * circle is sized by the *height*. A 1920x1080 window draws a 949px map into
-   * a field 1264px wide and simply wastes the remaining 315px, while the docks
-   * beside it scroll. So the docks take that width instead — bounded, so the
-   * field never becomes narrower than it is tall, which is the point at which
-   * widening would start costing the map rather than the margin.
-   *
-   * This went through two arrangements that are worth not repeating. Multicol
-   * balanced the left dock and kept choosing to break in the middle of the run
-   * of controls that belong together; hand-placed grid columns fixed that but
-   * left the zodiac panel alone in a short second column. Both are gone: the
-   * settings that nobody sets twice went behind the cog, and what remains fits
-   * one column.
-   *
-   * Panels are addressed by class rather than as children — the hosts between
-   * them are display:contents, so `> *` would set a property on a box that is
-   * not there. Nothing nests a panel inside a panel, which is what makes that
-   * safe.
-   */
-  @media (min-width: 84rem) {
-    /*
-     * The left dock stays one column and simply gets no wider.
-     *
-     * It was briefly two, with the zodiac settings alone in the second — and
-     * then those went behind the cog with everything else nobody sets twice,
-     * leaving one short panel beside a scrolling one. One column of four panels
-     * fits without scrolling once the masthead is slim and the overlay switches
-     * are chips, and the width it gives back goes to the map.
-     *
-     * The right dock is the one that still widens here: it holds the readouts,
-     * and they are the thing that wants the room.
-     */
-    :root {
-      --dock-width: clamp(14rem, 15vw, 17rem);
-      --dock-width-right: clamp(20rem, 21vw, 26rem);
-    }
-
-    .dock--right > * > .panel {
-      /* Grow to fill the dock, and scroll rather than push past the bottom. */
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      scrollbar-width: thin;
-    }
-  }
-}
-
-@layer components {
-  /* --- panels ------------------------------------------------------------ */
-
-  .panel,
-  .topbar {
-    border: var(--line-fine) solid var(--panel-edge);
-    border-radius: var(--panel-radius);
-    background: var(--panel-surface);
-    box-shadow: var(--panel-shadow);
-    backdrop-filter: blur(var(--panel-blur));
+  .track-host__empty,
+  .scorecard__empty {
+    padding: 1rem;
+    text-align: center;
   }
 
-  .panel {
-    padding: var(--panel-pad-block) var(--panel-pad-inline);
+  /* --- Model Capability Scorecard ---------------------------------------- */
+
+  .scorecard {
+    padding: 0.45rem 0.7rem 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
   }
 
-  .panel__title {
+  .scorecard__title {
     font-family: var(--face-display);
     font-size: var(--size-label);
-    letter-spacing: var(--tracking-wide);
+    letter-spacing: var(--tracking-label);
     text-transform: uppercase;
     color: var(--text-muted);
-    margin: 0 0 0.4rem;
-    padding-bottom: 0.24rem;
-    border-bottom: var(--line-hairline) solid var(--accent-dark);
   }
 
-  /* --- the top bar ------------------------------------------------------- */
-
-  .topbar {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-    padding: 0.3rem 0.5rem;
-    height: 2.1rem;
-  }
-
-  .topbar__group {
-    display: flex;
-    align-items: center;
-    gap: 0.2rem;
-  }
-
-  .topbar__divider {
-    width: var(--line-hairline);
-    align-self: stretch;
-    background: var(--accent-dark);
-    opacity: 0.5;
-  }
-
-  /* --- masthead ---------------------------------------------------------- */
-
-  .masthead__title {
-    font-family: var(--face-display);
-    /* A size down from --size-title: it names the app, it is not a headline. */
-    font-size: var(--size-heading);
-    margin: 0;
-    line-height: 1.2;
-  }
-
-  .masthead__subtitle {
-    font-family: var(--face-display);
+  .scorecard__table {
+    width: 100%;
+    border-collapse: collapse;
     font-size: var(--size-label);
-    letter-spacing: var(--tracking-wide);
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin: 0.15rem 0 0;
   }
 
-  /*
-   * --- credit --------------------------------------------------------------
-   * An imprint line, not a control: unboxed and small, so it sits under the
-   * time panel without reading as a fifth instrument on the map.
-   */
+  .scorecard__table th,
+  .scorecard__table td {
+    padding: 0.24rem 0.4rem;
+    border-bottom: var(--line-hairline) solid
+      color-mix(in srgb, var(--accent-dark) 45%, transparent);
+    vertical-align: middle;
+    text-align: start;
+  }
+
+  .scorecard__table tbody tr:last-child th,
+  .scorecard__table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .scorecard__row-label {
+    font-family: var(--face-display);
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    width: 24%;
+  }
+
+  .scorecard__model-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: var(--size-label);
+    padding: 0.14rem 0.45rem;
+    white-space: nowrap;
+  }
+
+  .scorecard__cell--active {
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+
+  .scorecard__metric,
+  .scorecard__phase {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  .scorecard__primary {
+    font-family: var(--face-numeric);
+    font-variant-numeric: tabular-nums;
+    color: var(--text-strong);
+    white-space: nowrap;
+  }
+
+  .scorecard__sub {
+    font-size: 0.66rem;
+    color: var(--text-muted);
+  }
+
+  .scorecard__flag,
+  .pill-flag {
+    display: inline-block;
+    font-family: var(--face-display);
+    font-size: 0.6rem;
+    letter-spacing: 0.04em;
+    padding: 0.05rem 0.35rem;
+    border-radius: 999px;
+    color: var(--text-strong);
+    background: color-mix(in srgb, var(--model-ptolemy) 20%, var(--panel-surface));
+    border: var(--line-hairline) solid var(--model-ptolemy);
+    white-space: nowrap;
+  }
+
+  /* --- Bottom-Centre Floating Time Pill ---------------------------------- */
+
+  .time-pill {
+    pointer-events: auto;
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem 0.45rem;
+    padding: 0.24rem 0.5rem;
+    min-block-size: 2.5rem;
+    max-width: 100%;
+    border-radius: min(1.3rem, calc(var(--panel-radius) * 2));
+  }
+
+  .time-pill__group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.24rem;
+    flex-shrink: 0;
+  }
+
+  .time-pill__play {
+    font-size: var(--size-label);
+    padding: 0.18rem 0.55rem;
+    min-block-size: 26px;
+    white-space: nowrap;
+  }
+
+  .time-pill__clock {
+    font-family: var(--face-numeric);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--size-label);
+    color: var(--text-strong);
+    white-space: nowrap;
+    padding-inline: 0.15rem;
+  }
+
+  .time-pill__date {
+    font-size: var(--size-label);
+    padding: 0.12rem 0.32rem;
+    max-width: 8.6rem;
+  }
+
+  .time-pill__today {
+    font-size: var(--size-label);
+    padding: 0.16rem 0.45rem;
+    white-space: nowrap;
+  }
+
+  .time-pill__rate {
+    font-family: var(--face-numeric);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--size-label);
+    color: var(--text);
+    min-width: 4.5rem;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* --- Credit (Bottom-Right Corner) -------------------------------------- */
+
   .credit {
     padding: 0 0.2rem;
-    font-size: 0.68rem;
-    line-height: 1.4;
+    font-size: 0.66rem;
+    line-height: 1.35;
     color: var(--text-muted);
     text-align: end;
   }
@@ -405,32 +804,16 @@
     text-decoration-color: currentColor;
   }
 
-  /*
-   * The institutional marks. Inline SVG filled with `currentColor`, so they
-   * take the credit line's own ink and stay legible on parchment and on black
-   * alike — the artwork the university ships is flat white and would vanish on
-   * two of the four themes.
-   *
-   * Held a little below full opacity: an imprint, not a sponsor's banner.
-   */
   .credit__marks {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    gap: 0.7rem;
-    margin-top: 0.4rem;
+    gap: 0.65rem;
+    margin-top: 0.28rem;
   }
 
-  /*
-   * Not dimmed with `opacity`. The muted ink already reads as an imprint, and
-   * dimming on top of it used to take the parchment theme below the 3:1 that a
-   * graphic carrying meaning needs. Measured at full opacity across the five
-   * themes (Orrery, Atelier, Nocturne, LCARS, Flightdeck) it gives 5.3, 5.3,
-   * 4.8, 5.5 and 4.7.
-   */
   .credit__mark {
     display: block;
-    /* No rule under a picture. */
     text-decoration: none;
     transition: color 120ms ease;
   }
@@ -441,19 +824,15 @@
 
   .credit__mark svg {
     display: block;
-    /* The mark's own width/height attributes are overridden; the viewBox keeps
-       the aspect ratio, so setting height alone is enough. */
-    height: 1.35rem;
+    height: 1.25rem;
     width: auto;
   }
 
-  /* The department wordmark is two lines of type in a 3.2:1 box, so at the same
-     height as the faculty emblem it reads as a smudge. Given a little more. */
   .credit__mark--wordmark svg {
-    height: 1.7rem;
+    height: 1.55rem;
   }
 
-  /* --- fields and controls ---------------------------------------------- */
+  /* --- Fields and Controls ----------------------------------------------- */
 
   .field {
     display: grid;
@@ -461,17 +840,6 @@
     margin-bottom: 0.42rem;
   }
 
-  /*
-   * A grid item will not shrink below its own content unless told to, and a
-   * <select> reports the width of its longest *option* as that content —
-   * "Almagest — Ptolemaiovy tabulky" is 244px of intrinsic width in a field
-   * that may be 172px wide. The label beside it does the same with a long
-   * caption. So the control quietly pushed its panel wider than the column it
-   * was in, which the docks then had to scroll sideways to reach.
-   *
-   * Truncating with an ellipsis rather than wrapping: these are one-line
-   * controls, and the full text is in the open list the moment it is clicked.
-   */
   .field > * {
     min-width: 0;
     max-width: 100%;
@@ -493,16 +861,6 @@
     color: var(--text);
   }
 
-  /*
-   * Explanatory prose, collapsed by default.
-   *
-   * The controls carry a lot of good standing text, and left permanently on it
-   * turns the left dock into a long scroll between a user and the control they
-   * wanted. It is one button away in the top bar, and the welcome says so.
-   *
-   * `.note--live` is exempt: the trail readout is a live status line rather than
-   * an explanation, and hiding it would remove information rather than prose.
-   */
   :root[data-notes='off'] .note:not(.note--live),
   :root[data-notes='off'] .field__hint {
     display: none;
@@ -524,7 +882,7 @@
     background: color-mix(in srgb, var(--panel-surface) 60%, transparent);
     border: var(--line-fine) solid var(--accent-dark);
     border-radius: var(--control-radius);
-    padding: 0.25rem 0.4rem;
+    padding: 0.22rem 0.4rem;
   }
 
   button {
@@ -564,7 +922,6 @@
     flex-wrap: wrap;
   }
 
-  /* Toggle labels in a wrapping row are as cramped as the segmented ones. */
   .button-row button:not(.icon-button) {
     font-size: var(--size-label);
     letter-spacing: 0.02em;
@@ -575,33 +932,18 @@
 
   .segmented {
     display: flex;
-    /*
-     * Wraps to one per row rather than letting a label break mid-word.
-     *
-     * Once the docks split into columns a two-button control gets about 72px a
-     * side, and Czech does not always fit: "Sfera kolem pozorovatele" was
-     * splitting as pozorovatel/e. A basis of 6rem keeps the pair side by side
-     * wherever there is room for both and stacks them where there is not.
-     */
     flex-wrap: wrap;
     border: var(--line-fine) solid var(--accent-dark);
     border-radius: var(--control-radius);
     overflow: hidden;
   }
 
-  /*
-   * Segmented labels are the tightest text in the app: three or four of them
-   * share one dock-width row, and the longest are single Czech words that cannot
-   * wrap — "Ptolemaios", "Pergamen". They were overflowing their boxes.
-   *
-   * The letter-spacing was the biggest culprit rather than the font size: at
-   * 0.08em, a ten-character label spends about ten pixels on tracking alone.
-   * Dropping most of it and taking the label size back buys enough room, with
-   * hyphenation and word-breaking as backstops so a translation can never spill
-   * again.
-   */
+  .segmented--compact {
+    margin-top: 0.42rem;
+  }
+
   .segmented button {
-    flex: 1 1 6rem;
+    flex: 1 1 5.2rem;
     border: 0;
     border-radius: 0;
     border-inline-end: var(--line-hairline) solid var(--accent-dark);
@@ -616,15 +958,6 @@
     text-wrap: balance;
   }
 
-  /*
-   * Restore the pressed fill inside a segmented control.
-   *
-   * `.segmented button` and `button[aria-pressed='true']` have identical
-   * specificity, so the later of the two wins — which meant the segment kept
-   * `background: transparent` while still taking the pressed rule's pale
-   * `color`. Pale text on a pale panel: the *selected* model, theme and zodiac
-   * division were the only labels in the app that could not be read.
-   */
   .segmented button[aria-pressed='true'] {
     background: var(--accent);
     color: var(--surface);
@@ -634,92 +967,71 @@
     border-inline-end: 0;
   }
 
-  /*
-   * Two rows of two, for a segmented control with more choices than fit across
-   * a dock. Four models at a shared dock width leave about 65px each, at which
-   * the English labels were breaking mid-word — "Copern/icus", "Ptolem/y".
-   *
-   * The dividers move from a single inline border per button to a grid of
-   * borders, since `:last-child` no longer identifies the outer edge once the
-   * control wraps. Written for an even number of items, which is what the two
-   * columns imply.
-   */
-  .segmented--grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .segmented--grid button {
-    border-inline-end: var(--line-hairline) solid var(--accent-dark);
-    border-block-end: var(--line-hairline) solid var(--accent-dark);
-  }
-
-  /* Right-hand column: nothing to divide it from. */
-  .segmented--grid button:nth-child(2n) {
-    border-inline-end: 0;
-  }
-
-  /* Bottom row: likewise. */
-  .segmented--grid button:nth-last-child(-n + 2) {
-    border-block-end: 0;
-  }
-
-  /*
-   * The top bar is not width-constrained, so its buttons size to their text
-   * instead of sharing a fixed row. With `flex: 1` they were being squeezed
-   * below their content width and clipping the theme names.
-   */
-  .topbar .segmented button {
-    flex: 0 0 auto;
-    white-space: nowrap;
-  }
-
-  /* A square button for the transport and rate steppers. */
   .icon-button {
     text-align: center;
     padding-inline: 0.35rem;
+    min-inline-size: 26px;
+    min-block-size: 26px;
     font-family: var(--face-numeric);
   }
 
-  /*
-   * Transport and rate rows share one set of column tracks, so the four corner
-   * steppers line up in two clean columns and whatever sits between them — the
-   * play button, the rate readout — takes all the width that is left. Laid out as
-   * separate flex rows they each sized to their own content and came out ragged.
-   */
-  .control-grid {
-    display: grid;
-    grid-template-columns: 2.2rem minmax(0, 1fr) 2.2rem;
-    gap: 0.35rem;
-    align-items: stretch;
+  /* --- Left Rail Helpers: Quick Vantage, Equivalence Bridge, Evidence ---- */
+
+  .quick-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin: -0.15rem 0 0.45rem;
   }
 
-  /* Anything that should run the full width of the grid. */
-  .control-grid__wide {
-    grid-column: 1 / -1;
+  .quick-chip {
+    flex: 1 1 0;
+    font-size: var(--size-label);
+    padding: 0.14rem 0.35rem;
+    white-space: nowrap;
   }
 
-  /* The date field and its "today" button: field takes the slack. */
-  .control-grid__split {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.35rem;
-  }
-
-  .control-grid input[type='date'] {
-    min-width: 0;
+  .equivalence-cta {
     width: 100%;
+    margin-top: 0.42rem;
+    font-size: var(--size-label);
+    padding: 0.26rem 0.45rem;
+    text-align: center;
   }
 
-  /*
-   * The overlay switches, as a wrapped row of chips.
-   *
-   * They were seven full-width buttons and the tallest panel on screen at
-   * 335px. Nothing about them wants a full row each: they are independent
-   * on/off marks, and a wrapped row says that better while saving most of the
-   * height.
-   */
+  .equivalence-box {
+    margin-top: 0.35rem;
+    padding: 0.38rem 0.5rem;
+    border-radius: var(--control-radius);
+    border-inline-start: 3px solid var(--model-kepler);
+    background: color-mix(in srgb, var(--model-kepler) 11%, var(--panel-surface));
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+  }
+
+  .equivalence-box__eq {
+    font-family: var(--face-numeric);
+    font-size: var(--size-label);
+    font-weight: 600;
+    color: var(--text-strong);
+  }
+
+  .equivalence-box__tag {
+    font-size: 0.66rem;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .evidence-launch {
+    margin-top: 0.5rem;
+    padding-top: 0.42rem;
+    border-top: var(--line-hairline) solid var(--accent-dark);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
   .toggle-grid {
     display: flex;
     flex-wrap: wrap;
@@ -731,18 +1043,28 @@
     min-width: 0;
     font-size: var(--size-label);
     letter-spacing: 0.02em;
-    padding: 0.2rem 0.5rem;
+    padding: 0.2rem 0.48rem;
     hyphens: auto;
     overflow-wrap: break-word;
     text-wrap: balance;
   }
 
-  /* --- body chips -------------------------------------------------------- */
+  .chip-clear {
+    opacity: 0.85;
+  }
+
+  /* --- Body Chips -------------------------------------------------------- */
 
   .chips {
     display: flex;
     flex-wrap: wrap;
     gap: 0.25rem;
+  }
+
+  .chips--moons {
+    margin-top: 0.32rem;
+    padding-top: 0.32rem;
+    border-top: var(--line-hairline) dashed var(--accent-dark);
   }
 
   .chip {
@@ -755,9 +1077,14 @@
     letter-spacing: 0;
   }
 
-  /* A key rather than a control: same shape, nothing to press. */
+  .chip--more {
+    font-family: var(--face-display);
+    color: var(--text-muted);
+    border-style: dashed;
+  }
+
   .chips--legend {
-    margin-top: 0.4rem;
+    margin-top: 0.35rem;
   }
 
   .chip--static {
@@ -771,23 +1098,305 @@
     height: 0.55rem;
     border-radius: 50%;
     background: var(--tint);
-    /* The Sun's yellow all but vanishes on parchment without an outline. */
     box-shadow: 0 0 0 var(--line-hairline) var(--accent-dark);
     flex: 0 0 auto;
   }
 
-  /* A button that opens something, rather than one of a set of choices. */
-  .wide-button {
-    width: 100%;
-    margin-top: 0.55rem;
+  /* --- Selected Body Inspector (Compare-First) --------------------------- */
+
+  .info-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
   }
 
-  /* --- the calculation overlay ------------------------------------------- */
+  .info-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    padding-bottom: 0.35rem;
+    border-bottom: var(--line-hairline) solid var(--accent-dark);
+  }
 
-  /*
-   * Covers the stage rather than docking, because four columns of working are
-   * wider than any dock and are meant to be read rather than driven.
-   */
+  .info-head__id {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+    min-width: 0;
+  }
+
+  .info-head__name {
+    font-family: var(--face-display);
+    font-size: var(--size-heading);
+    margin: 0;
+    line-height: 1.15;
+  }
+
+  .motion-badge {
+    font-family: var(--face-display);
+    font-size: 0.6rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.06rem 0.36rem;
+    border-radius: 999px;
+    border: var(--line-hairline) solid var(--accent-dark);
+    color: var(--text-muted);
+  }
+
+  .motion-badge--retro {
+    color: var(--text-strong);
+    border-color: var(--model-ptolemy);
+    background: color-mix(in srgb, var(--model-ptolemy) 20%, var(--panel-surface));
+  }
+
+  .info-head__actions {
+    display: inline-flex;
+    gap: 0.25rem;
+  }
+
+  .info-head__btn {
+    font-size: var(--size-label);
+    padding: 0.14rem 0.42rem;
+    white-space: nowrap;
+  }
+
+  .info-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.24rem;
+  }
+
+  .info-section__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+  }
+
+  /* 4-Model live phase strip */
+  .phase-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.26rem;
+  }
+
+  .phase-strip__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.18rem;
+    padding: 0.3rem 0.18rem;
+    border-radius: var(--control-radius);
+    background: color-mix(in srgb, var(--panel-surface) 45%, transparent);
+  }
+
+  .phase-strip__item[aria-pressed='true'] {
+    background: color-mix(in srgb, var(--accent) 22%, var(--panel-surface));
+    color: var(--text-strong);
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+
+  .phase-strip__model {
+    font-family: var(--face-display);
+    font-size: 0.6rem;
+    letter-spacing: 0.02em;
+    line-height: 1.1;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  .phase-strip__pct {
+    font-family: var(--face-numeric);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--size-label);
+    font-weight: 600;
+  }
+
+  /* Callouts: refutation (Venus/Mercury) & physics insight (Moon) */
+  .callout {
+    padding: 0.38rem 0.5rem;
+    border-radius: var(--control-radius);
+    font-size: 0.7rem;
+    line-height: 1.4;
+    color: var(--text-strong);
+  }
+
+  .callout--refutation {
+    border-inline-start: 3px solid var(--model-ptolemy);
+    background: color-mix(in srgb, var(--model-ptolemy) 14%, var(--panel-surface));
+  }
+
+  .callout--insight {
+    border-inline-start: 3px solid var(--model-newton);
+    background: color-mix(in srgb, var(--model-newton) 14%, var(--panel-surface));
+  }
+
+  /* Interactive model machinery parts */
+  .machinery-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.24rem;
+  }
+
+  .machinery-chip {
+    font-size: var(--size-label);
+    padding: 0.14rem 0.42rem;
+    letter-spacing: 0.02em;
+  }
+
+  .machinery-detail {
+    margin-top: 0.2rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: var(--control-radius);
+    border: var(--line-hairline) solid var(--accent-dark);
+    background: var(--panel-inner);
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+  }
+
+  .machinery-detail__body {
+    margin: 0 0 0.25rem;
+    font-size: 0.7rem;
+    line-height: 1.42;
+    color: var(--text);
+  }
+
+  /* Secondary details disclosure (<details>) */
+  .details-disclosure {
+    border-top: var(--line-hairline) solid var(--accent-dark);
+    padding-top: 0.35rem;
+  }
+
+  .details-disclosure__summary {
+    cursor: pointer;
+    font-family: var(--face-display);
+    font-size: var(--size-label);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    user-select: none;
+  }
+
+  .details-disclosure__summary:hover {
+    color: var(--text-strong);
+  }
+
+  .details-disclosure__body {
+    padding-top: 0.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  /* --- Events & Event Finder --------------------------------------------- */
+
+  .events-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .event-search {
+    display: flex;
+    flex-direction: column;
+    gap: 0.32rem;
+    padding-bottom: 0.5rem;
+    border-bottom: var(--line-hairline) solid var(--accent-dark);
+  }
+
+  .event-search__row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+    gap: 0.3rem;
+  }
+
+  .event-search select {
+    width: 100%;
+    min-width: 0;
+    font-size: var(--size-label);
+  }
+
+  .event-search__submit {
+    font-size: var(--size-label);
+    padding: 0.22rem 0.5rem;
+  }
+
+  .event-search__result {
+    margin-top: 0.2rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: var(--control-radius);
+    border: var(--line-hairline) solid var(--accent-dark);
+    background: var(--panel-inner);
+  }
+
+  .event-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .event {
+    border-bottom: var(--line-hairline) solid var(--accent-dark);
+    padding: 0.26rem 0;
+    line-height: 1.25;
+  }
+
+  .event:last-child {
+    border-bottom: 0;
+  }
+
+  .event__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.4rem;
+    cursor: pointer;
+    border-radius: var(--control-radius);
+    padding: 0.1rem 0.18rem;
+  }
+
+  .event__head:hover {
+    background: var(--hover-tint);
+  }
+
+  .event__head:focus-visible {
+    outline: var(--line-heavy) solid var(--accent-bright);
+    outline-offset: 1px;
+  }
+
+  .event__meta {
+    min-width: 0;
+  }
+
+  .event__chevron {
+    flex: 0 0 auto;
+    font-size: var(--size-label);
+    color: var(--text-muted);
+    padding-top: 0.1rem;
+  }
+
+  .event__head[aria-expanded='true'] .event__chevron {
+    color: var(--accent-dark);
+  }
+
+  .event__date {
+    font-family: var(--face-numeric);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--size-label);
+    color: var(--text-muted);
+  }
+
+  .event__title {
+    font-family: var(--face-display);
+  }
+
+  /* --- Overlays (Calculation Working & Welcome) -------------------------- */
+
   .overlay {
     position: absolute;
     inset: 0;
@@ -803,9 +1412,21 @@
     display: none;
   }
 
-  /* The welcome sits above the calculation overlay, never beneath it. */
   .overlay--welcome {
     z-index: 11;
+  }
+
+  .overlay__sheet {
+    width: min(62rem, 100%);
+    max-height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    padding: 1rem 1.15rem 1.3rem;
+    border: var(--line-fine) solid var(--panel-edge);
+    border-radius: var(--panel-radius);
+    background: var(--panel-surface);
+    box-shadow: var(--panel-shadow);
   }
 
   .overlay__sheet--narrow {
@@ -845,19 +1466,6 @@
     padding-block: 0.35rem;
   }
 
-  .overlay__sheet {
-    width: min(62rem, 100%);
-    max-height: 100%;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-    padding: 1rem 1.15rem 1.3rem;
-    border: var(--line-fine) solid var(--panel-edge);
-    border-radius: var(--panel-radius);
-    background: var(--panel-surface);
-    box-shadow: var(--panel-shadow);
-  }
-
   .overlay__header {
     display: flex;
     align-items: baseline;
@@ -885,27 +1493,36 @@
     letter-spacing: var(--tracking-wide);
     text-transform: uppercase;
     color: var(--text-muted);
-    margin: 1.2rem 0 0.4rem;
+    margin: 1.1rem 0 0.4rem;
     padding-bottom: 0.25rem;
     border-bottom: var(--line-hairline) solid var(--accent-dark);
   }
 
-  /* --- demonstrations ---------------------------------------------------- */
+  /* --- Demonstrations & Working ------------------------------------------ */
 
   .demos {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
     gap: 0.5rem;
-    margin-top: 0.6rem;
+    margin-top: 0.5rem;
+  }
+
+  .demos--compact {
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
   }
 
   .demo {
     display: grid;
-    gap: 0.2rem;
+    gap: 0.18rem;
     text-align: start;
-    padding: 0.55rem 0.65rem;
+    padding: 0.48rem 0.6rem;
     height: 100%;
     border-radius: var(--panel-radius);
+  }
+
+  .demo[data-active='on'] {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 16%, var(--panel-surface));
   }
 
   .demo__date {
@@ -916,25 +1533,22 @@
 
   .demo__title {
     font-family: var(--face-display);
-    font-size: var(--size-heading);
+    font-size: var(--size-body);
     line-height: 1.2;
   }
 
   .demo__note {
     font-size: 0.68rem;
-    line-height: 1.45;
+    line-height: 1.4;
     font-style: italic;
     color: var(--text-muted);
     white-space: normal;
   }
 
-  /* Muted text on the accent fill would vanish once the card is hovered. */
   .demo:hover .demo__date,
   .demo:hover .demo__note {
     color: inherit;
   }
-
-  /* --- the working ------------------------------------------------------- */
 
   .workings {
     display: grid;
@@ -977,7 +1591,6 @@
     line-height: 1.3;
   }
 
-  /* Notation, so it is set apart from the prose label and never wraps oddly. */
   .working__formula {
     display: block;
     font-family: var(--face-numeric);
@@ -991,7 +1604,6 @@
     white-space: nowrap;
   }
 
-  /* The answer, which is what every line above it was for. */
   .working__line--result {
     padding-top: 0.3rem;
     border-top: var(--line-hairline) solid var(--accent-dark);
@@ -1002,7 +1614,6 @@
     color: var(--text-strong);
   }
 
-  /* Pushed to the bottom so the cost lines up across columns of unequal length. */
   .working__cost {
     margin: auto 0 0;
     padding-top: 0.45rem;
@@ -1012,11 +1623,6 @@
     color: var(--text-muted);
   }
 
-  /*
-   * The tables note. Set apart from the cost line above it because the two
-   * answer different questions — what one position cost, and what the book of
-   * positions cost — and running them together read as one long aside.
-   */
   .working__tables {
     margin-top: 0.55rem;
     padding-top: 0.45rem;
@@ -1039,11 +1645,12 @@
     color: var(--text-muted);
   }
 
-  /* --- readouts ---------------------------------------------------------- */
+  /* --- Readouts & Comparison Tables -------------------------------------- */
 
   .readout {
     display: flex;
     justify-content: space-between;
+    align-items: baseline;
     gap: 0.5rem;
     padding: 0.06rem 0;
     font-size: var(--size-body);
@@ -1059,55 +1666,6 @@
     text-align: end;
   }
 
-  .clock {
-    font-family: var(--face-display);
-    font-size: var(--size-heading);
-    text-align: center;
-    padding: 0.1rem 0 0.3rem;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .rate-readout {
-    display: grid;
-    place-items: center;
-    font-family: var(--face-numeric);
-    font-variant-numeric: tabular-nums;
-    font-size: var(--size-label);
-    color: var(--text);
-    text-align: center;
-    /* Matches the buttons either side so the row reads as one control. */
-    border: var(--line-fine) solid var(--panel-edge);
-    border-radius: var(--control-radius);
-    background: color-mix(in srgb, var(--panel-surface) 35%, transparent);
-  }
-
-  /* --- events ------------------------------------------------------------ */
-
-  /*
-   * The feed scrolls; the panel around it does not.
-   *
-   * Bounded against the viewport rather than set in rem, because what it has to
-   * fit inside is a dock whose height is the window height. 58vh leaves room
-   * for the panel title and for the clock below it at every size the two-column
-   * layout covers, and on a narrow screen it simply stops the list running away
-   * down a column that was already scrolling. The figure is set by the worst
-   * case rather than the typical one: LCARS in English, where uppercase labels
-   * at 0.16em of tracking wrap far more than Czech sentence case and make every
-   * panel beside them taller.
-   */
-  /*
-   * --- names linked out to Wikipedia --------------------------------------
-   *
-   * Underlined faintly and in the same colour as the prose around it. These
-   * sit inside explanatory paragraphs, several to a panel, and a conventional
-   * blue link would pull the eye through the text in the order the names
-   * happen to fall rather than the order the sentence means. The reader who
-   * wants one will find it; the reader who does not is not interrupted.
-   *
-   * The underline is drawn with a border rather than text-decoration so it
-   * keeps a hairline width at every type size and does not thicken when the
-   * theme changes the font.
-   */
   .wiki-link {
     color: inherit;
     text-decoration: none;
@@ -1122,7 +1680,6 @@
     border-bottom-style: solid;
   }
 
-  /* On the light themes the bright accent is the *paler* of the two. */
   :root[data-theme='orrery'] .wiki-link:hover,
   :root[data-theme='orrery'] .wiki-link:focus-visible,
   :root[data-theme='atelier'] .wiki-link:hover,
@@ -1131,71 +1688,8 @@
     border-bottom-color: var(--accent-dark);
   }
 
-  .event-list {
-    max-height: min(46vh, 40rem);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-  }
-
-  .event {
-    border-bottom: var(--line-hairline) solid var(--accent-dark);
-    padding: 0.22rem 0;
-    line-height: 1.25;
-  }
-
-  .event:last-child {
-    border-bottom: 0;
-  }
-
-  .event__head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.4rem;
-    cursor: pointer;
-    border-radius: var(--control-radius);
-  }
-
-  .event__head:hover {
-    background: var(--hover-tint);
-  }
-
-  .event__head:focus-visible {
-    outline: var(--line-heavy) solid var(--accent-bright);
-    outline-offset: 1px;
-  }
-
-  .event__meta {
-    min-width: 0;
-  }
-
-  .event__chevron {
-    flex: 0 0 auto;
-    font-size: var(--size-label);
-    color: var(--text-muted);
-    padding-top: 0.1rem;
-  }
-
-  .event__head[aria-expanded='true'] .event__chevron {
-    color: var(--accent-dark);
-  }
-
-  .event__date {
-    font-family: var(--face-numeric);
-    font-variant-numeric: tabular-nums;
-    font-size: var(--size-label);
-    color: var(--text-muted);
-  }
-
-  .event__title {
-    font-family: var(--face-display);
-  }
-
-  /* --- comparison tables ------------------------------------------------ */
-
   .comparison {
-    margin-top: 0.4rem;
+    margin-top: 0.3rem;
     font-size: var(--size-label);
   }
 
@@ -1207,16 +1701,21 @@
     padding: 0.1rem 0;
   }
 
-  .comparison__row--active {
+  .comparison__row--reference {
     font-weight: 600;
     color: var(--text-strong);
+    padding-bottom: 0.2rem;
+    margin-bottom: 0.2rem;
+    border-bottom: var(--line-hairline) solid var(--accent-dark);
   }
 
-  .comparison__row--active::before {
-    content: '▸';
-    position: absolute;
-    margin-inline-start: -0.75rem;
-    color: var(--accent-dark);
+  .comparison__offset {
+    text-align: end;
+    font-family: var(--face-numeric);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin: -0.1rem 0 0.22rem;
   }
 
   .comparison__spread {
@@ -1232,10 +1731,10 @@
     color: var(--text-muted);
     font-style: italic;
     line-height: 1.4;
-    margin: 0.35rem 0 0;
+    margin: 0.3rem 0 0;
   }
 
-  /* --- phase disc ------------------------------------------------------- */
+  /* --- Phase Discs ------------------------------------------------------- */
 
   .phase-disc {
     position: relative;
@@ -1246,6 +1745,19 @@
     background: var(--shadow-solid);
     overflow: hidden;
     margin: 0.4rem auto 0.2rem;
+  }
+
+  .phase-disc--strip {
+    width: 2rem;
+    height: 2rem;
+    margin: 0;
+  }
+
+  .phase-disc--mini {
+    width: 1.15rem;
+    height: 1.15rem;
+    margin: 0;
+    flex: 0 0 auto;
   }
 
   .phase-disc__half {
@@ -1288,94 +1800,74 @@
     font-size: var(--size-label);
     letter-spacing: var(--tracking-label);
     color: var(--text);
-    margin: 0 0 0.4rem;
+    margin: 0.1rem 0 0;
   }
 
-  /*
-   * The download row. `.phase-card` needs no rule of its own — it is a plain
-   * block wrapper grouping the heading, disc, caption and readouts as one
-   * visual unit, and inherits the layout its children already had.
-   */
+  /* --- Export Controls --------------------------------------------------- */
+
   .export {
-    margin-top: 0.6rem;
+    margin-top: 0.4rem;
   }
 
-  /*
-   * The phase download, sitting inside the figure it saves rather than under
-   * the whole panel. Small enough not to compete with the disc above it.
-   */
   .export--compact {
-    margin: 0.15rem 0 0.5rem;
-    display: flex;
-    justify-content: center;
+    margin: 0;
+    display: inline-flex;
+    justify-content: flex-end;
+  }
+
+  .export--compact .button-row {
+    gap: 0.2rem;
   }
 
   .export--compact .button-row button:not(.icon-button) {
     font-size: calc(var(--size-label) * 0.88);
-    padding: 0.08rem 0.4rem;
-    opacity: 0.75;
+    padding: 0.08rem 0.36rem;
+    opacity: 0.8;
   }
 
   .export--compact .button-row button:hover {
     opacity: 1;
   }
-
-  /*
-   * The quiet corner: saving the map. Faint until it is pointed at, because it
-   * shapes nothing on screen and should never be the first thing read.
-   */
-  .panel--quiet {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.22rem 0.45rem;
-    opacity: 0.42;
-    transition: opacity var(--transition-fast);
-  }
-
-  .panel--quiet:hover,
-  .panel--quiet:focus-within {
-    opacity: 1;
-  }
-
-  .panel--quiet .export {
-    margin-top: 0;
-  }
-
-  .export__label {
-    font-family: var(--face-display);
-    font-size: calc(var(--size-label) * 0.92);
-    letter-spacing: var(--tracking-label);
-    text-transform: uppercase;
-    color: var(--text-muted);
-    white-space: nowrap;
-  }
-
-  .panel--quiet .button-row button:not(.icon-button) {
-    font-size: calc(var(--size-label) * 0.88);
-    padding: 0.08rem 0.4rem;
-  }
 }
 
-/* --- narrow viewports ---------------------------------------------------- */
+/* --- Responsive: Narrow Viewports ---------------------------------------- */
 
 @layer structure {
-  /*
-   * Below this width the docks would cover the map entirely, so they stop
-   * floating and stack as a scrolling column beneath it.
-   */
   @media (max-width: 60rem) {
     #app {
       display: grid;
-      grid-template-rows: minmax(0, 1fr) auto;
+      grid-template-rows: auto minmax(15rem, 1fr) auto auto;
       overflow: hidden;
+    }
+
+    .command-bar-host {
+      position: relative;
+      inset: auto;
+    }
+
+    .command-popover {
+      inset-inline: var(--dock-gap);
+      transform: none;
+      width: auto;
+      max-height: 65vh;
     }
 
     .stage__field {
       position: relative;
-      inset: auto;
+      inset: auto !important;
       width: 100%;
       height: 100%;
+    }
+
+    .trial-banner-host {
+      inset-block-start: calc(var(--bar-height) + var(--dock-gap));
+      inset-inline: var(--dock-gap);
+    }
+
+    .evidence-host {
+      position: static;
+      max-height: 14rem;
+      margin: 0 var(--dock-gap) var(--dock-gap);
     }
 
     .dock {
@@ -1383,66 +1875,38 @@
       width: auto;
       max-height: none;
       inset: auto;
-      /*
-       * The stack is the scroller here; the docks inside it are not.
-       *
-       * They have to be told so explicitly. `.dock--left` and `.dock--right`
-       * carry `overflow-y: auto` for the floating layout, and a grid item that
-       * scrolls has an automatic minimum size of zero rather than of its
-       * content — so the row would take its height from whatever sat beside it.
-       * That put the whole selected-body panel, phase disc and all, inside a
-       * 34px window the height of the switch bar it shares a row with.
-       */
       overflow: visible;
     }
 
+    .dock--bottom-center {
+      grid-column: 1 / -1;
+      pointer-events: auto;
+    }
+
+    .time-pill {
+      flex-wrap: wrap;
+      justify-content: center;
+      border-radius: var(--panel-radius);
+      width: 100%;
+    }
+
+    .inspector {
+      height: auto;
+      max-height: 26rem;
+    }
+
     .dock-stack {
-      grid-row: 2;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
       gap: var(--dock-gap);
       padding: var(--dock-gap);
-      max-height: 45vh;
+      max-height: 44vh;
       overflow-y: auto;
       align-content: start;
     }
 
-    .dock--top-right {
-      flex-direction: row;
-      justify-content: flex-end;
-      flex-wrap: wrap;
+    .dock--bottom-right {
+      grid-column: 1 / -1;
     }
-
-    /*
-     * The docks go static here, so an absolutely positioned menu would hang off
-     * the page rather than off the bar it belongs to. In the stacked layout it
-     * simply flows underneath, which is what a narrow screen wants anyway.
-     */
-    .settings-menu {
-      position: static;
-      width: 100%;
-      max-width: none;
-    }
-  }
-}
-
-@layer components {
-  /* The reference row leads the comparison; the models are read against it. */
-  .comparison__row--reference {
-    font-weight: 600;
-    color: var(--text-strong);
-    padding-bottom: 0.2rem;
-    margin-bottom: 0.2rem;
-    border-bottom: var(--line-hairline) solid var(--accent-dark);
-  }
-
-  /* A model's miss, hung under its own row. */
-  .comparison__offset {
-    text-align: end;
-    font-family: var(--face-numeric);
-    font-variant-numeric: tabular-nums;
-    font-size: 0.68rem;
-    color: var(--text-muted);
-    margin: -0.1rem 0 0.25rem;
   }
 }

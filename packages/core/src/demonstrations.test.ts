@@ -13,6 +13,7 @@ import { relativePosition, solarElongation } from './coordinates.js';
 import { DEMONSTRATIONS, type Demonstration } from './demonstrations.js';
 import { circularPositions } from './engines/circular.js';
 import { keplerianPositions } from './engines/keplerian.js';
+import { nbodyEngine } from './engines/nbody.js';
 import { ptolemaicEpicyclicPositions } from './engines/ptolemaic.js';
 import { vsop87Positions } from './engines/vsop87.js';
 import { findConjunctions, findOppositions } from './events.js';
@@ -189,5 +190,40 @@ describe('the Mars opposition of 1602', () => {
 
     expect(opposition).toBeDefined();
     expect(hoursApart(opposition!.jd, demonstration.jd)).toBeLessThan(2);
+  });
+});
+
+describe('the Mars composition trial of 2027', () => {
+  const demonstration = find('mars-composition-2027');
+
+  it('lands on a real Mars opposition with Composition enabled', () => {
+    const [opposition] = findOppositions(vsop87Positions, 'mars', {
+      observer: 'earth',
+      startJd: demonstration.jd - 20,
+      endJd: demonstration.jd + 20,
+      stepDays: 0.5,
+    });
+
+    expect(opposition).toBeDefined();
+    expect(hoursApart(opposition!.jd, demonstration.jd)).toBeLessThan(2);
+    expect(demonstration.showRecentredHarness).toBe(true);
+    expect(demonstration.frameOrigin).toBe('earth');
+  });
+});
+
+describe('the Galilean moons and lunar perturbation trials', () => {
+  it('places Galileo’s first Jovian observation on 7 January 1610', () => {
+    const demonstration = find('galilean-moons-1610');
+    expect(demonstration.body).toBe('jupiter');
+    expect(demonstration.mode).toBe('ptolemy');
+    expect(demonstration.focusBody).toBe(true);
+  });
+
+  it('shows the Sun pulling the Moon harder than Earth does on the lunar trial date', () => {
+    const demonstration = find('lunar-perturbation-2026');
+    const dynamics = nbodyEngine.dynamics!(demonstration.jd, 'moon')!;
+    const sunPull = dynamics.pulls.find((p) => p.source === 'sun')!;
+    const earthPull = dynamics.pulls.find((p) => p.source === 'earth')!;
+    expect(sunPull.newtons).toBeGreaterThan(earthPull.newtons * 1.5);
   });
 });

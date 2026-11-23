@@ -37,6 +37,15 @@ export type SphereCentre = 'frame' | 'observer';
 /** What the ghost overlay draws: nothing, one named model, or all of them. */
 export type GhostSelection = EngineId | 'all' | null;
 
+/** Which bottom observer-evidence drawer tab is open, or null when closed. */
+export type EvidenceTab = 'sky' | 'track' | 'scorecard';
+
+/** Active tab in the right-hand inspector dock. */
+export type RightTab = 'inspect' | 'events';
+
+/** Which anchored popover in the top command bar is open, or null. */
+export type TopPopover = 'compare' | 'trials' | 'export' | 'settings';
+
 /** The part of the state a shared link carries. See `urlState.ts`. */
 export type HydratableState = Pick<
   State,
@@ -161,14 +170,17 @@ export interface State {
    * reader meeting the app for the first time should meet the map.
    */
   showTrack: boolean;
-  /**
-   * The band of sky around the selected body, along the bottom of the stage.
-   *
-   * Off by default like the strip above it, and for the same reason: it answers
-   * the observer's question rather than the model's, and belongs to a reader
-   * who has already got their bearings on the map.
-   */
   showSky: boolean;
+  /** Unified bottom Evidence Drawer tab; mirrors `showSky` / `showTrack`. */
+  evidenceTab: EvidenceTab | null;
+  /** Active tab in the right-hand inspector (`inspect` details vs `events`). */
+  rightTab: RightTab;
+  /** Currently open popover in the top command bar (at most one at a time). */
+  activePopover: TopPopover | null;
+  /** Active guided trial id for the floating non-blocking stage banner. */
+  activeTrialId: string | null;
+  /** Whether the 5 outer-planet moon chips are expanded in the left rail. */
+  showMoons: boolean;
   /**
    * How wide that band is, degrees of longitude — the band's own zoom.
    *
@@ -240,6 +252,11 @@ export class Store {
       showRecentredHarness: false,
       showTrack: false,
       showSky: false,
+      evidenceTab: null,
+      rightTab: 'inspect',
+      activePopover: null,
+      activeTrialId: null,
+      showMoons: false,
       skyField: DEFAULT_SKY_FIELD,
       locale: getLocale(),
       theme: readStoredTheme(),
@@ -446,7 +463,47 @@ export class Store {
       | 'showTrack'
       | 'showSky',
   ): void {
+    if (key === 'showSky') {
+      this.setEvidenceTab(this.state.evidenceTab === 'sky' ? null : 'sky');
+      return;
+    }
+    if (key === 'showTrack') {
+      this.setEvidenceTab(this.state.evidenceTab === 'track' ? null : 'track');
+      return;
+    }
     this.patch({ [key]: !this.state[key] } as Partial<State>);
+  }
+
+  /** Open or switch the unified bottom Evidence Drawer, or pass null to close it. */
+  setEvidenceTab(tab: EvidenceTab | null): void {
+    if (tab === this.state.evidenceTab) return;
+    this.patch({
+      evidenceTab: tab,
+      showSky: tab === 'sky',
+      showTrack: tab === 'track',
+    });
+  }
+
+  setRightTab(rightTab: RightTab): void {
+    if (rightTab === this.state.rightTab) return;
+    this.patch({ rightTab });
+  }
+
+  setTopPopover(activePopover: TopPopover | null): void {
+    if (activePopover === this.state.activePopover) return;
+    this.patch({
+      activePopover,
+      showSettings: activePopover === 'settings',
+    });
+  }
+
+  toggleMoons(): void {
+    this.patch({ showMoons: !this.state.showMoons });
+  }
+
+  dismissTrial(): void {
+    if (this.state.activeTrialId === null) return;
+    this.patch({ activeTrialId: null });
   }
 
   /** Widen or narrow the band of sky. See `skyField`. */
@@ -482,8 +539,7 @@ export class Store {
   }
 
   setSettingsOpen(showSettings: boolean): void {
-    if (showSettings === this.state.showSettings) return;
-    this.patch({ showSettings });
+    this.setTopPopover(showSettings ? 'settings' : null);
   }
 
   /** Dismissing the welcome is permanent; this browser has now seen it. */
@@ -514,14 +570,34 @@ export class Store {
     this.clock.pause();
     this.trails.reset();
 
+    const evidenceTab = demonstration.openEvidence ?? null;
+    const engineId = MODES[demonstration.mode].engines[0]!;
+    const ghost =
+      demonstration.ghostEngineId === engineId
+        ? null
+        : (demonstration.ghostEngineId ?? null);
+
     this.patch({
       mode: demonstration.mode,
-      engineId: MODES[demonstration.mode].engines[0]!,
-      ghostEngineId: null,
+      engineId,
+      ghostEngineId: ghost,
       frameOrigin: demonstration.frameOrigin,
       observationPoint: demonstration.observationPoint,
       selectedBody: demonstration.body,
+      showConstruction: true,
+      showRecentredHarness: demonstration.showRecentredHarness ?? false,
+      evidenceTab,
+      showSky: evidenceTab === 'sky',
+      showTrack: evidenceTab === 'track',
+      ...(demonstration.skyField !== undefined ? { skyField: demonstration.skyField } : {}),
+      rightTab: 'inspect',
+      activePopover: null,
+      showSettings: false,
       showCalculation: false,
+      activeTrialId: demonstration.id,
+      zoom: 1,
+      panX: 0,
+      panY: 0,
       julianDate: this.clock.julianDate,
       playing: false,
     });

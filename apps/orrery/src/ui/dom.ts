@@ -87,3 +87,64 @@ export function toggleButton(
   button.addEventListener('click', onClick);
   return button;
 }
+
+/**
+ * Roving-tabindex keyboard navigation fallback for `focusgroup` toolbars and
+ * tablists. Installed only when native `focusGroup` is absent.
+ */
+export function wireRovingFocus(
+  container: HTMLElement,
+  itemSelector: string,
+  options: { activateOnFocus?: boolean } = {},
+): void {
+  if (typeof HTMLElement === 'undefined' || 'focusGroup' in HTMLElement.prototype) return;
+
+  const items = (): HTMLElement[] =>
+    Array.from(container.querySelectorAll<HTMLElement>(itemSelector)).filter(
+      (node) => !node.hidden && !(node as HTMLButtonElement).disabled,
+    );
+
+  const list = items();
+  if (list.length === 0) return;
+
+  const initial =
+    list.find((item) => item.getAttribute('aria-selected') === 'true') ??
+    list.find((item) => item.hasAttribute('focusgroupstart')) ??
+    list[0]!;
+  list.forEach((item) => {
+    item.tabIndex = item === initial ? 0 : -1;
+  });
+
+  container.addEventListener('focusin', (event) => {
+    const target = (event.target as Element | null)?.closest<HTMLElement>(itemSelector);
+    if (!target || !container.contains(target)) return;
+    for (const item of items()) item.tabIndex = item === target ? 0 : -1;
+  });
+
+  container.addEventListener('keydown', (event) => {
+    const currentList = items();
+    if (currentList.length < 2) return;
+    const active = (document.activeElement as Element | null)?.closest<HTMLElement>(itemSelector);
+    const index = active ? currentList.indexOf(active) : -1;
+    if (index === -1) return;
+
+    const rtl = getComputedStyle(container).direction === 'rtl';
+    let nextIndex: number | null = null;
+    if (event.key === 'ArrowRight') {
+      nextIndex = (index + (rtl ? -1 : 1) + currentList.length) % currentList.length;
+    } else if (event.key === 'ArrowLeft') {
+      nextIndex = (index + (rtl ? 1 : -1) + currentList.length) % currentList.length;
+    } else if (event.key === 'Home') {
+      nextIndex = 0;
+    } else if (event.key === 'End') {
+      nextIndex = currentList.length - 1;
+    }
+    if (nextIndex === null) return;
+
+    event.preventDefault();
+    const target = currentList[nextIndex]!;
+    for (const item of currentList) item.tabIndex = item === target ? 0 : -1;
+    target.focus();
+    if (options.activateOnFocus) target.click();
+  });
+}

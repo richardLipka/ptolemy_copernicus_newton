@@ -1,44 +1,47 @@
 /**
- * Upcoming events, and what each model says about them.
+ * Upcoming events, on-demand event finder, and cross-model date comparison.
  *
  * The comparison table is the app's argument in its most direct form: one
- * event, a date from each model, and the spread between them. A Mars
- * opposition that Newton and Ptolemy place a fortnight apart says more about
- * the two systems than any amount of prose.
- *
- * Scanning is deliberately kept off the animation path — it runs when the
- * date or model changes, not per frame, because each scan evaluates the engine
- * a few hundred times.
+ * event, a date from each model, and the spread between them. The finder at the
+ * top lets a student search forward up to 10 years for any conjunction,
+ * opposition, or retrograde station and jump directly to it.
  */
 
 import { BODIES, BODY_IDS, type BodyId } from '@orrery/core/bodies';
+import { ENGINES } from '@orrery/core/engines/registry';
 import type { EngineId, PositionSet } from '@orrery/core/engines/types';
 import {
   REFERENCE_ENGINE,
   compareAcrossModels,
+  findConjunctions,
+  findOppositions,
+  findStations,
   scanEvents,
   type AstronomicalEvent,
 } from '@orrery/core/events';
-import { dateFromJd } from '@orrery/core/time';
+import { MAX_JD, dateFromJd } from '@orrery/core/time';
 import { bodyName, formatDate, formatDateTime, formatNumber, t } from '../../i18n/i18n';
-import { ENGINES } from '@orrery/core/engines/registry';
 import type { Store } from '../../state/store';
-import { el, note, panel } from '../../ui/dom';
+import { el, note, select } from '../../ui/dom';
 
 /** Window scanned around the current date, days. */
 const WINDOW_DAYS = 400;
 
-/**
- * Bodies worth reporting events for — the classical wanderers.
- *
- * Satellites are excluded, and not only to save the scan the extra pairs. Io and
- * Europa conjoin every couple of days, so including them would bury every
- * genuine planetary event under a drift of moon-on-moon conjunctions that
- * nobody, in any century, thought worth tabulating.
- */
+/** Progressive search horizons (days) so common events return immediately. */
+const SEARCH_HORIZONS: readonly number[] = [400, 1200, 3652];
+
+/** Classical wanderers for event detection (satellites excluded). */
 const EVENT_BODIES: readonly BodyId[] = BODY_IDS.filter(
   (id) => id !== 'earth' && BODIES[id].satellite === undefined,
 );
+
+type SearchKind = 'conjunction' | 'opposition' | 'station';
+
+/** Persisted finder state across panel rebuilds. */
+let searchKind: SearchKind = 'conjunction';
+let searchBodyA: BodyId = 'jupiter';
+let searchBodyB: BodyId = 'saturn';
+let searchOutcome: { event: AstronomicalEvent | null; errorKey: string | null } | null = null;
 
 function describe(event: AstronomicalEvent): string {
   switch (event.kind) {
@@ -57,10 +60,6 @@ function describe(event: AstronomicalEvent): string {
 /**
  * Engines to put side by side: the modern reference first, then one per
  * historical model.
- *
- * The reference leads because everything below it is read as a departure from
- * it. It is the same ephemeris the accuracy tests measure against — see
- * CLAUDE.md §12.7 for what it is and is not good for.
  */
 export const EVENT_COMPARISON_ENGINES: readonly EngineId[] = [
   REFERENCE_ENGINE,
@@ -86,6 +85,80 @@ function formatOffset(days: number): string {
     : `${sign}${formatNumber(size, 1)} ${t('events.comparison.days')}`;
 }
 
+function renderComparisonTable(event: AstronomicalEvent, observer: BodyId): HTMLDivElement {
+  const comparison = compareAcrossModels(event, comparisonEngines(), observer);
+
+  const table = el('div', 'comparison');
+  table.appendChild(el('div', 'field__label', t('events.comparison.title')));
+
+  for (const [engineId, jd] of comparison.predictions) {
+    const isReference = engineId === REFERENCE_ENGINE;
+    const line = el('div', 'comparison__row');
+    if (isReference) line.classList.add('comparison__row--reference');
+
+    line.appendChild(
+      el(
+        'span',
+        undefined,
+        isReference ? t('events.comparison.actual') : t(`engine.${engineId}`),
+      ),
+    );
+    line.appendChild(el('span', 'readout__value', formatDateTime(dateFromJd(jd))));
+    table.appendChild(line);
+
+    if (!isReference && comparison.referenceJd !== null) {
+      table.appendChild(
+        el('div', 'comparison__offset', formatOffset(jd - comparison.referenceJd)),
+      );
+    }
+  }
+
+  table.appendChild(
+    el(
+      'div',
+      'comparison__spread',
+      `${t('events.comparison.spread')}: ${formatNumber(comparison.spreadDays, 1)} ${t('events.comparison.days')}`,
+    ),
+  );
+  table.appendChild(note(t('events.comparison.referenceNote')));
+  return table;
+}
+
+function searchNextEvent(
+  engineId: EngineId,
+  observer: BodyId,
+  startJd: number,
+  kind: SearchKind,
+  bodyA: BodyId,
+  bodyB: BodyId,
+): AstronomicalEvent | null {
+  const positionsAt = (jd: number): PositionSet => ENGINES[engineId].positionsAt(jd);
+  const stepDays = bodyA === 'moon' || (kind === 'conjunction' && bodyB === 'moon') ? 1 : 2;
+  let cursor = startJd + 0.5;
+
+  for (const horizon of SEARCH_HORIZONS) {
+    const endJd = Math.min(MAX_JD, startJd + horizon);
+    if (endJd <= cursor) break;
+
+    const options = { observer, startJd: cursor, endJd, stepDays };
+    let matches: AstronomicalEvent[];
+    if (kind === 'conjunction') {
+      matches = findConjunctions(positionsAt, bodyA, bodyB, options);
+    } else if (kind === 'opposition') {
+      matches = findOppositions(positionsAt, bodyA, options);
+    } else {
+      matches = findStations(positionsAt, bodyA, options);
+    }
+
+    if (matches.length > 0) {
+      return matches.sort((a, b) => a.jd - b.jd)[0]!;
+    }
+    cursor = Math.max(cursor, endJd - stepDays);
+  }
+
+  return null;
+}
+
 export interface EventPanelOptions {
   /**
    * Jump the clock to a clicked event without immediately replacing this panel
@@ -102,8 +175,116 @@ export function renderEventPanel(
   const state = store.get();
   container.replaceChildren();
 
-  const card = panel(t('events.title'));
+  const pane = el('div', 'events-pane');
   const jump = options.onJump ?? ((jd: number) => store.setJulianDate(jd));
+
+  // --- 1. On-demand Event Finder -----------------------------------------
+
+  const finder = el('form', 'event-search');
+  finder.appendChild(el('div', 'field__label', t('events.searchTitle')));
+
+  const primaryChoices = EVENT_BODIES.filter(
+    (id) => id !== state.observationPoint && (searchKind === 'conjunction' || id !== 'sun'),
+  );
+  const secondaryChoices = EVENT_BODIES.filter((id) => id !== state.observationPoint);
+
+  if (!primaryChoices.includes(searchBodyA) && primaryChoices[0]) {
+    searchBodyA = primaryChoices[0];
+  }
+  if (!secondaryChoices.includes(searchBodyB) && secondaryChoices[0]) {
+    searchBodyB = secondaryChoices.find((id) => id !== searchBodyA) ?? secondaryChoices[0];
+  }
+
+  const kindSelect = select<SearchKind>(
+    [
+      { value: 'conjunction', label: t('events.kind.conjunction') },
+      { value: 'opposition', label: t('events.kind.opposition') },
+      { value: 'station', label: t('events.kind.station') },
+    ],
+    searchKind,
+    (next) => {
+      searchKind = next;
+      searchOutcome = null;
+      renderEventPanel(container, store, options);
+    },
+  );
+  kindSelect.setAttribute('aria-label', t('events.searchTitle'));
+
+  const bodyASelect = select<BodyId>(
+    primaryChoices.map((id) => ({ value: id, label: bodyName(id) })),
+    searchBodyA,
+    (next) => {
+      searchBodyA = next;
+      searchOutcome = null;
+    },
+  );
+
+  const controlsRow = el('div', 'event-search__row');
+  controlsRow.append(bodyASelect);
+
+  if (searchKind === 'conjunction') {
+    const bodyBSelect = select<BodyId>(
+      secondaryChoices.map((id) => ({ value: id, label: bodyName(id) })),
+      searchBodyB,
+      (next) => {
+        searchBodyB = next;
+        searchOutcome = null;
+      },
+    );
+    controlsRow.append(bodyBSelect);
+  }
+
+  const submitBtn = el('button', 'event-search__submit', t('events.searchNext'));
+  submitBtn.type = 'submit';
+
+  finder.append(kindSelect, controlsRow, submitBtn);
+
+  finder.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (searchKind === 'conjunction' && searchBodyA === searchBodyB) {
+      searchOutcome = { event: null, errorKey: 'events.searchSameBody' };
+      renderEventPanel(container, store, options);
+      return;
+    }
+
+    const found = searchNextEvent(
+      state.engineId,
+      state.observationPoint,
+      state.julianDate,
+      searchKind,
+      searchBodyA,
+      searchBodyB,
+    );
+
+    if (!found) {
+      searchOutcome = { event: null, errorKey: 'events.searchNone' };
+      renderEventPanel(container, store, options);
+      return;
+    }
+
+    searchOutcome = { event: found, errorKey: null };
+    jump(found.jd);
+    renderEventPanel(container, store, options);
+  });
+
+  if (searchOutcome) {
+    const resultBox = el('div', 'event-search__result');
+    if (searchOutcome.errorKey) {
+      resultBox.appendChild(el('p', 'note note--live', t(searchOutcome.errorKey)));
+    } else if (searchOutcome.event) {
+      const found = searchOutcome.event;
+      resultBox.append(
+        el('div', 'event__date', formatDate(dateFromJd(found.jd))),
+        el('div', 'event__title', describe(found)),
+        renderComparisonTable(found, state.observationPoint),
+      );
+    }
+    finder.appendChild(resultBox);
+  }
+
+  pane.appendChild(finder);
+
+  // --- 2. Upcoming events feed -------------------------------------------
 
   const events = scanEvents(
     (jd) => ENGINES[state.engineId].positionsAt(jd),
@@ -117,22 +298,11 @@ export function renderEventPanel(
   ).slice(0, 12);
 
   if (events.length === 0) {
-    card.appendChild(note(t('events.none')));
-    container.appendChild(card);
+    pane.appendChild(note(t('events.none'), 'note note--live'));
+    container.appendChild(pane);
     return;
   }
 
-  /*
-   * The rows go in a list of their own, and the list is what scrolls.
-   *
-   * A chronological feed has no natural end — it is the one panel in the app
-   * whose height is set by how much sky there is rather than by how much there
-   * is to say. Left to grow it decided the height of the whole dock, and on a
-   * two-column layout it was tall enough on its own to push a third column off
-   * the side of the screen. Bounded here instead, so the panel is a known size
-   * and the *docks* never scroll; the events keep a short scroll of their own,
-   * which is what a feed is supposed to have.
-   */
   const list = el('div', 'event-list');
 
   for (const event of events) {
@@ -162,8 +332,6 @@ export function renderEventPanel(
     head.append(meta, chevron);
     row.appendChild(head);
 
-    // Expand on click rather than computing every comparison up front: each
-    // one re-scans every engine around the date.
     let expanded: HTMLElement | null = null;
     const toggle = (): void => {
       if (expanded) {
@@ -175,54 +343,7 @@ export function renderEventPanel(
       }
 
       jump(event.jd);
-
-      const comparison = compareAcrossModels(
-        event,
-        comparisonEngines(),
-        state.observationPoint,
-      );
-
-      const table = el('div', 'comparison');
-      table.appendChild(el('div', 'field__label', t('events.comparison.title')));
-
-      for (const [engineId, jd] of comparison.predictions) {
-        const isReference = engineId === REFERENCE_ENGINE;
-        const line = el('div', 'comparison__row');
-        if (isReference) line.classList.add('comparison__row--reference');
-
-        line.appendChild(
-          el('span', undefined, isReference ? t('events.comparison.actual') : t(`engine.${engineId}`)),
-        );
-
-        // Date and time for everything, since the models are compared to the
-        // hour. The reading is UT; see the note under the table.
-        const when = el('span', 'readout__value', formatDateTime(dateFromJd(jd)));
-        line.appendChild(when);
-        table.appendChild(line);
-
-        // How far this model missed by, which is the number worth reading.
-        if (!isReference && comparison.referenceJd !== null) {
-          const offset = el(
-            'div',
-            'comparison__offset',
-            formatOffset(jd - comparison.referenceJd),
-          );
-          table.appendChild(offset);
-        }
-      }
-
-      table.appendChild(
-        el(
-          'div',
-          'comparison__spread',
-          `${t('events.comparison.spread')}: ${formatNumber(comparison.spreadDays, 1)} ${t('events.comparison.days')}`,
-        ),
-      );
-
-      // The reference is an approximation too, and saying so is the difference
-      // between a teaching tool and a false authority.
-      table.appendChild(note(t('events.comparison.referenceNote')));
-
+      const table = renderComparisonTable(event, state.observationPoint);
       row.appendChild(table);
       expanded = table;
       head.setAttribute('aria-expanded', 'true');
@@ -240,6 +361,6 @@ export function renderEventPanel(
     list.appendChild(row);
   }
 
-  card.appendChild(list);
-  container.appendChild(card);
+  pane.appendChild(list);
+  container.appendChild(pane);
 }
