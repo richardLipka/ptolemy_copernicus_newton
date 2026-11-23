@@ -36,10 +36,10 @@ import { exportButtonRow } from '../../ui/exportButtons';
 import { buildPhaseSvg } from '../export/phaseSvg';
 
 /** One engine per model, for the side-by-side phase figures. */
-const PHASE_COMPARISON_ENGINES: readonly EngineId[] = [
+export const PHASE_COMPARISON_ENGINES: readonly EngineId[] = [
   'nbody',
   'keplerian',
-  'circular',
+  'copernican',
   'ptolemaic-epicyclic',
 ];
 

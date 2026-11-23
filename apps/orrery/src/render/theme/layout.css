@@ -1250,10 +1250,16 @@
  * that the attribute selector supplies.
  */
 .body--ghost[data-engine='ptolemaic-epicyclic'],
-.ghost-link[data-engine='ptolemaic-epicyclic'] {
+.ghost-link[data-engine='ptolemaic-epicyclic'],
+.body--ghost[data-engine='ptolemaic-almagest'],
+.ghost-link[data-engine='ptolemaic-almagest'],
+.body--ghost[data-engine='ptolemaic-reframe'],
+.ghost-link[data-engine='ptolemaic-reframe'] {
   --tint: var(--model-ptolemy);
 }
 
+.body--ghost[data-engine='copernican'],
+.ghost-link[data-engine='copernican'],
 .body--ghost[data-engine='circular'],
 .ghost-link[data-engine='circular'] {
   --tint: var(--model-copernicus);

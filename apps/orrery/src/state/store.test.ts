@@ -10,8 +10,12 @@
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { DEMONSTRATIONS } from '@orrery/core/demonstrations';
 import { MAX_JD, MIN_JD, jdFromCalendar } from '@orrery/core/time';
-import { projectRadius } from './selectors';
+import { EVENT_COMPARISON_ENGINES } from '../render/event-panel/eventPanel';
+import { PHASE_COMPARISON_ENGINES } from '../render/info-panel/infoPanel';
+import { availableGhostEngines } from '../ui/topBar';
+import { COMPARISON_ENGINES, projectRadius } from './selectors';
 import {
   DEFAULT_SKY_FIELD,
   MAX_SKY_FIELD,
@@ -115,11 +119,48 @@ describe('switching model', () => {
 });
 
 describe('opening state', () => {
-  it('starts from the opening mode’s canonical centre and vantage', () => {
+  it('starts from the opening mode’s canonical centre and vantage with Venus selected', () => {
     const state = store.get();
     expect(state.mode).toBe('newton');
     expect(state.frameOrigin).toBe('sun');
     expect(state.observationPoint).toBe('earth');
+    expect(state.selectedBody).toBe('venus');
+  });
+});
+
+describe('demonstrations and cross-model comparison', () => {
+  it('closes the calculation overlay when a demonstration is applied', () => {
+    store.setCalculationOpen(true);
+    expect(store.get().showCalculation).toBe(true);
+
+    const demo = DEMONSTRATIONS[0]!;
+    store.applyDemonstration(demo);
+
+    expect(store.get().showCalculation).toBe(false);
+    expect(store.get().selectedBody).toBe(demo.body);
+    expect(store.get().mode).toBe(demo.mode);
+    expect(store.get().playing).toBe(false);
+  });
+
+  it('offers rival models across all modes in the single-ghost picker', () => {
+    for (const active of ['nbody', 'keplerian', 'copernican', 'ptolemaic-epicyclic'] as const) {
+      const choices = availableGhostEngines(active);
+      expect(choices, active).not.toContain(active);
+      for (const expected of ['ptolemaic-epicyclic', 'copernican', 'keplerian', 'nbody'] as const) {
+        if (expected === active) continue;
+        expect(choices, `${active} should offer ${expected}`).toContain(expected);
+      }
+    }
+  });
+
+  it('uses Copernicus’s actual eccentric model (not bare circles) in every comparison surface', () => {
+    for (const list of [COMPARISON_ENGINES, PHASE_COMPARISON_ENGINES, EVENT_COMPARISON_ENGINES]) {
+      expect(list).toContain('copernican');
+      expect(list).not.toContain('circular');
+      expect(list).toContain('ptolemaic-epicyclic');
+      expect(list).toContain('keplerian');
+      expect(list).toContain('nbody');
+    }
   });
 });
 

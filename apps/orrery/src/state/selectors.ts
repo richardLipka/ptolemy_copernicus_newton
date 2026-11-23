@@ -268,7 +268,7 @@ export interface OrreryView {
  */
 export const COMPARISON_ENGINES: readonly EngineId[] = [
   'ptolemaic-epicyclic',
-  'circular',
+  'copernican',
   'keplerian',
   'nbody',
 ];

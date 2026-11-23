@@ -94,6 +94,7 @@ function renderCalculationColumn(calculation: ModelCalculation): HTMLElement {
 
 export function renderCalculationOverlay(container: HTMLElement, store: Store): void {
   const state = store.get();
+  const wasHidden = container.hidden;
   container.replaceChildren();
 
   if (!state.showCalculation) {
@@ -168,10 +169,15 @@ export function renderCalculationOverlay(container: HTMLElement, store: Store): 
 
   container.appendChild(sheet);
 
-  // Clicking the backdrop dismisses; clicking the sheet must not.
-  container.addEventListener('click', (event) => {
-    if (event.target === container) store.setCalculationOpen(false);
-  });
+  // Clicking the backdrop dismisses; clicking the sheet must not. Bound once
+  // so 250ms live refreshes do not accumulate duplicate listeners.
+  if (!container.dataset.backdropBound) {
+    container.dataset.backdropBound = '1';
+    container.addEventListener('click', (event) => {
+      if (event.target === container) store.setCalculationOpen(false);
+    });
+  }
 
-  close.focus();
+  // Only move focus when first opened; otherwise live refreshes steal it.
+  if (wasHidden) close.focus();
 }

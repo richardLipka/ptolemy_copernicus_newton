@@ -713,17 +713,12 @@
   }
 
   /*
-   * Overlay toggles as a two-column block rather than a wrapping row, which
-   * left a ragged edge whenever a label wrapped or the fourth toggle was absent.
-   * An odd one out spans both columns so the block always ends square.
-   */
-  /*
    * The overlay switches, as a wrapped row of chips.
    *
    * They were seven full-width buttons and the tallest panel on screen at
-   * 335px. Nothing about them wants a column each: they are independent
-   * on/off marks, most of which are left alone once set, and a wrapped row
-   * says that better while costing a third of the height.
+   * 335px. Nothing about them wants a full row each: they are independent
+   * on/off marks, and a wrapped row says that better while saving most of the
+   * height.
    */
   .toggle-grid {
     display: flex;
@@ -733,26 +728,10 @@
 
   .toggle-grid button:not(.icon-button) {
     flex: 0 1 auto;
+    min-width: 0;
     font-size: var(--size-label);
     letter-spacing: 0.02em;
     padding: 0.2rem 0.5rem;
-    hyphens: auto;
-    overflow-wrap: break-word;
-  }
-
-  /*
-   * Wrapped the same way the segmented labels are, and for the same reason.
-   *
-   * These sit two to a row inside a dock, so each gets half of whatever the
-   * column is - about 70px once the docks split in two. A single unbreakable
-   * word longer than that ("Constructions", "Souhvezdi") pushed its button
-   * wider than the track, the panel wider than its column, and a scrollbar
-   * onto the dock. The minmax(0, 1fr) above lets the *track* shrink; this is
-   * what lets the text inside it do the same.
-   */
-  .toggle-grid button {
-    width: 100%;
-    min-width: 0;
     hyphens: auto;
     overflow-wrap: break-word;
     text-wrap: balance;
@@ -1163,15 +1142,43 @@
     border-bottom: var(--line-hairline) solid var(--accent-dark);
     padding: 0.22rem 0;
     line-height: 1.25;
-    cursor: pointer;
   }
 
   .event:last-child {
     border-bottom: 0;
   }
 
-  .event:hover {
+  .event__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.4rem;
+    cursor: pointer;
+    border-radius: var(--control-radius);
+  }
+
+  .event__head:hover {
     background: var(--hover-tint);
+  }
+
+  .event__head:focus-visible {
+    outline: var(--line-heavy) solid var(--accent-bright);
+    outline-offset: 1px;
+  }
+
+  .event__meta {
+    min-width: 0;
+  }
+
+  .event__chevron {
+    flex: 0 0 auto;
+    font-size: var(--size-label);
+    color: var(--text-muted);
+    padding-top: 0.1rem;
+  }
+
+  .event__head[aria-expanded='true'] .event__chevron {
+    color: var(--accent-dark);
   }
 
   .event__date {

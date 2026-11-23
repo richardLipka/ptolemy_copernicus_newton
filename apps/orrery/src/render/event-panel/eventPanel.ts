@@ -62,14 +62,18 @@ function describe(event: AstronomicalEvent): string {
  * it. It is the same ephemeris the accuracy tests measure against — see
  * CLAUDE.md §12.7 for what it is and is not good for.
  */
+export const EVENT_COMPARISON_ENGINES: readonly EngineId[] = [
+  REFERENCE_ENGINE,
+  'nbody',
+  'keplerian',
+  'copernican',
+  'ptolemaic-epicyclic',
+];
+
 function comparisonEngines(): Map<EngineId, (jd: number) => PositionSet> {
-  return new Map<EngineId, (jd: number) => PositionSet>([
-    [REFERENCE_ENGINE, (jd) => ENGINES[REFERENCE_ENGINE].positionsAt(jd)],
-    ['nbody', (jd) => ENGINES.nbody.positionsAt(jd)],
-    ['keplerian', (jd) => ENGINES.keplerian.positionsAt(jd)],
-    ['circular', (jd) => ENGINES.circular.positionsAt(jd)],
-    ['ptolemaic-epicyclic', (jd) => ENGINES['ptolemaic-epicyclic'].positionsAt(jd)],
-  ]);
+  return new Map<EngineId, (jd: number) => PositionSet>(
+    EVENT_COMPARISON_ENGINES.map((id) => [id, (jd: number) => ENGINES[id].positionsAt(jd)]),
+  );
 }
 
 /** A model's offset from the reference, as a signed count of days. */
@@ -82,11 +86,24 @@ function formatOffset(days: number): string {
     : `${sign}${formatNumber(size, 1)} ${t('events.comparison.days')}`;
 }
 
-export function renderEventPanel(container: HTMLElement, store: Store): void {
+export interface EventPanelOptions {
+  /**
+   * Jump the clock to a clicked event without immediately replacing this panel
+   * when the event sits past the rescan threshold.
+   */
+  onJump?: (jd: number) => void;
+}
+
+export function renderEventPanel(
+  container: HTMLElement,
+  store: Store,
+  options: EventPanelOptions = {},
+): void {
   const state = store.get();
   container.replaceChildren();
 
   const card = panel(t('events.title'));
+  const jump = options.onJump ?? ((jd: number) => store.setJulianDate(jd));
 
   const events = scanEvents(
     (jd) => ENGINES[state.engineId].positionsAt(jd),
@@ -120,11 +137,18 @@ export function renderEventPanel(container: HTMLElement, store: Store): void {
 
   for (const event of events) {
     const row = el('div', 'event');
-    row.appendChild(el('div', 'event__date', formatDate(dateFromJd(event.jd))));
-    row.appendChild(el('div', 'event__title', describe(event)));
+
+    const head = el('div', 'event__head');
+    head.tabIndex = 0;
+    head.setAttribute('role', 'button');
+    head.setAttribute('aria-expanded', 'false');
+
+    const meta = el('div', 'event__meta');
+    meta.appendChild(el('div', 'event__date', formatDate(dateFromJd(event.jd))));
+    meta.appendChild(el('div', 'event__title', describe(event)));
 
     if (event.separation !== undefined) {
-      row.appendChild(
+      meta.appendChild(
         el(
           'div',
           'event__date',
@@ -133,17 +157,24 @@ export function renderEventPanel(container: HTMLElement, store: Store): void {
       );
     }
 
+    const chevron = el('span', 'event__chevron', '▸');
+    chevron.setAttribute('aria-hidden', 'true');
+    head.append(meta, chevron);
+    row.appendChild(head);
+
     // Expand on click rather than computing every comparison up front: each
     // one re-scans every engine around the date.
     let expanded: HTMLElement | null = null;
-    row.addEventListener('click', () => {
-      store.setJulianDate(event.jd);
-
+    const toggle = (): void => {
       if (expanded) {
         expanded.remove();
         expanded = null;
+        head.setAttribute('aria-expanded', 'false');
+        chevron.textContent = '▸';
         return;
       }
+
+      jump(event.jd);
 
       const comparison = compareAcrossModels(
         event,
@@ -194,6 +225,16 @@ export function renderEventPanel(container: HTMLElement, store: Store): void {
 
       row.appendChild(table);
       expanded = table;
+      head.setAttribute('aria-expanded', 'true');
+      chevron.textContent = '▾';
+    };
+
+    head.addEventListener('click', toggle);
+    head.addEventListener('keydown', (keyboardEvent) => {
+      if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
+        keyboardEvent.preventDefault();
+        toggle();
+      }
     });
 
     list.appendChild(row);

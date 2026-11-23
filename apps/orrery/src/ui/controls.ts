@@ -83,7 +83,7 @@ export function renderControls(container: HTMLElement, store: Store): void {
 
   // --- vantage ----------------------------------------------------------
 
-  const vantagePanel = panel(t('frame.label'));
+  const vantagePanel = panel(t('vantage.label'));
   vantagePanel.appendChild(
     field(
       t('frame.label'),
@@ -123,7 +123,7 @@ export function renderControls(container: HTMLElement, store: Store): void {
       ),
     );
   }
-  vantagePanel.appendChild(centreRow);
+  vantagePanel.appendChild(field(t('view.sphere.label'), centreRow));
   vantagePanel.appendChild(
     note(
       state.sphereCentre === 'observer'
@@ -205,16 +205,15 @@ export function renderControls(container: HTMLElement, store: Store): void {
   );
 
   // Every model that builds a position from something shows its machinery here:
-  // circles for Ptolemy and Copernicus, force and velocity vectors for Newton.
-  // Only the Earth-centred reframe has none, since it borrows finished positions
-  // rather than deriving them.
-  // One label across all models: what it shows differs (circles for the
-  // geometric constructions, force vectors for Newton) but it is the same idea —
-  // the machinery behind the position — so it gets the same name.
+  // circles for Ptolemy and Copernicus, an ellipse for Kepler, force and
+  // velocity vectors for Newton (labelled "Forces" / "Síly" to match what it
+  // actually draws). Only the Earth-centred reframe has none, since it borrows
+  // finished positions rather than deriving them.
   const hasMachinery = Boolean(store.engine.construction ?? store.engine.dynamics);
   if (hasMachinery) {
+    const machineryLabel = store.engine.dynamics ? t('view.forces') : t('view.construction');
     toggles.appendChild(
-      toggleButton(t('view.construction'), state.showConstruction, () =>
+      toggleButton(machineryLabel, state.showConstruction, () =>
         store.toggle('showConstruction'),
       ),
     );

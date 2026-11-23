@@ -29,10 +29,29 @@ import { el, field, panel, select, toggleButton } from './dom';
 /** Engine id to the colour token compare-all tints it with. */
 const MODEL_TOKEN: Partial<Record<EngineId, string>> = {
   'ptolemaic-epicyclic': 'ptolemy',
+  'ptolemaic-almagest': 'ptolemy',
+  'ptolemaic-reframe': 'ptolemy',
+  copernican: 'copernicus',
   circular: 'copernicus',
   keplerian: 'kepler',
   nbody: 'newton',
 };
+
+/**
+ * Every engine available as a single ghost comparison against `activeEngineId`,
+ * across all four models (excluding the currently active engine itself).
+ */
+export function availableGhostEngines(activeEngineId: EngineId): EngineId[] {
+  const engines: EngineId[] = [];
+  for (const mode of Object.values(MODES)) {
+    for (const engineId of mode.engines) {
+      if (engineId === activeEngineId) continue;
+      if (engines.includes(engineId)) continue;
+      engines.push(engineId);
+    }
+  }
+  return engines;
+}
 
 /** One labelled row of mutually exclusive buttons. */
 function choiceRow<T extends string>(
@@ -60,17 +79,12 @@ function comparisonField(store: Store): DocumentFragment {
 
   const ghostChoices: { value: string; label: string }[] = [
     { value: '', label: t('ghost.none') },
+    { value: 'all', label: t('ghost.all') },
+    ...availableGhostEngines(state.engineId).map((engineId) => ({
+      value: engineId,
+      label: t(`engine.${engineId}`),
+    })),
   ];
-  const mode = MODES[state.mode];
-  if (mode) {
-    for (const engineId of mode.engines) {
-      if (engineId === state.engineId) continue;
-      if (ghostChoices.some((choice) => choice.value === engineId)) continue;
-      ghostChoices.push({ value: engineId, label: t(`engine.${engineId}`) });
-    }
-  }
-  // Four models now, so "one other" is a narrower question than it used to be.
-  ghostChoices.splice(1, 0, { value: 'all', label: t('ghost.all') });
 
   fragment.appendChild(
     field(

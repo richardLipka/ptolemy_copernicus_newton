@@ -50,6 +50,8 @@ export type HydratableState = Pick<
 
 /** Which model the app opens on. */
 const INITIAL_MODE: ModeId = 'newton';
+/** Pre-selected on load so the map opens with live phase and model comparisons visible. */
+const INITIAL_BODY: BodyId = 'venus';
 
 /**
  * Simulated days per real second, slowest to fastest.
@@ -224,7 +226,7 @@ export class Store {
       ghostEngineId: null,
       frameOrigin: opening.defaultFrameOrigin,
       observationPoint: opening.defaultObservationPoint,
-      selectedBody: null,
+      selectedBody: INITIAL_BODY,
       zodiacScheme: 'signs',
       sphereCentre: 'frame',
       scaleMode: 'compressed',
@@ -519,6 +521,7 @@ export class Store {
       frameOrigin: demonstration.frameOrigin,
       observationPoint: demonstration.observationPoint,
       selectedBody: demonstration.body,
+      showCalculation: false,
       julianDate: this.clock.julianDate,
       playing: false,
     });

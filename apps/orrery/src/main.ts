@@ -485,7 +485,14 @@ function render(): void {
     eventsRendered = true;
     lastEventAt = now;
     lastEventScanJd = state.julianDate;
-    renderEventPanel(eventsHost, store);
+    renderEventPanel(eventsHost, store, {
+      onJump: (jd) => {
+        // Keep the current list intact so an inline comparison opened for an
+        // event >25 days ahead is not wiped by an immediate rescan.
+        lastEventScanJd = jd;
+        store.setJulianDate(jd);
+      },
+    });
   }
 }
 
