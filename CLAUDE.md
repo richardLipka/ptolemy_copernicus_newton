@@ -234,53 +234,59 @@ conjunction of X and Y" search are provided.
 ## 5. Module Map
 
 ```
-src/
-  core/
-    time.ts              # simulation clock, Julian Date conversions
-    bodies.ts            # static body registry + physical/orbital constants
-    vec.ts               # small vector math helpers
-    engines/
-      types.ts           # Engine interface, mode registry
-      vsop87.ts          # reference ephemeris; basis for Ptolemy reframe
-      vsop87Data.ts      # GENERATED — see scripts/generate-vsop87.mjs
-      keplerian.ts       # osculating elements; n-body seed, Almagest motions
-      copernican.ts      # Copernicus: eccentric + epicyclet (his own)
-      circular.ts        # concentric circles — the simplification, not him
-      nbody.ts           # Newton: numerical gravity integrator
-      ptolemaic.ts       # reframe + epicyclic sub-modes
-    frame.ts             # recenter(positions, originId)
-    coordinates.ts       # heliocentric <-> ecliptic longitude <-> apparent
-    illumination.ts      # phase angle -> illuminated fraction / terminator
-    events.ts            # scan + bisect; multi-engine comparison
-    zodiac.ts            # longitude -> sign (equal) or constellation (IAU)
+packages/core/src/           # @orrery/core — pure math, no DOM lib
+  time.ts                    # simulation clock, Julian Date conversions
+  bodies.ts                  # static body registry + physical/orbital constants
+  vec.ts                     # small vector math helpers
+  engines/
+    types.ts                 # Engine interface, mode registry
+    registry.ts              # all eight engines by id + REFERENCE_ENGINE_ID
+    vsop87.ts                # reference ephemeris; basis for Ptolemy reframe
+    vsop87Data.ts            # GENERATED — see packages/core/scripts/generate-vsop87.mjs
+    keplerian.ts             # osculating elements; Kepler mode, n-body seed
+    copernican.ts            # Copernicus: eccentric + epicyclet (his own)
+    circular.ts              # concentric circles — the simplification, not him
+    nbody.ts                 # Newton: numerical gravity integrator
+    calibrate.ts             # differential correction for n-body initial speeds
+    ptolemaic.ts             # reframe + epicyclic + Almagest-tables sub-modes
+    ptolemaicUnits.ts        # Almagest parts-of-60 / sexagesimal formatting
+    recentred.ts             # two-stage composition harness for non-Sun origins
+  frame.ts                   # recenter(positions, originId)
+  coordinates.ts             # heliocentric <-> ecliptic longitude <-> apparent
+  illumination.ts            # phase angle -> illuminated fraction / terminator
+  events.ts                  # scan + bisect; multi-engine comparison
+  zodiac.ts                  # longitude -> sign (equal) or constellation (IAU)
+  satellites.ts              # Galilean moons + Titan two-body riders
+  satelliteHarness.ts        # counterfactual geometric harnesses for moons
+  construction.ts            # shared construction geometry types & family helper
+  dynamics.ts                # Newtonian force/velocity decomposition
+  calculation.ts             # step-by-step working for the calculation overlay
+  demonstrations.ts          # historical showcase presets
+  longitudeTrack.ts          # apparent longitude vs time (sky track)
+  stars.ts                   # bright ecliptic star catalogue (J2000)
 
+apps/orrery/src/             # @orrery/app — vanilla DOM frontend
   state/
-    store.ts             # mode, frame origin, observation point, selected body,
-                         #   time, orbit toggles, zodiac scheme, locale
-    selectors.ts         # derived: current positions, sight-lines, event window
-
+    store.ts                 # single pub/sub store
+    selectors.ts             # derived view data, projections, harnesses, vectors
+    trails.ts                # logged position history with decimation
+    skyView.ts               # band-of-sky projection
+    harnessMeasures.ts       # live parameter/rate readouts for hover cards
+    urlState.ts              # shareable hash encoding/decoding
+    preferences.ts           # localStorage persistence (welcome, notes)
   render/
-    orrery/              # composite view: map + ring + sight-lines
-      map.ts             # orbit rings, body markers
-      sphere.ts          # zodiac annulus, segment labels
-      sightlines.ts      # observation point -> body -> ring intercept
-    body-marker/         # per-body element + illumination rendering
-    info-panel/          # selected-body card
-    event-panel/         # event list + search + cross-model comparison table
-    theme/               # CSS custom-property tokens (orrery/brass skin)
-
-  ui/
-    controls/            # mode switch, frame origin, observation point,
-                         #   time controls, orbit toggles, zodiac scheme, locale
-    app-shell.ts
-
-  i18n/
-    cs.json              # default
-    en.json
-    i18n.ts
-
-main.ts
-index.html
+    orrery/                  # composite map + zodiac ring + sight-lines + hover hints
+    sky/                     # band-of-sky strip
+    track/                   # longitude-against-time strip
+    info-panel/              # selected-body readings & phase disc
+    event-panel/             # event list + search + cross-model comparison table
+    export/                  # vector SVG & raster PNG exporters (map + phase)
+    theme/                   # CSS custom-property tokens & 5 theme files
+  ui/                        # topBar, controls, timeDock, calculationOverlay,
+                             #   welcome, exportButtons, dom helpers
+  i18n/                      # cs.json (default), en.json, i18n.ts, wikiLinks.ts
+  main.ts
+apps/orrery/index.html
 ```
 
 Data flow, one tick:
@@ -457,14 +463,13 @@ custom-property tokens.
   reproduces to the day. No longer the reference, but still the source of the
   osculating elements the other engines are built from: it seeds the n-body
   integration and supplies the Almagest engine's modern mean longitudes.
-- **Copernican** — mean radius, mean longitude, correct orbital plane, zero
-  eccentricity. The circles are not a simplification of Copernicus but a
-  faithful rendering of him: *De revolutionibus* is circles-and-epicycles
-  throughout, and the ellipse is Kepler's, sixty-six years later. Keeping the
-  error intact is what lets the app show that heliocentrism *alone* bought no
-  predictive gain — see §12.3, where Copernicus loses to Ptolemy on every
-  superior planet, and §12.1's Kepler figures, where the same arrangement with
-  ellipses instead of circles beats him by a factor of five hundred at Mars.
+- **Copernican** — eccentric deferent displaced 3/2·*ae* from the Sun carrying
+  a small epicyclet of 1/2·*ae* turning at twice the mean anomaly, as *De
+  revolutionibus* describes. Reproduces an ellipse to first order in *e* and
+  puts Mars at 0.33° on modern parameters — the same bracket as Ptolemy once
+  historical parameter error is accounted for (see §12.3). The bare-circle
+  sub-mode (`circularEngine`, zero eccentricity, Mars 13.5°) is kept alongside
+  it to show how much of an orbit's shape the eccentricity alone accounts for.
 - **Keplerian** — the same JPL elements solved properly: Kepler's equation for
   the eccentric anomaly, the Sun at a focus. See the `keplerianEngine` note
   above for what its residual error is and why it is interesting.
@@ -977,18 +982,19 @@ Files: `tokens.css` (contract and fallbacks), `theme-*.css` (one per look),
 `@layer tokens, structure, components, theme` fixes the precedence.
 
 **Contrast** was measured rather than eyeballed, on the body surface: body text
-10.0–17.8:1 across the five themes, engraved ring hairlines 2.7–6.2:1, ring
-labels 6.3–14.1:1. Atelier's muted text was darkened from the inherited value,
-which only reached 3.4:1 against a near-white ground; Orrery keeps the original,
-since preserving that look is the point of having both.
+10.0–17.8:1 across the five themes, muted small type 4.7–5.5:1, engraved ring
+hairlines 3.8–6.2:1, ring labels 6.3–14.1:1. Two earlier shortfalls were
+corrected in the palette:
 
-The hairline figure is the one to watch, and Flightdeck is why it moved. That
-theme holds its chrome deliberately dim so the bodies can be the brightest thing
-on screen (§10), and the ring it draws comes to **2.7:1** against its own ground
-— under the 3:1 a graphical object of that kind wants, where the other four sit
-between 4.2 and 6.2. It is legible in practice because the ring is a continuous
-figure rather than a detail to be picked out, but it is a real shortfall and it
-is the first thing to fix if that palette is revisited.
+- **Orrery's muted text** (`--text-muted`) used to sit at 3.14:1 (`#8a7859`) —
+  below 4.5:1 AA on panel titles and the credit line — and was deepened to
+  `#665539`, giving **5.28:1** on `#e8dcc0` and **4.53:1** even over the shaded
+  corner (`--surface-shade`), matching Atelier's darkened muted tone.
+- **Flightdeck's ring hairline** (`--accent-dark`) used to sit at 2.73:1
+  (`#235a80`) against `#04070d` — below 3:1 non-text contrast — and was lifted
+  to `#2e709c`, giving **3.76:1** on `#04070d` and **3.46:1** over its
+  `--surface-glow` wash while staying visibly below `--accent` (5.18:1) and the
+  bright bodies.
 
 **Zoom** is the mouse wheel, and needs no centre of its own. Every element on the
 instrument is positioned in units of `--unit`, and the frame origin sits at the
@@ -2261,11 +2267,13 @@ rather than the angular construction. With Venus penned inside the Sun's shell i
 can never turn more than half its lit face toward Earth, so at superior
 conjunction Ptolemy says crescent where the sky says full — a whole disc apart.
 
-**Longitude and phase rank the models in opposite orders.** Ptolemy beats
-Copernicus on where the planets appear (2.8° against 13.4° on Mars) and loses to
-him absolutely on how they are lit. That is the shape of the seventeenth-century
-argument in two rows of a table, and it is why the case was settled with a
-telescope rather than with an ephemeris.
+**Longitude left the dispute open; phase closed it.** In longitude, Ptolemy's
+and Copernicus's actual constructions sit in the same bracket — 2.8° against
+0.33° on modern parameters, and indistinguishable on sixteenth-century ones
+(§12.3), while bare concentric circles miss Mars by 13.5° — whereas on how the
+inferior planets are lit, Ptolemy fails absolutely. That is the shape of the
+seventeenth-century argument in two rows of a table, and it is why the case was
+settled with a telescope rather than with an ephemeris.
 
 The Moon is the exception in Ptolemy's favour, being nobody's neighbour in the
 shell ordering and so unpenalised by the nesting.
@@ -2337,10 +2345,14 @@ export's own viewBox already handles an off-screen body honestly — it is
 simply outside the picture, which is what off the map means.
 
 `resolveThemeColor`/`buildExportFilename`/`escapeXml`/`mapProjection`/
-`ringGeometry` are all pure and are tested directly; the parts that call
-`getComputedStyle` or a canvas are checked by hand in the running app, the
-same accommodation `orrery.ts` itself gets for the same reason — see
-`vitest.config.ts`'s own note that this suite is plain Node throughout.
+`ringGeometry` are all pure and tested directly, and `buildMapSvg` accepts an
+optional `MapPalette` so `mapSvg.test.ts` exercises the full SVG output in Node
+— pinning observer-centred sight-line scaling (`RING_INNER * ringScale`),
+`showConstruction` gating for Newton's vectors, and the dashed composition
+overlay without needing `getComputedStyle`. Only theme resolution via
+`getComputedStyle` and canvas PNG rasterisation remain manual checks in the
+running app — see `vitest.config.ts`'s own note that this suite is plain Node
+throughout.
 
 ### 13.8 Still assumed, not confirmed
 

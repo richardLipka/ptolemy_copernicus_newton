@@ -223,12 +223,11 @@ panels where they belong. Your choice of language and theme is remembered.
 Every look is a block of CSS custom properties and nothing else, so the body
 colours stay comparable between them and adding a sixth means adding one file.
 
-Text contrast is measured rather than eyeballed, and the measurement is not
-uniformly flattering: headings run 9:1 to 18:1 across the five themes and control
-labels 6:1 to 13:1, but the muted small type is weaker — panel titles and the
-credit line sit at 3.1:1 on Parchment, below the 4.5:1 that type that size wants.
-That is the low-contrast engraving the theme is imitating working against
-legibility rather than for it, and it is the next thing to fix in the palette.
+Text contrast is measured rather than eyeballed across all five themes:
+headings run 10:1 to 18:1, control labels 6:1 to 14:1, and muted small type
+(panel titles and the credit line) runs 4.7:1 to 5.5:1 against each theme's
+surface (5.3:1 on Parchment, 4.5:1 even over its shaded corner). Engraved ring
+hairlines run 3.8:1 to 6.2:1.
 
 ## Sharing a setup
 
