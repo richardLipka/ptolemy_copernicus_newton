@@ -19,10 +19,8 @@
 
     --text-strong: #23201b;
     --text: #4f4840;
-    /* Darker than the parchment theme's equivalent: the hint notes are set in
-       this, and the original value only reached 3.4:1 against a near-white
-       ground. Orrery keeps its own value, since preserving that look was the
-       point of having both. */
+    /* Deepened from the original parchment equivalent, which only reached
+       3.4:1 against a near-white ground; Orrery was later darkened to match. */
     --text-muted: #6b645c;
 
     --accent: #a07a42;

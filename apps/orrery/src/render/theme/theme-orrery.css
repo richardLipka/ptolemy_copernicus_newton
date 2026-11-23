@@ -13,7 +13,10 @@
 
     --text-strong: #2e2317;
     --text: #5a4a35;
-    --text-muted: #8a7859;
+    /* Deepened from #8a7859 (3.14:1) to keep the sepia tone while passing
+       4.5:1 AA even over the shaded parchment corners (5.28:1 on surface,
+       4.53:1 over --surface-shade). */
+    --text-muted: #665539;
 
     --accent: #b08d57;
     --accent-bright: #d4b16a;

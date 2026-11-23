@@ -50,7 +50,10 @@
      */
     --accent: #3d87bd;
     --accent-bright: #6cc4f0;
-    --accent-dark: #235a80;
+    /* Lifted from #235a80 (2.73:1) so ring hairlines clear 3:1 non-text
+       contrast (3.76:1 on #04070d, 3.46:1 over --surface-glow) while staying
+       visibly dimmer than --accent and the planets. */
+    --accent-dark: #2e709c;
     --accent-shadow: #12314a;
 
     --panel-surface: rgba(8, 15, 26, 0.74);

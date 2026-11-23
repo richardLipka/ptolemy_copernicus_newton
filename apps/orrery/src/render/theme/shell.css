@@ -423,9 +423,10 @@
 
   /*
    * Not dimmed with `opacity`. The muted ink already reads as an imprint, and
-   * dimming on top of it took the parchment theme to about 2.2:1 against its
-   * background — under the 3:1 that a graphic carrying meaning needs. Measured
-   * at full opacity the four themes give 3.1, 5.3, 4.8 and 5.5.
+   * dimming on top of it used to take the parchment theme below the 3:1 that a
+   * graphic carrying meaning needs. Measured at full opacity across the five
+   * themes (Orrery, Atelier, Nocturne, LCARS, Flightdeck) it gives 5.3, 5.3,
+   * 4.8, 5.5 and 4.7.
    */
   .credit__mark {
     display: block;
