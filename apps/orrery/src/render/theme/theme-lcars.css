@@ -167,10 +167,21 @@
 
     & .phase-strip__item,
     & .popover-option,
-    & .demo {
+    & .demo,
+    & .comparison__row--btn {
       background: #18181f;
       color: var(--text);
       border-radius: var(--panel-radius);
+    }
+
+    & .comparison__row--btn.comparison__row--active {
+      background: rgba(255, 156, 0, 0.22);
+      color: var(--accent-bright);
+    }
+
+    & .comparison__row--btn:hover {
+      background: rgba(255, 156, 0, 0.3);
+      color: var(--accent-bright);
     }
 
     & .phase-strip__item[aria-pressed='true'],

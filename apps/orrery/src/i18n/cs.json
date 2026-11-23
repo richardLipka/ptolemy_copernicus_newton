@@ -432,5 +432,13 @@
   "help.toggle": "Zobrazit či skrýt vysvětlení",
   "evidence.sky.short": "Obloha",
   "evidence.track.short": "Dráha",
-  "evidence.scorecard.short": "Srovnání"
+  "evidence.scorecard.short": "Srovnání",
+  "recentred.part.deferent": "Deferent skládání ({{body}})",
+  "recentred.part.epicycle": "Epicykl skládání ({{body}})",
+  "recentred.part.apsidal": "Přímka apsid skládání ({{body}})",
+  "recentred.note.deferent.origin": "První rameno přestředěného součtu: dráha {{legOf}} projitá pozpátku od nehybného bodu. Protože má {{leg}} větší dráhu, plní roli deferentu — a v kloubu nese Slunce.",
+  "recentred.note.deferent.body": "První rameno přestředěného součtu: dráha {{legOf}} vynesená přímo kolem {{originOf}}. Protože má {{leg}} větší dráhu, stává se deferentem — přesně jako u Ptolemaiovy vnější planety.",
+  "recentred.note.epicycle.sunJoint": "Druhé rameno přestředěného součtu: dráha {{legOf}} nesená Sluncem na konci deferentu. Při pohledu ze Země jde o Tychonovo uspořádání i Ptolemaiův model vnitřní planety.",
+  "recentred.note.epicycle.emptyJoint": "Druhé rameno přestředěného součtu: obrácená dráha {{legOf}} nesená prázdným kloubem. Právě proto zůstávalo Ptolemaiovo rameno epicyklu rovnoběžné se směrem ke Slunci — je to totiž samotná dráha Země.",
+  "recentred.note.apsidal": "Přímka apsid vedoucí dráhy ({{legOf}}), přenesená beze změny do přestředěné soustavy."
 }

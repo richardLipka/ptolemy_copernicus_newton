@@ -36,6 +36,7 @@ interface Target {
   role: HarnessRole;
   markerIndex?: number;
   source?: BodyId;
+  overlay?: 'recentred';
 }
 
 /** How far the card is held off the pointer, px. */
@@ -50,7 +51,7 @@ function targetFrom(node: EventTarget | null): Target | null {
   const element = node.closest<HTMLElement>('[data-role][data-body]');
   if (!element) return null;
 
-  const { role, body, index, source } = element.dataset;
+  const { role, body, index, source, overlay } = element.dataset;
   if (!role || !body) return null;
 
   return {
@@ -59,6 +60,7 @@ function targetFrom(node: EventTarget | null): Target | null {
     role: role as HarnessRole,
     markerIndex: index === undefined ? undefined : Number(index),
     source: source as BodyId | undefined,
+    overlay: overlay === 'recentred' ? 'recentred' : undefined,
   };
 }
 
@@ -68,7 +70,8 @@ const sameTarget = (a: Target | null, b: Target | null): boolean =>
   a.bodyId === b.bodyId &&
   a.role === b.role &&
   a.markerIndex === b.markerIndex &&
-  a.source === b.source;
+  a.source === b.source &&
+  a.overlay === b.overlay;
 
 export function createHarnessHint(
   container: HTMLElement,
@@ -145,6 +148,7 @@ export function createHarnessHint(
     shown = null;
     card.style.display = 'none';
     delete layer.dataset.hover;
+    delete layer.dataset.hoverOverlay;
   }
 
   function write(note: HarnessNote): void {
@@ -196,6 +200,7 @@ export function createHarnessHint(
     const note = harnessNote(state, next.bodyId, next.role, {
       markerIndex: next.markerIndex,
       source: next.source,
+      overlay: next.overlay,
     });
     if (!note) {
       hide();
@@ -206,6 +211,8 @@ export function createHarnessHint(
     target = next;
     card.style.display = '';
     layer.dataset.hover = next.role;
+    if (next.overlay) layer.dataset.hoverOverlay = next.overlay;
+    else delete layer.dataset.hoverOverlay;
     write(note);
   }
 

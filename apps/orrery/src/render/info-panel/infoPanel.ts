@@ -29,7 +29,7 @@ import {
   type HarnessRole,
   type HarnessTarget,
 } from '../../state/harnessMeasures';
-import { buildView, focusViewFor, rawConstruction } from '../../state/selectors';
+import { buildView, focusViewFor, rawConstruction, rawRecentredHarness } from '../../state/selectors';
 import type { State, Store } from '../../state/store';
 import { el, note, readout } from '../../ui/dom';
 import { exportButtonRow } from '../../ui/exportButtons';
@@ -184,6 +184,32 @@ function collectMachineryChips(state: State, selected: BodyId, hasDynamics: bool
     });
   }
 
+  if (state.showRecentredHarness) {
+    const recentred = rawRecentredHarness(state, selected);
+    if (recentred) {
+      add({
+        key: 'recentred:deferent',
+        role: 'deferent',
+        label: t('recentred.part.deferent', { body: bodyName(recentred.deferentBody) }),
+        target: { overlay: 'recentred' },
+      });
+      if (recentred.epicycleBody) {
+        add({
+          key: 'recentred:epicycle',
+          role: 'epicycle',
+          label: t('recentred.part.epicycle', { body: bodyName(recentred.epicycleBody) }),
+          target: { overlay: 'recentred' },
+        });
+      }
+      add({
+        key: 'recentred:apsidal',
+        role: 'apsidal',
+        label: t('recentred.part.apsidal', { body: bodyName(recentred.deferentBody) }),
+        target: { overlay: 'recentred' },
+      });
+    }
+  }
+
   return chips;
 }
 
@@ -198,11 +224,17 @@ function buildPhaseDisc(bodyId: BodyId, illumination: Illumination, extraClass: 
   return disc;
 }
 
-function setHarnessHover(role: HarnessRole | null): void {
+function setHarnessHover(role: HarnessRole | null, overlay?: 'recentred'): void {
   const layer = document.querySelector<HTMLElement>('.harness');
   if (!layer) return;
-  if (role) layer.dataset.hover = role;
-  else delete layer.dataset.hover;
+  if (role) {
+    layer.dataset.hover = role;
+    if (overlay) layer.dataset.hoverOverlay = overlay;
+    else delete layer.dataset.hoverOverlay;
+  } else {
+    delete layer.dataset.hover;
+    delete layer.dataset.hoverOverlay;
+  }
 }
 
 export function renderInfoPanel(container: HTMLElement, store: Store): void {
@@ -384,17 +416,48 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
   };
 
   if (!body.isObserver) {
-    const distRow = readout(t('info.distanceFromObserver'), distance(body.distanceFromObserver));
-    if (inPtolemysUnits && parts(body.distanceFromObserver) !== null) {
-      const valueEl = distRow.lastElementChild;
-      if (valueEl) {
-        valueEl.append(' ', el('span', 'pill-flag', t('info.noAbsoluteScale')));
+    const scaleBlock = el('div', 'comparison');
+    scaleBlock.appendChild(el('div', 'field__label', t('info.distanceByModel')));
+
+    for (const { mode, engineId } of PHASE_STRIP_MODELS) {
+      const active = state.mode === mode;
+      const effectiveEngine = active ? state.engineId : engineId;
+      const positions =
+        effectiveEngine === state.engineId
+          ? view.positions
+          : ENGINES[effectiveEngine].positionsAt(state.julianDate);
+      const distAu = relativePosition(positions, state.observationPoint, selected).distance;
+      const ptolemyUnits =
+        effectiveEngine === 'ptolemaic-epicyclic' || effectiveEngine === 'ptolemaic-almagest';
+      const asParts = ptolemyUnits
+        ? inDeferentParts(distAu, state.julianDate, selected)
+        : null;
+
+      const row = el(
+        'button',
+        active ? 'comparison__row comparison__row--btn comparison__row--active' : 'comparison__row comparison__row--btn',
+      );
+      row.type = 'button';
+      row.appendChild(el('span', undefined, t(`mode.${mode}`)));
+
+      const val = el('span', 'readout__value');
+      if (asParts !== null) {
+        val.append(
+          `${formatNumber(asParts, 1)} ${t('info.unit.parts')} `,
+          el('span', 'pill-flag', t('info.noAbsoluteScale')),
+        );
+      } else {
+        val.textContent = `${formatNumber(distAu, 3)} ${t('info.unit.au')}`;
       }
-      metricsSection.appendChild(distRow);
-      metricsSection.appendChild(note(t('info.ptolemyParts')));
-    } else {
-      metricsSection.appendChild(distRow);
+      row.appendChild(val);
+      row.addEventListener('click', () => store.setMode(mode));
+      scaleBlock.appendChild(row);
     }
+
+    if (inPtolemysUnits && parts(body.distanceFromObserver) !== null) {
+      scaleBlock.appendChild(note(t('info.ptolemyParts')));
+    }
+    metricsSection.appendChild(scaleBlock);
   }
 
   if (state.ghostEngineId && state.ghostEngineId !== 'all' && !body.isObserver) {
@@ -445,13 +508,13 @@ export function renderInfoPanel(container: HTMLElement, store: Store): void {
       const btn = el('button', 'machinery-chip', chip.label);
       btn.type = 'button';
       btn.setAttribute('aria-pressed', String(active));
-      btn.addEventListener('mouseenter', () => setHarnessHover(chip.role));
+      btn.addEventListener('mouseenter', () => setHarnessHover(chip.role, chip.target.overlay));
       btn.addEventListener('mouseleave', () => setHarnessHover(null));
-      btn.addEventListener('focus', () => setHarnessHover(chip.role));
+      btn.addEventListener('focus', () => setHarnessHover(chip.role, chip.target.overlay));
       btn.addEventListener('blur', () => setHarnessHover(null));
       btn.addEventListener('click', () => {
         activePartKey = activePartKey === chip.key ? null : chip.key;
-        setHarnessHover(activePartKey ? chip.role : null);
+        setHarnessHover(activePartKey ? chip.role : null, activePartKey ? chip.target.overlay : undefined);
         renderInfoPanel(container, store);
       });
       chipRow.appendChild(btn);

@@ -19,7 +19,8 @@
  *    mouth.
  */
 
-import type { BodyId } from '@orrery/core/bodies';
+import { BODIES, type BodyId } from '@orrery/core/bodies';
+import { length, sub } from '@orrery/core/vec';
 import {
   measureHarnessPart,
   type HarnessMeasure,
@@ -27,6 +28,7 @@ import {
   type HarnessRole,
   type HarnessTarget,
 } from '../../state/harnessMeasures';
+import { rawRecentredHarness } from '../../state/selectors';
 import type { State } from '../../state/store';
 import {
   bodyName,
@@ -197,6 +199,99 @@ export function describeHarnessPart(part: HarnessPart): HarnessNote {
   };
 }
 
+/** Describe one leg of the recentred Composition overlay (deferent, epicycle, or apsidal). */
+function recentredHarnessNote(
+  state: State,
+  bodyId: BodyId,
+  role: HarnessRole,
+): HarnessNote | null {
+  const harness = rawRecentredHarness(state, bodyId);
+  if (!harness) return null;
+
+  const { construction, deferentBody, epicycleBody, jointIsSun } = harness;
+  const deferentOrbit = BODIES[deferentBody].orbit?.epoch;
+  const epicycleOrbit = epicycleBody ? BODIES[epicycleBody].orbit?.epoch : undefined;
+  const fmtAu = (au: number): string => `${formatNumber(au, 4)} ${t('info.unit.au')}`;
+
+  if (role === 'deferent' || role === 'deferent-arm') {
+    const legIsOrigin = deferentBody === state.frameOrigin;
+    const arm = construction.arms.find((candidate) => candidate.role === 'deferent-arm');
+    const values: HarnessNoteValue[] = [];
+    if (deferentOrbit) {
+      values.push({ label: t('harness.value.semiMajor'), value: fmtAu(deferentOrbit.a) });
+    }
+    if (arm) {
+      values.push({
+        label: t('harness.value.length'),
+        value: fmtAu(length(sub(arm.to, arm.from))),
+      });
+    }
+    if (deferentOrbit && epicycleOrbit && deferentOrbit.a > 0) {
+      values.push({
+        label: t('harness.value.ratio'),
+        value: formatNumber(epicycleOrbit.a / deferentOrbit.a, 4),
+      });
+    }
+    return {
+      title: t('recentred.part.deferent', { body: bodyName(deferentBody) }),
+      subject: bodyName(bodyId),
+      body: t(legIsOrigin ? 'recentred.note.deferent.origin' : 'recentred.note.deferent.body', {
+        leg: bodyName(deferentBody),
+        legOf: bodyName(deferentBody, 'genitive'),
+        originOf: bodyName(state.frameOrigin, 'genitive'),
+      }),
+      values,
+    };
+  }
+
+  if ((role === 'epicycle' || role === 'epicycle-arm') && epicycleBody) {
+    const arm = construction.arms.find((candidate) => candidate.role === 'epicycle-arm');
+    const values: HarnessNoteValue[] = [];
+    if (epicycleOrbit) {
+      values.push({ label: t('harness.value.semiMajor'), value: fmtAu(epicycleOrbit.a) });
+    }
+    if (arm) {
+      values.push({
+        label: t('harness.value.length'),
+        value: fmtAu(length(sub(arm.to, arm.from))),
+      });
+    }
+    if (deferentOrbit && epicycleOrbit && deferentOrbit.a > 0) {
+      values.push({
+        label: t('harness.value.ratio'),
+        value: formatNumber(epicycleOrbit.a / deferentOrbit.a, 4),
+      });
+    }
+    return {
+      title: t('recentred.part.epicycle', { body: bodyName(epicycleBody) }),
+      subject: bodyName(bodyId),
+      body: t(jointIsSun ? 'recentred.note.epicycle.sunJoint' : 'recentred.note.epicycle.emptyJoint', {
+        legOf: bodyName(epicycleBody, 'genitive'),
+      }),
+      values,
+    };
+  }
+
+  if (role === 'apsidal') {
+    const values: HarnessNoteValue[] = [];
+    if (deferentOrbit) {
+      values.push({ label: t('harness.value.semiMajor'), value: fmtAu(deferentOrbit.a) });
+      values.push({
+        label: t('harness.value.eccentricity'),
+        value: formatNumber(deferentOrbit.e, 4),
+      });
+    }
+    return {
+      title: t('recentred.part.apsidal', { body: bodyName(deferentBody) }),
+      subject: bodyName(bodyId),
+      body: t('recentred.note.apsidal', { legOf: bodyName(deferentBody, 'genitive') }),
+      values,
+    };
+  }
+
+  return null;
+}
+
 /** The note for one part of one body's machinery, or null where it has none. */
 export function harnessNote(
   state: State,
@@ -204,6 +299,9 @@ export function harnessNote(
   role: HarnessRole,
   target: HarnessTarget = {},
 ): HarnessNote | null {
+  if (target.overlay === 'recentred') {
+    return recentredHarnessNote(state, bodyId, role);
+  }
   const part = measureHarnessPart(state, bodyId, role, target);
   return part ? describeHarnessPart(part) : null;
 }

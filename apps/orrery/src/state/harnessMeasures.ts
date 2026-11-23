@@ -84,6 +84,8 @@ export interface HarnessTarget {
   markerIndex?: number;
   /** Which body pulls, for a gravity vector. */
   source?: BodyId;
+  /** Set when inspecting a dashed leg of the recentred composition overlay. */
+  overlay?: 'recentred';
 }
 
 /**

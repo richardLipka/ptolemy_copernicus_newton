@@ -18,6 +18,7 @@ import {
   findStations,
   scanEvents,
   type AstronomicalEvent,
+  type ModelComparison,
 } from '@orrery/core/events';
 import { MAX_JD, dateFromJd } from '@orrery/core/time';
 import { bodyName, formatDate, formatDateTime, formatNumber, t } from '../../i18n/i18n';
@@ -85,8 +86,46 @@ function formatOffset(days: number): string {
     : `${sign}${formatNumber(size, 1)} ${t('events.comparison.days')}`;
 }
 
+/** Bounded cache for cross-model event comparisons, shared by badges and clicks. */
+const COMPARISON_CACHE_LIMIT = 200;
+const comparisonCache = new Map<string, ModelComparison>();
+let spreadScanGeneration = 0;
+
+function comparisonKey(event: AstronomicalEvent, observer: BodyId): string {
+  return `${observer}|${event.kind}|${event.body}|${event.other ?? ''}|${Math.round(event.jd / 2)}`;
+}
+
+function getComparison(event: AstronomicalEvent, observer: BodyId): ModelComparison {
+  const key = comparisonKey(event, observer);
+  const cached = comparisonCache.get(key);
+  if (cached) return cached;
+
+  const computed = compareAcrossModels(event, comparisonEngines(), observer);
+  if (comparisonCache.size >= COMPARISON_CACHE_LIMIT) {
+    const oldest = comparisonCache.keys().next().value;
+    if (oldest !== undefined) comparisonCache.delete(oldest);
+  }
+  comparisonCache.set(key, computed);
+  return computed;
+}
+
+function formatSpreadBadge(days: number): string {
+  if (days < 0.05) return `Δ <0.1 ${t('events.comparison.days')}`;
+  return `Δ ${formatNumber(days, 1)} ${t('events.comparison.days')}`;
+}
+
+function scheduleIdle(task: () => void): void {
+  const ric = (globalThis as { requestIdleCallback?: (cb: () => void) => number })
+    .requestIdleCallback;
+  if (typeof ric === 'function') {
+    ric(task);
+  } else {
+    setTimeout(task, 16);
+  }
+}
+
 function renderComparisonTable(event: AstronomicalEvent, observer: BodyId): HTMLDivElement {
-  const comparison = compareAcrossModels(event, comparisonEngines(), observer);
+  const comparison = getComparison(event, observer);
 
   const table = el('div', 'comparison');
   table.appendChild(el('div', 'field__label', t('events.comparison.title')));
@@ -173,6 +212,7 @@ export function renderEventPanel(
   options: EventPanelOptions = {},
 ): void {
   const state = store.get();
+  const scanGen = ++spreadScanGeneration;
   container.replaceChildren();
 
   const pane = el('div', 'events-pane');
@@ -304,6 +344,7 @@ export function renderEventPanel(
   }
 
   const list = el('div', 'event-list');
+  const pendingBadges: { event: AstronomicalEvent; badge: HTMLSpanElement }[] = [];
 
   for (const event of events) {
     const row = el('div', 'event');
@@ -327,9 +368,20 @@ export function renderEventPanel(
       );
     }
 
+    const headRight = el('div', 'event__head-right');
+    const spreadBadge = el('span', 'event__spread');
+    const cached = comparisonCache.get(comparisonKey(event, state.observationPoint));
+    if (cached) {
+      spreadBadge.textContent = formatSpreadBadge(cached.spreadDays);
+    } else {
+      spreadBadge.hidden = true;
+      pendingBadges.push({ event, badge: spreadBadge });
+    }
+
     const chevron = el('span', 'event__chevron', '▸');
     chevron.setAttribute('aria-hidden', 'true');
-    head.append(meta, chevron);
+    headRight.append(spreadBadge, chevron);
+    head.append(meta, headRight);
     row.appendChild(head);
 
     let expanded: HTMLElement | null = null;
@@ -344,6 +396,11 @@ export function renderEventPanel(
 
       jump(event.jd);
       const table = renderComparisonTable(event, state.observationPoint);
+      const latest = comparisonCache.get(comparisonKey(event, state.observationPoint));
+      if (latest) {
+        spreadBadge.textContent = formatSpreadBadge(latest.spreadDays);
+        spreadBadge.hidden = false;
+      }
       row.appendChild(table);
       expanded = table;
       head.setAttribute('aria-expanded', 'true');
@@ -363,4 +420,23 @@ export function renderEventPanel(
 
   pane.appendChild(list);
   container.appendChild(pane);
+
+  // Fill cross-model spread badges lazily during idle slices so opening the
+  // Events tab never blocks the UI thread.
+  if (pendingBadges.length > 0) {
+    let cursor = 0;
+    const observer = state.observationPoint;
+    const step = (): void => {
+      if (scanGen !== spreadScanGeneration) return;
+      const item = pendingBadges[cursor++];
+      if (!item) return;
+      if (item.badge.isConnected) {
+        const comparison = getComparison(item.event, observer);
+        item.badge.textContent = formatSpreadBadge(comparison.spreadDays);
+        item.badge.hidden = false;
+      }
+      if (cursor < pendingBadges.length) scheduleIdle(step);
+    };
+    scheduleIdle(step);
+  }
 }

@@ -276,14 +276,16 @@ apps/orrery/src/             # @orrery/app — vanilla DOM frontend
     preferences.ts           # localStorage persistence (welcome, notes)
   render/
     orrery/                  # composite map + zodiac ring + sight-lines + hover hints
-    sky/                     # band-of-sky strip
-    track/                   # longitude-against-time strip
-    info-panel/              # selected-body readings & phase disc
-    event-panel/             # event list + search + cross-model comparison table
+    evidence/                # unified bottom Evidence Drawer + Model Capability Scorecard
+    sky/                     # multi-model band-of-sky strip (true-scale Sun at ≤12°)
+    track/                   # multi-model longitude-against-time strip
+    info-panel/              # compare-first body inspector (phase & distance strips, machinery)
+    event-panel/             # upcoming events with async spread badges + Event Finder
     export/                  # vector SVG & raster PNG exporters (map + phase)
     theme/                   # CSS custom-property tokens & 5 theme files
-  ui/                        # topBar, controls, timeDock, calculationOverlay,
-                             #   welcome, exportButtons, dom helpers
+  ui/                        # topBar (models, compare, trials, CZ/EN, export, prefs),
+                             #   controls (symmetric left rail + ? help), timeDock (bottom-centre pill),
+                             #   trials (launch + banner), calculationOverlay, welcome, exportButtons, dom helpers
   i18n/                      # cs.json (default), en.json, i18n.ts, wikiLinks.ts
   main.ts
 apps/orrery/index.html
@@ -1163,7 +1165,7 @@ What it shows is that accuracy was not bought at a steadily rising price:
 | model | what it cost |
 |---|---|
 | Ptolemy | two table look-ups and two additions |
-| Copernicus | one look-up, no correction at all |
+| Copernicus | two table look-ups and an addition |
 | Kepler | a transcendental equation, solved by iteration, per body per date |
 | Newton | nothing new — his two-body solution *is* Kepler's ellipse |
 
@@ -1221,12 +1223,16 @@ written: measured, Copernicus is 2.5 days early and Ptolemy 2.7. Both still
 so wrong that Mercury missed the disc, it was wrong about the day, and an
 observer following it would have watched on the wrong one.
 
-**Demonstrations** (`core/demonstrations.ts`) are the handful of moments when the
-models disagreed about something the sky could settle: Venus gibbous in 1610,
-the Mercury transit of 1631, the great conjunctions of 1603 and 2020, the Mars
-opposition of 1602. Each sets date, model, centre, vantage and selection at
-once — deliberately unlike `setMode`, which changes one thing at a time, because
-a demonstration is a whole scene rather than a controlled comparison.
+**Demonstrations / Guided Trials** (`core/demonstrations.ts`, `ui/trials.ts`)
+are the eight moments that test both halves of the core argument, grouped into
+*Same reality, different machinery* (`mars-composition-2027`,
+`mars-opposition-1602`) and *What newer models predict that older ones cannot*
+(`venus-phases-1610`, `galilean-moons-1610`, `mercury-transit-1631`,
+`great-conjunction-1603`, `great-conjunction-2020`, `lunar-perturbation-2026`).
+Each sets date, model, centre, vantage, selection, comparison ghost, evidence
+pane, and focus target at once — resetting scale, sphere centre, sight-lines
+and sky field cleanly so prior state never corrupts a trial — and displays a
+dismissible non-blocking Trial Banner at top-centre of the stage.
 
 **Every date was found with the app's own solver, and `demonstrations.test.ts`
 re-derives them.** A teaching tool that cites a wrong date is worse than one
@@ -1574,6 +1580,60 @@ Four panels come to about 900px, so the dock still scrolls below roughly 1000px
 of viewport height. That is the honest cost of the sequence being four panels
 long.
 
+### 13.0f Stage-First reorganization and cross-model evidence
+
+A subsequent layout pass reorganized the six scattered docks into a single
+Stage-First workbench built around the two core messages (*same reality,
+different machinery* and *unequal predictive reach*):
+
+- **Top Command Bar (`ui/topBar.ts`):** Full-width `role="toolbar"` promoting
+  the four chronological models (with inline variant `<select>`), **Compare**
+  (`Off / Single / All 4`), **★ Trials** (8 grouped trials), **∑ Working**,
+  a dedicated **`CZ | EN`** language switch, global `ⓘ` explanations,
+  **Export** (`SVG`/`PNG`), and `⚙` strictly for theme and zodiac preferences.
+- **Symmetric Left Settings Rail (`ui/controls.ts`):** Three compact panels
+  (`Vantage`, `What to show`, `Bodies`) arranged in strict symmetric grids
+  (2-col selects, 3-col quick frames, 50/50 split sphere/scale switches, 2×2
+  layers, 3-col evidence launchers, 2×4 classical bodies + collapsible moons
+  sub-grid). Standing prose is hidden at rest; each panel header carries its
+  own `?` toggle to reveal contextual explanations on demand (overriding the
+  global `ⓘ` switch until `ⓘ` toggles again). Under Copernicus and Kepler, a
+  one-click **Equivalence Bridge** button (`View from Earth as epicycles`) and
+  live vector equation box make the recentred Composition overlay immediately
+  discoverable.
+- **Right Tabbed Inspector (`infoPanel.ts`, `eventPanel.ts`):** Full-height
+  ARIA `tablist` (`Details | Events`), freed from the old bottom-right clock
+  reserve and opening with **Venus pre-selected** so the core comparison is
+  immediately visible.
+  - `Details` leads with a clickable **4-model phase disc strip** (plus an
+    automatic refutation banner on Venus/Mercury when Ptolemy's nested-sphere
+    cap contradicts the gibbous heliocentric phase), live **Error vs sky
+    (VSOP87)**, a clickable **4-model distance & scale table** contrasting
+    Ptolemy's dimensionless `parts` (`no absolute AU`) against heliocentric
+    `AU`, interactive **Model machinery** chips (including dashed Composition
+    legs when active) that highlight the map on hover and expand live
+    measurements on click, Newton's Moon force insight, and a native
+    `<details>` disclosure for secondary physical figures.
+  - `Events` includes an on-demand **Find next event** search (conjunction,
+    opposition, or station up to 10 years ahead) plus upcoming rows that fill
+    cached cross-model spread preview badges (`Δ days`) asynchronously during
+    idle slices so tab opening stays instant.
+- **Bottom-Centre Floating Time Pill (`ui/timeDock.ts`) & Bottom-Right Credit:**
+  Transport, live clock, calendar input, `Today`, and the geometric rate ladder
+  sit in one horizontal pill centered under the map; the institutional credit
+  and FAV/KIV ZČU marks sit quietly in the bottom-right corner. `ResizeObserver`
+  syncs `--bar-height`, `--time-pill-height`, and `--credit-reserve` to actual
+  rendered heights so wrapping on mid-size screens never overlaps the map.
+- **Unified Bottom Evidence Drawer (`render/evidence/evidenceDrawer.ts`):**
+  Replaces the two colliding top/bottom strips with one tabbed drawer
+  (`Observer's sky | Sky track | Model scorecard`) docked cleanly above the
+  time pill. `Observer's sky` renders dashed model-tinted rival ghosts (with
+  their own phases and latitudes) and draws the Sun at true angular diameter at
+  narrow fields (`≤ 12°`) for transits like 1631 Mercury; `Sky track` overlays
+  rival retrograde curves behind the active curve; `Model scorecard`
+  (`scorecard.ts`) compares all four models side by side across longitude,
+  phase, distance/scale, latitude, and cause/force.
+
 ### 13.3a The recentred harness — what a heliocentric model turns into
 
 An optional overlay (**Skládání / Composition**) offered under Copernicus and
@@ -1659,10 +1719,11 @@ Three things worth knowing:
 - Segments are pooled, so `data-overlay` is cleared in `takeSegment` rather than
   merely set by the caller that wants it. Otherwise a recycled element carries
   the overlay's styling onto the model's own machinery.
-- The construction carries **no markers**. A marker's hover note is keyed by
-  role and family (`harnessNotes.ts`), and this overlay has no wording there; a
-  dot that explained itself as something else would be worse than no dot. The
-  two centres and the joint are readable from where the arms meet.
+- The construction still carries **no extra markers** (the centres and joint
+  remain readable from where the arms meet), while every dashed leg carries
+  `data-overlay="recentred"` so hovering it on the map — or clicking its chip
+  under *Model machinery* — highlights only the recentred overlay and displays
+  its own `recentred.*` note with semi-major axis, arm length, and `r/R` ratio.
 
 Measured over 1440 (stationary body, selected body, date) combinations across
 both families and every pair of orbiting bodies: the chain starts on the

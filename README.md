@@ -92,19 +92,20 @@ quietly regress.
   you are down among the lunar orbit. It appears only on the realistic scale,
   because the compressed one is logarithmic and no single bar could be true of
   it.
-- **See what an observer would have written down.** The *sky track* draws the
-  selected body's position among the stars against time — the record every
-  pre-telescopic astronomer actually kept. Where the curve doubles back, the
-  planet is retrograde; that shape is the single phenomenon both Ptolemy's
-  epicycle and Copernicus's moving Earth were built to reproduce, and switching
-  model redraws it.
+- **See what an observer would have written down.** The *sky track* tab in the
+  bottom evidence drawer plots the selected body's longitude among the stars
+  against time — the record every pre-telescopic astronomer actually kept. Where
+  the curve doubles back, the planet is retrograde; when comparison is active,
+  rival models' tracks draw faintly behind the active curve so you can see
+  Ptolemy's epicycle and Copernicus's moving Earth trace the same loop.
 - **Watch a heliocentric model turn into Ptolemy's.** Under Copernicus or Kepler,
-  hold something other than the Sun still and a **Composition** overlay becomes
-  available. It draws the model's own two orbits, chained end to end — where the
-  stationary body goes, then where the selected body goes from there — and their
-  sum lands exactly on the planet the engine had already placed. What that chain
-  looks like on screen is a deferent carrying an epicycle. The overlay computes
-  nothing of its own; it just declines to do the subtraction in one step.
+  use the one-click **View from Earth as epicycles** button (or hold any non-Sun
+  body still) to enable the **Composition** overlay. It draws the model's own
+  two orbits chained end to end — showing the live vector equation beside the
+  toggle — and their sum lands exactly on the planet the engine already placed.
+  What that chain looks like on screen is a deferent carrying an epicycle.
+  Hovering any dashed leg (or clicking it under *Model machinery*) identifies
+  which body's orbit it is and prints its semi-major axis and ratio.
 
   The only rule is that the larger orbit is the deferent, and it reproduces the
   *Almagest*'s own split without being told to. Hold the **Earth** still and pick
@@ -118,29 +119,34 @@ quietly regress.
 
   The point is not that Ptolemy was right. It is that the disagreement was never
   about the geometry — only about which body to hold still.
-- **See the machinery.** In Ptolemy and Copernicus modes, select a body and the
-  construction appears: deferent, epicycle, the arms carrying them, and the
-  **equant** — the off-centre point about which the epicycle's centre sweeps
-  equal angles in equal time. It is the cleverest device in the *Almagest* and
-  it is invisible in the finished orbit.
-- **Ask any part of it what it is.** Hover a circle, an arm, a marker or a force
-  vector and a card says what that part does in the model that is running, with
-  its figures for the date on screen — in Ptolemy's own parts of 60, sexagesimal
-  beside the decimal, exactly as the *Almagest* states them. Hover the equant and
-  the two rates are there together: 0.524°/day uniform about it, 0.639°/day about
-  the Earth, which is the whole reason it exists. Hover Mars's epicycle and its
-  r/R of 39;30 to 60 is read out as the distance from the Sun it implies —
-  **1.519 AU against a true 1.524** — a figure Ptolemy wrote down for all five
-  planets without any way of knowing what he had.
+- **See the machinery — and ask any part what it is.** In Ptolemy and Copernicus
+  modes, select a body and the construction appears: deferent, epicycle, arms,
+  and the **equant**. Hover a circle, an arm, a marker, a dashed composition
+  leg, or a force vector on the map — or click any chip under **Model machinery**
+  in the right-hand inspector — to read what that part does in the active model
+  and what it measures on the current date, in Ptolemy's own parts of 60
+  (sexagesimal beside decimal) or AU. Hover the equant and the two rates appear
+  together (0.524°/day uniform about it, 0.639°/day about Earth); hover Mars's
+  epicycle and its r/R of 39;30 to 60 reads out as the heliocentric distance it
+  implies — **1.519 AU against a true 1.524** — a figure Ptolemy wrote down for
+  all five planets without knowing what he had.
 - **See Newton's machinery too.** He places a body by force rather than by
   geometry, so the same switch draws vectors instead of circles: velocity, the
   net force, and every other body's gravitational pull, coloured by which body
   pulls, with exact magnitudes in newtons listed alongside. Select **Earth** and
   the Sun is 99.4% of the pull — which is why treating an orbit as a two-body
-  ellipse works at all. Then select the **Moon**: the Sun pulls it about twice as
-  hard as Earth does — near 69% against 31%, with the ratio breathing between 1.9
-  and 2.5 across a year — and it orbits Earth anyway, because the two are falling
-  toward the Sun together.
+  ellipse works at all. Then select the **Moon**: the Sun pulls it nearly twice
+  as hard as Earth does (~65–69% against ~31–35%, breathing between 1.9× and
+  2.5× across a year), and the inspector highlights why it orbits Earth anyway —
+  both fall toward the Sun together.
+- **Run eight guided decisive trials.** Click **★ Trials** in the top bar to
+  jump straight to the historical moments that test both halves of the argument:
+  *Same reality, different machinery* (Mars composition in 2027, Mars opposition
+  of 1602) and *What newer models predict that older ones cannot* (Galileo's
+  gibbous Venus in 1610, the Galilean moons of Jupiter in 1610, the 1631 Mercury
+  transit, the great conjunctions of 1603 and 2020, and the Moon's wandering
+  ellipse). A dismissible banner at the top of the stage explains the test and
+  offers one-click actions to flip models or open the sky view.
 - **Every name in the explanations is a link.** Ptolemy, Tycho, the *Rudolphine
   Tables*, Gassendi watching a transit in Paris — people, books, places and
   planets carry a faint dotted underline out to Wikipedia, in the language the
@@ -149,36 +155,36 @@ quietly regress.
   a link. Czech is matched by stem, because it declines — Ptolemaios turns up as
   Ptolemaia, Ptolemaiovi and Ptolemaiovými, and all of them should point at the
   same man.
-- **Look at the sky itself.** Open the band along the bottom and it shows the
-  patch of sky the selected body is in, as seen from the observation point:
-  the bright stars within 35° of the ecliptic at their catalogued places, every
-  body that falls in the field, the sign boundaries, and the ecliptic itself.
-  Both axes are to one scale, so a separation on screen is the separation in the
-  sky — scroll over the band to zoom it down to a fifth of a degree and watch a
-  conjunction actually open. That zoom is the band's own: the map's
-  magnification stays exactly where you left it. It is the
-  view every pre-telescopic observation was made in, and it makes two things
-  visible that no map can: **Ptolemy's planets sit exactly on the ecliptic**,
-  because his model here has longitudes and no latitude theory at all; and
-  **Venus keeps her phase**, never passing half under Ptolemy and filling under
-  the other three.
-- **Save the map, or a body's phase, as an image.** SVG or PNG, from a button
-  beside each — the map exactly as it stands, this model and this zoom, or the
-  selected body's phase disc on its own for dropping into a slide. Real vector
-  shapes rather than a picture of the page, so the SVG opens as editable
-  circles and lines and the PNG rasterises cleanly at print resolution.
-- **Compare two models at once.** The ghost overlay draws a second model faintly
-  beside the active one, so Ptolemy's 2.8° at Mars is a visible gap rather than a
-  number — and the bare-circle sub-mode's 13.5°, which is what heliocentrism
-  looks like with the eccentrics taken out, is an unmissable one.
-- **Watch the light.** On the map every body's lit hemisphere faces the Sun.
-  Select one and the panel shows its phase *as seen from the observation point*,
-  with a proper elliptical terminator — and what each of the four models
-  predicts for it. The heliocentric three agree closely: indistinguishable on
-  Venus, within two percentage points on Mercury. Ptolemy is the outlier, and not
-  by a little — his Venus never passes 44% lit and his Mercury never passes 8%,
-  where the sky takes both to full. That gap is the phases of Venus, and it is
-  the one place in the app where a model is not merely inaccurate but refuted.
+- **Look at the sky itself — and compare capabilities side by side.** The
+  unified bottom evidence drawer switches cleanly between **Observer's sky**,
+  **Sky track**, and the live **Model scorecard**:
+  - *Observer's sky* plots the bright J2000 stars within 35° of the ecliptic,
+    every body in the field, sign boundaries, and the ecliptic to one angular
+    scale (scroll over the band or pick `40° | 12° | 4° | 1°`). When **Compare**
+    is active, dashed model-tinted outlines show where rival models place the
+    same body — with their own phases and ecliptic latitudes — and at narrow
+    fields (`≤ 12°`) the Sun is drawn at true angular diameter so Kepler's 1631
+    Mercury transit sits visibly on the solar disc while Ptolemy misses by 5°.
+  - *Model scorecard* lines up all four models side by side for the selected
+    body across apparent longitude (`Δ` vs VSOP87), illuminated phase (flagging
+    Ptolemy's `≤ 44%` / `≤ 8%` cap), distance & scale (`parts` vs `AU`),
+    ecliptic latitude (`0°` flat vs inclined), and mechanism / net force.
+- **Save the map, or a body's phase, as an image.** SVG or PNG, from **Export**
+  in the top bar (for the map exactly as it stands) or right inside the phase
+  card (for the selected body's phase disc). Real vector shapes rather than a
+  DOM snapshot, so SVG opens as editable geometry and PNG rasterises cleanly at
+  print resolution.
+- **Compare two or all four models at once.** **Compare** in the top bar draws
+  any rival model — or all four at once — as colour-coded ghosts on the map, in
+  Observer's sky, and on the Sky track, so Ptolemy's 2.8° at Mars or bare
+  circles' 13.5° is a visible gap rather than an abstract number.
+- **Watch the light and the scale.** The app opens with **Venus pre-selected**
+  and puts a clickable **4-model phase disc strip** plus a **4-model distance &
+  scale table** at the top of the right-hand inspector. On Venus and Mercury, an
+  automatic refutation callout appears whenever Ptolemy's nested-sphere cap
+  (`≤ 44%` / `≤ 8%`) contradicts the gibbous/full heliocentric disc, and
+  Ptolemy's dimensionless `parts of 60` (`no absolute AU`) sits directly beside
+  the heliocentric models' `AU` distances.
 - **Read the sky.** Sight-lines run from the observation point out to a zodiac
   ring, showing where each body *appears* as distinct from where it *is*. The
   ring switches between the twelve equal signs and the real IAU constellations,
@@ -189,20 +195,29 @@ quietly regress.
   rays at the true apparent longitude in every model, and at true scale they pass
   exactly through the planet on their way to the zodiac. The cost is a sphere no
   longer centred on the instrument.
-- **Switch off anything you don't want.** Trails, construction, sight-lines and
-  star figures are all optional annotation, each with its own switch. Trails take
-  their body's colour and fade with age; the harness is brass and uniform, so the
-  record of where something went never reads as part of the machinery.
-- **Compare predicted dates.** For any conjunction, opposition or station, the
-  event panel shows the date each of the four models predicts and the spread
-  between them.
+- **Switch off anything you don't want.** Trails, construction/forces,
+  sight-lines and star figures are all optional annotation in a symmetric left
+  settings rail, with a `?` button on each panel to reveal explanations only
+  when wanted. Trails take their body's colour and fade with age; the harness is
+  brass and uniform, so the record of where something went never reads as part
+  of the machinery.
+- **Compare predicted dates — and search ahead.** The **Events** tab lists
+  upcoming conjunctions, oppositions and retrograde stations with live
+  cross-model spread badges (`Δ days`), expands to show every model's predicted
+  time beside the VSOP87 reference, and includes an on-demand **Find next
+  event** search scanning up to 10 years ahead.
 
-## Five looks
+## Layout and five looks
 
-The map runs full-bleed with the controls floating over it. Language, theme and
-the zodiac scheme live together behind the gear in the top-right corner, with the
-things you change often — model, stationary point, what to draw — left out on the
-panels where they belong. Your choice of language and theme is remembered.
+The map runs full-bleed inside a Stage-First layout: a single-row **Top Command
+Bar** holds the four models, **Compare**, **★ Trials**, **∑ Working**, a
+dedicated **`CZ | EN`** language switch, global `ⓘ` explanations, **Export**,
+and `⚙` for theme and zodiac scheme. Symmetric settings sit on the **left**
+(with per-panel `?` explanations on demand), the tabbed **Details | Events**
+inspector sits on the **right**, playback and date controls float in a compact
+**bottom-center** pill, the unified **Evidence Drawer** docks cleanly above it,
+and credits sit quietly in the **bottom-right** corner. Your choice of language
+and theme is remembered.
 
 - **Parchment** — brass instrument on paper, c. 1750. Engraved hairlines, hard
   edges, no depth, because a printed plate has none.
@@ -255,7 +270,7 @@ npm install && npm run dev
 Other commands:
 
 ```bash
-npm test          # ~510 tests, mostly of the orbital mathematics
+npm test          # 536 tests, covering orbital mathematics, trials, i18n and view logic
 npm run typecheck # strict TypeScript, no emit
 npm run build     # static output in apps/orrery/dist/
 ```
@@ -288,8 +303,8 @@ packages/core/       @orrery/core — bodies, engines, coordinates, events,
                      compile error rather than a convention.
 apps/orrery/
   src/state/         store and derived view data
-  src/render/        the instrument and the panels
-  src/ui/            controls
+  src/render/        the instrument, inspector, events, evidence drawer & scorecard
+  src/ui/            top command bar, symmetric settings rail, time pill, trials & overlays
   src/i18n/          Czech and English
 ```
 
@@ -431,13 +446,28 @@ při stejném heliocentrickém uspořádání. Nerozhodl střed, ale tvar dráhy
   v jejich kloubu neleží nic — a právě proto zůstávalo Ptolemaiovo rameno epicyklu
   rovnoběžné se směrem ke Slunci. Nejde o to, že by měl Ptolemaios pravdu, ale
   o to, že spor nikdy nebyl o geometrii, nýbrž o to, které těleso zastavit.
-- **Porovnat dva modely naráz** — druhý model se vykreslí slabě vedle aktivního.
+- **Porovnat dva nebo všechny čtyři modely naráz** — tlačítko **Porovnat**
+  v horní liště vykreslí ostatní modely na mapě, v pohledu na oblohu i v dráze
+  na obloze.
+- **Spustit osm rozhodujících zkoušek** — tlačítko **★ Zkoušky** v horní liště
+  přenese mapu rovnou do historických okamžiků rozdělených na *Tatáž realita,
+  jiný mechanismus* (skládání Marsu 2027, opozice Marsu 1602) a *Co novější
+  modely předpoví a starší nemohou* (fáze Venuše 1610, Galileovy měsíce
+  Jupiteru 1610, přechod Merkuru přes Slunce 1631, velké konjunkce 1603 a 2020,
+  putující elipsa Měsíce).
+- **Srovnat fáze, měřítko i schopnosti modelů** — pravý panel detailu otevírá
+  rovnou srovnání fází všech čtyř modelů (včetně upozornění na vyvrácení
+  Ptolemaiovy Venuše a Merkuru), srovnání vzdálenosti v dílech ku 60 proti AU a
+  interaktivní čipy mechanismu; spodní panel **Důkazy na obloze** pak přepíná
+  mezi pohledem na oblohu, dráhou na obloze a přehlednou tabulkou **Schopnosti
+  modelů**.
 - **Číst oblohu** — záměrné přímky z místa pozorování míří na pás zvěrokruhu
   a ukazují, kde těleso *vypadá*, na rozdíl od toho, kde *je*. Pás lze přepnout
   mezi dvanácti znameními a skutečnými souhvězdími IAU.
-- **Srovnat předpovědi** — u každé konjunkce, opozice a zastávky je vidět datum,
-  které předpovídá každý ze čtyř modelů, rozdíl mezi nimi i skutečný čas podle
-  moderní efemeridy VSOP87.
+- **Srovnat předpovědi a vyhledat příští úkaz** — záložka **Úkazy** zobrazuje
+  nadcházející konjunkce, opozice a zastávky s náhledem rozptylu modelů (`Δ dny`),
+  úplným srovnáním proti moderní efemeridě VSOP87 i vyhledáváním příštího úkazu
+  až na 10 let dopředu.
 
 ### Spuštění
 
@@ -446,5 +476,7 @@ npm install && npm run dev
 ```
 
 Aplikace je plně lokalizovaná do češtiny a angličtiny; výchozím jazykem je
-čeština. Jazyk, vzhled a volbu zvěrokruhu najdete pod ozubeným kolem vpravo
-nahoře, ostatní ovládání zůstává na panelech kolem mapy.
+čeština. Přepínač **`CZ | EN`** je přímo v horní liště vedle volby modelů,
+porovnání, zkoušek a exportu; vzhled a zvěrokruh najdete pod ozubeným kolem `⚙`,
+symetrické nastavení vlevo (s vysvětlením na vyžádání pod tlačítkem `?` na
+každém panelu), detail tělesa a úkazy vpravo a ovládání času dole uprostřed.

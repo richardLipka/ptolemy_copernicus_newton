@@ -432,5 +432,13 @@
   "help.toggle": "Show or hide explanation",
   "evidence.sky.short": "Sky",
   "evidence.track.short": "Track",
-  "evidence.scorecard.short": "Scorecard"
+  "evidence.scorecard.short": "Scorecard",
+  "recentred.part.deferent": "Composition deferent ({{body}})",
+  "recentred.part.epicycle": "Composition epicycle ({{body}})",
+  "recentred.part.apsidal": "Composition apsidal axis ({{body}})",
+  "recentred.note.deferent.origin": "First leg of the recentred sum: the orbit of {{legOf}} walked backwards from the stationary point. Because {{leg}} has the larger orbit, it acts as the deferent — carrying the Sun at its joint.",
+  "recentred.note.deferent.body": "First leg of the recentred sum: the orbit of {{legOf}} drawn directly about {{originOf}}. Because {{leg}} has the larger orbit, it becomes the deferent — reproducing Ptolemy's layout for a superior planet.",
+  "recentred.note.epicycle.sunJoint": "Second leg of the recentred sum: the orbit of {{legOf}} riding on the Sun at the end of the deferent. Held from Earth, this is Tycho's geometry and Ptolemy's layout for an inferior planet.",
+  "recentred.note.epicycle.emptyJoint": "Second leg of the recentred sum: the reversed orbit of {{legOf}} riding on an empty joint. This is why Ptolemy's epicycle arm stayed parallel to the Sun — the arm is the Earth's own orbit in disguise.",
+  "recentred.note.apsidal": "Line of apsides of the leading orbit ({{legOf}}), carried intact into the recentred frame."
 }

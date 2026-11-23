@@ -15,6 +15,7 @@ import type { EngineId } from '@orrery/core/engines/types';
 import { jdFromCalendar } from '@orrery/core/time';
 import { rawConstruction } from '../../state/selectors';
 import { measureHarnessPart, type HarnessRole } from '../../state/harnessMeasures';
+import { setLocale } from '../../i18n/i18n';
 import cs from '../../i18n/cs.json';
 import en from '../../i18n/en.json';
 import {
@@ -238,5 +239,36 @@ describe('the harness explains itself', () => {
       'epicycle',
     )!;
     expect(describeHarnessPart(epicycle).values[0]?.value).toContain('39;30');
+  });
+
+  it('describes every recentred Composition overlay leg in both Czech and English', () => {
+    const cases = [
+      { bodyId: 'mars' as const, roles: ['deferent', 'deferent-arm', 'epicycle', 'epicycle-arm', 'apsidal'] as const },
+      { bodyId: 'venus' as const, roles: ['deferent', 'epicycle', 'apsidal'] as const },
+      { bodyId: 'sun' as const, roles: ['deferent', 'apsidal'] as const },
+    ];
+
+    for (const locale of ['cs', 'en'] as const) {
+      setLocale(locale);
+      const state: State = {
+        ...STATE,
+        mode: 'kepler',
+        engineId: 'keplerian',
+        frameOrigin: 'earth',
+        showRecentredHarness: true,
+        locale,
+      };
+
+      for (const { bodyId, roles } of cases) {
+        for (const role of roles) {
+          const note = harnessNote(state, bodyId, role, { overlay: 'recentred' });
+          expect(note, `${locale} ${bodyId} ${role}`).not.toBeNull();
+          expect(note!.title).not.toContain('{{');
+          expect(note!.body).not.toContain('{{');
+          expect(note!.values.length).toBeGreaterThan(0);
+        }
+      }
+    }
+    setLocale('cs');
   });
 });

@@ -754,6 +754,22 @@ export interface ProjectedRecentred extends ProjectedConstruction {
   jointIsSun: boolean;
 }
 
+/** Unprojected recentred composition harness, for measuring and describing its legs. */
+export function rawRecentredHarness(
+  state: State,
+  bodyId: BodyId,
+): RecentredHarness | null {
+  const family = recentredFamilyFor(state.engineId);
+  if (!family || state.frameOrigin === 'sun') return null;
+
+  return recentredConstruction(
+    state.julianDate,
+    bodyId,
+    state.frameOrigin,
+    family,
+  );
+}
+
 /**
  * The recentred harness, projected like any other construction.
  *
@@ -766,15 +782,7 @@ export function buildRecentredHarness(
   state: State,
   bodyId: BodyId,
 ): ProjectedRecentred | null {
-  const family = recentredFamilyFor(state.engineId);
-  if (!family || state.frameOrigin === 'sun') return null;
-
-  const harness: RecentredHarness | null = recentredConstruction(
-    state.julianDate,
-    bodyId,
-    state.frameOrigin,
-    family,
-  );
+  const harness = rawRecentredHarness(state, bodyId);
   if (!harness) return null;
 
   const positions = ENGINES[state.engineId].positionsAt(state.julianDate);
