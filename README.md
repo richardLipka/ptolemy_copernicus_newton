@@ -277,7 +277,7 @@ npm install && npm run dev
 Other commands:
 
 ```bash
-npm test          # 543 tests, covering orbital mathematics, caching, split view, trials, i18n and view logic
+npm test          # 547 tests, covering orbital mathematics, caching, split view, trials, i18n and view logic
 npm run typecheck # strict TypeScript, no emit
 npm run build     # static output in apps/orrery/dist/
 ```

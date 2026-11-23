@@ -41,6 +41,7 @@ import { renderInfoPanel } from './render/info-panel/infoPanel';
 import { createOrrery, type OrrerySource } from './render/orrery/orrery';
 import { applyTheme } from './render/theme/themes';
 import { renderTrackStrip, type GhostTrackEntry } from './render/track/trackStrip';
+import { createAnimationLoop } from './state/animationLoop';
 import { applyNotes } from './state/preferences';
 import { COMPARISON_ENGINES, recentredHarnessAvailable } from './state/selectors';
 import { store, type RightTab } from './state/store';
@@ -866,35 +867,13 @@ syncUrl();
 const MAX_FRAME_SECONDS = 0.1;
 
 // Schedule animation frames strictly while playing so paused views consume
-// zero idle CPU or battery.
-let rafId: number | null = null;
-let previousTimestamp = 0;
+// zero idle CPU or battery, guarded against re-entrant store notifications.
+const animationLoop = createAnimationLoop({
+  maxFrameSeconds: MAX_FRAME_SECONDS,
+  onTick: (elapsedSeconds) => store.tick(elapsedSeconds),
+});
 
-function frame(timestamp: number): void {
-  rafId = null;
-  if (!store.get().playing) return;
-  const elapsedSeconds = Math.min(
-    (timestamp - previousTimestamp) / 1000,
-    MAX_FRAME_SECONDS,
-  );
-  previousTimestamp = timestamp;
-  store.tick(elapsedSeconds);
-  if (store.get().playing) {
-    rafId = requestAnimationFrame(frame);
-  }
-}
-
-function syncAnimationLoop(): void {
-  if (store.get().playing && rafId === null) {
-    previousTimestamp = performance.now();
-    rafId = requestAnimationFrame(frame);
-  } else if (!store.get().playing && rafId !== null) {
-    cancelAnimationFrame(rafId);
-    rafId = null;
-  }
-}
-
-store.subscribe(syncAnimationLoop);
-syncAnimationLoop();
+store.subscribe((state) => animationLoop.sync(state.playing));
+animationLoop.sync(store.get().playing);
 
 render();

@@ -268,6 +268,7 @@ packages/core/src/           # @orrery/core — pure math, no DOM lib
 apps/orrery/src/             # @orrery/app — vanilla DOM frontend
   state/
     store.ts                 # single pub/sub store
+    animationLoop.ts         # re-entrancy-safe on-demand requestAnimationFrame controller
     selectors.ts             # derived view data, projections, harnesses, vectors
     trails.ts                # logged position history with decimation
     skyView.ts               # band-of-sky projection
