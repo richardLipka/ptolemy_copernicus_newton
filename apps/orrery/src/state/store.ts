@@ -10,7 +10,7 @@
  * you flip between Ptolemy and Newton.
  */
 
-import type { BodyId } from '@orrery/core/bodies';
+import { BODIES, type BodyId } from '@orrery/core/bodies';
 import type { Demonstration } from '@orrery/core/demonstrations';
 import { ENGINES } from '@orrery/core/engines/registry';
 import { MODES, type Engine, type EngineId, type ModeId } from '@orrery/core/engines/types';
@@ -577,6 +577,12 @@ export class Store {
         ? null
         : (demonstration.ghostEngineId ?? null);
 
+    const showMoons = Boolean(
+      BODIES[demonstration.body].satellite ||
+        demonstration.body === 'jupiter' ||
+        demonstration.body === 'saturn',
+    );
+
     this.patch({
       mode: demonstration.mode,
       engineId,
@@ -584,12 +590,16 @@ export class Store {
       frameOrigin: demonstration.frameOrigin,
       observationPoint: demonstration.observationPoint,
       selectedBody: demonstration.body,
+      scaleMode: 'compressed',
+      sphereCentre: 'frame',
+      showSightLines: true,
       showConstruction: true,
       showRecentredHarness: demonstration.showRecentredHarness ?? false,
+      showMoons,
       evidenceTab,
       showSky: evidenceTab === 'sky',
       showTrack: evidenceTab === 'track',
-      ...(demonstration.skyField !== undefined ? { skyField: demonstration.skyField } : {}),
+      skyField: demonstration.skyField ?? DEFAULT_SKY_FIELD,
       rightTab: 'inspect',
       activePopover: null,
       showSettings: false,

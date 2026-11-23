@@ -40,8 +40,10 @@ export interface Demonstration {
   ghostEngineId?: EngineId | 'all' | null;
   openEvidence?: EvidencePanelKind | null;
   skyField?: number;
-  /** Zoom onto the body and its satellite system on entry. */
+  /** Zoom onto the body (or `focusTarget`, e.g. a moon's primary) on entry. */
   focusBody?: boolean;
+  /** Optional body whose system to frame when `focusBody` is true. */
+  focusTarget?: BodyId;
 }
 
 /** Fraction of a day, for the verified clock times. */
@@ -110,25 +112,27 @@ export const DEMONSTRATIONS: readonly Demonstration[] = [
     observationPoint: 'earth',
     ghostEngineId: 'keplerian',
     openEvidence: 'sky',
+    skyField: 12,
   },
 
   /**
    * 7 January 1610, 20:00 UT. Galileo turns his telescope on Jupiter in Padua
    * and sees moons circling something other than the Earth.
    *
-   * Shown inside Ptolemy's model on purpose: four bodies plainly orbiting
-   * Jupiter — obeying Kepler's third law with Jupiter's own mass constant —
-   * broke the claim that the heavens have a single centre.
+   * Selects Io with Jupiter held stationary at the centre so switching between
+   * Ptolemy and Newton keeps the entire Jovian system centred, draws Io's orbit
+   * around Jupiter, and in Newton mode reveals Jupiter exerting >99% of the pull.
    */
   {
     id: 'galilean-moons-1610',
     theme: 'prediction',
     jd: jdFromCalendar(1610, 1, 7) + at(20, 0),
-    body: 'jupiter',
+    body: 'io',
     mode: 'ptolemy',
-    frameOrigin: 'earth',
+    frameOrigin: 'jupiter',
     observationPoint: 'earth',
     focusBody: true,
+    focusTarget: 'jupiter',
   },
 
   /**
@@ -137,8 +141,8 @@ export const DEMONSTRATIONS: readonly Demonstration[] = [
    * Kepler predicted it in the *Rudolphine Tables* and did not live to see it;
    * Gassendi watched it in Paris. Verified here: geocentric latitude 0.002°,
    * comfortably inside the Sun's 0.27° disc, so the transit is real in this
-   * app's geometry and not merely asserted. A prediction of this kind is the
-   * sharpest possible test — the event either happens or it does not.
+   * app's geometry and not merely asserted. A 12° field keeps both the true-scale
+   * solar disc and Ptolemy's 5° miss visible in one frame.
    */
   {
     id: 'mercury-transit-1631',
@@ -150,7 +154,7 @@ export const DEMONSTRATIONS: readonly Demonstration[] = [
     observationPoint: 'earth',
     ghostEngineId: 'all',
     openEvidence: 'sky',
-    skyField: 4,
+    skyField: 12,
   },
 
   /**
@@ -212,5 +216,6 @@ export const DEMONSTRATIONS: readonly Demonstration[] = [
     frameOrigin: 'earth',
     observationPoint: 'earth',
     focusBody: true,
+    focusTarget: 'earth',
   },
 ];

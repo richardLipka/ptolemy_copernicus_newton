@@ -302,7 +302,9 @@ let lastRightTab: RightTab | null = null;
 let lastEvidenceTab: string | null = null;
 
 let lastInfoAt = 0;
+let lastInfoJd = Number.NaN;
 let lastScorecardAt = 0;
+let lastScorecardJd = Number.NaN;
 let lastEventAt = 0;
 let lastEventScanJd = Number.NaN;
 let eventsRendered = false;
@@ -404,9 +406,11 @@ function render(): void {
     (evidenceSwitched ||
       contextChanged ||
       state.selectedBody !== lastSelected ||
+      (!state.playing && state.julianDate !== lastScorecardJd) ||
       now - lastScorecardAt > INFO_BUDGET_MS)
   ) {
     lastScorecardAt = now;
+    lastScorecardJd = state.julianDate;
     renderScorecard(evidenceDrawer.scorecardPane, store);
   }
 
@@ -460,9 +464,11 @@ function render(): void {
     (rightTabSwitched ||
       contextChanged ||
       state.selectedBody !== lastSelected ||
+      (!state.playing && state.julianDate !== lastInfoJd) ||
       now - lastInfoAt > INFO_BUDGET_MS)
   ) {
     lastInfoAt = now;
+    lastInfoJd = state.julianDate;
     lastSelected = state.selectedBody;
     renderInfoPanel(infoHost, store);
   } else if (state.selectedBody !== lastSelected) {

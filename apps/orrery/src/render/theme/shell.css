@@ -200,6 +200,61 @@
     padding: var(--panel-pad-block) var(--panel-pad-inline);
   }
 
+  .panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    margin: 0 0 0.42rem;
+    padding-bottom: 0.24rem;
+    border-bottom: var(--line-hairline) solid var(--accent-dark);
+  }
+
+  .panel__header .panel__title {
+    margin: 0;
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .panel__help-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    padding: 0;
+    border-radius: 50%;
+    font-family: var(--face-numeric);
+    font-size: 0.68rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--text-muted);
+    background: transparent;
+    border: var(--line-hairline) solid var(--accent-dark);
+    flex: 0 0 auto;
+  }
+
+  .panel__help-btn[aria-expanded='true'] {
+    background: var(--accent);
+    color: var(--surface);
+    border-color: var(--accent);
+  }
+
+  .panel__help {
+    margin-top: 0.45rem;
+    padding: 0.38rem 0.48rem;
+    border-radius: var(--control-radius);
+    border-inline-start: 2px solid var(--accent);
+    background: var(--panel-inner);
+    display: flex;
+    flex-direction: column;
+    gap: 0.28rem;
+  }
+
+  .panel__help .note {
+    margin: 0;
+  }
+
   .panel__title {
     font-family: var(--face-display);
     font-size: var(--size-label);
@@ -303,6 +358,22 @@
     justify-content: center;
     font-size: 0.88rem;
     padding: 0.15rem 0.42rem;
+  }
+
+  /* Dedicated CZ | EN language toggle in the top command bar. */
+  .lang-switch {
+    flex-shrink: 0;
+  }
+
+  .lang-switch .lang-switch__btn {
+    flex: 0 0 auto;
+    min-inline-size: 28px;
+    min-block-size: 26px;
+    padding: 0.14rem 0.44rem;
+    font-family: var(--face-display);
+    font-size: var(--size-label);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
   }
 
   .command-bar__btn[data-active='on'],
@@ -939,7 +1010,19 @@
   }
 
   .segmented--compact {
-    margin-top: 0.42rem;
+    margin-top: 0.4rem;
+  }
+
+  /* Strictly equal 50/50 split for 2-option switches (sphere centre, scale). */
+  .segmented--two {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .segmented--two button {
+    flex: initial;
+    width: 100%;
+    padding: 0.22rem 0.28rem;
   }
 
   .segmented button {
@@ -975,20 +1058,65 @@
     font-family: var(--face-numeric);
   }
 
-  /* --- Left Rail Helpers: Quick Vantage, Equivalence Bridge, Evidence ---- */
+  /* --- Left Rail Symmetric Grids & Helpers ------------------------------- */
 
-  .quick-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-    margin: -0.15rem 0 0.45rem;
+  .vantage-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem;
+    margin-bottom: 0.35rem;
   }
 
-  .quick-chip {
-    flex: 1 1 0;
+  .field--compact {
+    margin-bottom: 0;
+  }
+
+  .vantage-grid + .grid-3 {
+    margin-bottom: 0.42rem;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.28rem;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.26rem;
+  }
+
+  .grid-btn {
+    width: 100%;
+    min-width: 0;
     font-size: var(--size-label);
-    padding: 0.14rem 0.35rem;
-    white-space: nowrap;
+    letter-spacing: 0.02em;
+    padding: 0.22rem 0.3rem;
+    line-height: 1.2;
+    text-align: center;
+    hyphens: auto;
+    overflow-wrap: break-word;
+    text-wrap: balance;
+  }
+
+  .trail-bar {
+    margin-top: 0.32rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+  }
+
+  .trail-bar__meta {
+    font-family: var(--face-numeric);
+    font-size: var(--size-label);
+    color: var(--text-muted);
+  }
+
+  .trail-bar__clear {
+    font-size: var(--size-label);
+    padding: 0.14rem 0.45rem;
   }
 
   .equivalence-cta {
@@ -1024,36 +1152,55 @@
   }
 
   .evidence-launch {
-    margin-top: 0.5rem;
-    padding-top: 0.42rem;
+    margin-top: 0.48rem;
+    padding-top: 0.4rem;
     border-top: var(--line-hairline) solid var(--accent-dark);
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.28rem;
   }
 
-  .toggle-grid {
-    display: flex;
-    flex-wrap: wrap;
+  /* --- Body Chips (Strict Symmetric 2-Column Grid) ----------------------- */
+
+  .bodies-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.26rem;
   }
 
-  .toggle-grid button:not(.icon-button) {
-    flex: 0 1 auto;
+  .bodies-grid--moons {
+    margin-top: 0.3rem;
+    padding-top: 0.3rem;
+    border-top: var(--line-hairline) dashed var(--accent-dark);
+  }
+
+  .chip--grid {
+    width: 100%;
     min-width: 0;
+    justify-content: flex-start;
+    padding: 0.2rem 0.45rem;
+  }
+
+  .chip--wide {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+
+  .chip__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .moons-toggle {
+    width: 100%;
+    margin-top: 0.3rem;
+    padding: 0.18rem 0.4rem;
     font-size: var(--size-label);
-    letter-spacing: 0.02em;
-    padding: 0.2rem 0.48rem;
-    hyphens: auto;
-    overflow-wrap: break-word;
-    text-wrap: balance;
+    color: var(--text-muted);
+    border-style: dashed;
+    background: transparent;
   }
-
-  .chip-clear {
-    opacity: 0.85;
-  }
-
-  /* --- Body Chips -------------------------------------------------------- */
 
   .chips {
     display: flex;
@@ -1061,26 +1208,14 @@
     gap: 0.25rem;
   }
 
-  .chips--moons {
-    margin-top: 0.32rem;
-    padding-top: 0.32rem;
-    border-top: var(--line-hairline) dashed var(--accent-dark);
-  }
-
   .chip {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
+    gap: 0.32rem;
     padding: 0.15rem 0.4rem;
     font-family: var(--face-text);
     font-size: var(--size-label);
     letter-spacing: 0;
-  }
-
-  .chip--more {
-    font-family: var(--face-display);
-    color: var(--text-muted);
-    border-style: dashed;
   }
 
   .chips--legend {

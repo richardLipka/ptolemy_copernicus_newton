@@ -16,7 +16,7 @@ import { THEMES, type ThemeId } from '../render/theme/themes';
 import { COMPARISON_ENGINES } from '../state/selectors';
 import type { GhostSelection, Store, TopPopover } from '../state/store';
 import type { ZodiacScheme } from '@orrery/core/zodiac';
-import { el, linked, panel, select, toggleButton, wireRovingFocus } from './dom';
+import { el, panel, select, toggleButton, wireRovingFocus } from './dom';
 import { exportButtonRow } from './exportButtons';
 import { launchTrial } from './trials';
 
@@ -171,7 +171,7 @@ function renderTrialsPopover(store: Store): HTMLElement {
       card.append(
         el('span', 'demo__date', formatDate(dateFromJd(demo.jd))),
         el('span', 'demo__title', t(`demo.${demo.id}`)),
-        linked('span', 'demo__note', t(`demo.${demo.id}.note`)),
+        el('span', 'demo__note', t(`demo.${demo.id}.note`)),
       );
       card.addEventListener('click', () => launchTrial(store, demo));
       grid.appendChild(card);
@@ -219,15 +219,6 @@ function renderSettingsPopover(store: Store): HTMLElement {
   const menu = panel();
   menu.classList.add('command-popover', 'command-popover--settings');
   menu.id = 'popover-settings';
-
-  menu.appendChild(
-    choiceRow(
-      t('locale.label'),
-      LOCALES.map((locale) => ({ id: locale, label: t(`locale.${locale}.short`) })),
-      state.locale,
-      (locale) => store.setLocale(locale as Locale),
-    ),
-  );
 
   menu.appendChild(
     choiceRow(
@@ -350,11 +341,25 @@ export function renderTopBar(container: HTMLElement, store: Store): void {
 
   bar.appendChild(inquiryGroup);
 
-  // --- Utilities: Notes, Export, Preferences -----------------------------
+  // --- Utilities: Language Switch, Notes, Export, Preferences ------------
 
   const utilGroup = el('div', 'command-bar__group command-bar__group--end');
   utilGroup.setAttribute('role', 'group');
   utilGroup.setAttribute('aria-label', t('toolbar.utilities'));
+
+  const langSwitch = el('div', 'segmented segmented--inline lang-switch');
+  langSwitch.setAttribute('role', 'group');
+  langSwitch.setAttribute('aria-label', t('locale.label'));
+  for (const locale of LOCALES) {
+    const btn = toggleButton(t(`locale.${locale}.short`), state.locale === locale, () =>
+      store.setLocale(locale as Locale),
+    );
+    btn.className = 'lang-switch__btn';
+    btn.title = t(`locale.${locale}`);
+    btn.setAttribute('aria-label', t(`locale.${locale}`));
+    langSwitch.appendChild(btn);
+  }
+  utilGroup.appendChild(langSwitch);
 
   const notes = toggleButton('ⓘ', state.showNotes, () => store.toggleNotes());
   notes.className = 'command-bar__icon';

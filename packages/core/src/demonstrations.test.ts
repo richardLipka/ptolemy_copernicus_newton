@@ -214,7 +214,9 @@ describe('the Mars composition trial of 2027', () => {
 describe('the Galilean moons and lunar perturbation trials', () => {
   it('places Galileo’s first Jovian observation on 7 January 1610', () => {
     const demonstration = find('galilean-moons-1610');
-    expect(demonstration.body).toBe('jupiter');
+    expect(demonstration.body).toBe('io');
+    expect(demonstration.frameOrigin).toBe('jupiter');
+    expect(demonstration.focusTarget).toBe('jupiter');
     expect(demonstration.mode).toBe('ptolemy');
     expect(demonstration.focusBody).toBe(true);
   });

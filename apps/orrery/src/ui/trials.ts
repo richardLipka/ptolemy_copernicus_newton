@@ -14,7 +14,7 @@ import { el, linked } from './dom';
 export function launchTrial(store: Store, demonstration: Demonstration): void {
   store.applyDemonstration(demonstration);
   if (demonstration.focusBody) {
-    const view = focusViewFor(store.get(), demonstration.body);
+    const view = focusViewFor(store.get(), demonstration.focusTarget ?? demonstration.body);
     store.setZoom(view.zoom);
     store.panTo(view.centreOn.x, view.centreOn.y);
   }
@@ -69,11 +69,19 @@ function actionsForTrial(trial: Demonstration, store: Store): TrialAction[] {
 
     case 'galilean-moons-1610':
       actions.push(switchAction(state.mode === 'newton' ? 'ptolemy' : 'newton'));
+      if (!state.playing) {
+        actions.push({
+          label: t('trials.action.play'),
+          run: () => {
+            store.setRate(0.25);
+            store.play();
+          },
+        });
+      }
       actions.push({
         label: t('trials.action.focus'),
         run: () => {
           const view = focusViewFor(store.get(), 'jupiter');
-          store.selectBody('jupiter');
           store.setZoom(view.zoom);
           store.panTo(view.centreOn.x, view.centreOn.y);
         },
@@ -84,7 +92,7 @@ function actionsForTrial(trial: Demonstration, store: Store): TrialAction[] {
       actions.push(switchAction(state.mode === 'ptolemy' ? 'kepler' : 'ptolemy'));
       if (state.evidenceTab !== 'sky' || state.skyField > 4) {
         actions.push({
-          label: t('trials.action.openSky'),
+          label: `${t('trials.action.openSky')} (1°)`,
           run: () => {
             store.setSkyField(1);
             store.setEvidenceTab('sky');

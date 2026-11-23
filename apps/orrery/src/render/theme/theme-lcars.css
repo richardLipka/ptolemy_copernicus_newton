@@ -78,6 +78,40 @@
       font-family: var(--face-display);
     }
 
+    & .panel__header {
+      border-bottom: 0;
+      background: var(--accent-dark);
+      color: #000;
+      padding: 0.2rem 0.5rem;
+      margin: calc(-1 * var(--panel-pad-block)) calc(-1 * var(--panel-pad-inline))
+        0.45rem;
+      border-start-end-radius: 0;
+    }
+
+    & .panel__header .panel__title {
+      background: transparent;
+      color: #000;
+      margin: 0;
+      padding: 0;
+    }
+
+    & .panel__help-btn {
+      background: #000;
+      color: var(--accent-bright);
+      border: 0;
+    }
+
+    & .panel__help-btn[aria-expanded='true'] {
+      background: var(--accent-bright);
+      color: #000;
+    }
+
+    & .moons-toggle {
+      background: #18181f;
+      color: var(--text);
+      border: 1px dashed var(--accent-dark);
+    }
+
     & .panel__title {
       /* A title bar rather than an underlined heading. */
       border-bottom: 0;

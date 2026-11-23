@@ -428,5 +428,9 @@
   "scorecard.cause.kepler": "Empirical 2-body ellipse",
   "scorecard.cause.newton": "Gravity (1/r²), {{force}} N",
   "scorecard.phaseForbidden": "capped ≤ {{max}} %",
-  "scorecard.selectPrompt": "Select a body to compare what all four models predict for it."
+  "scorecard.selectPrompt": "Select a body to compare what all four models predict for it.",
+  "help.toggle": "Show or hide explanation",
+  "evidence.sky.short": "Sky",
+  "evidence.track.short": "Track",
+  "evidence.scorecard.short": "Scorecard"
 }

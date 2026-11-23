@@ -475,4 +475,38 @@ describe('Phase 2 & 3 layout and evidence state', () => {
     expect(state.showRecentredHarness).toBe(true);
     expect(state.ghostEngineId).toBe('ptolemaic-epicyclic');
   });
+
+  it('selects the right body and resets scale, sphere, sight-lines and skyField across all 8 trials', () => {
+    const expectedBodies: Record<string, string> = {
+      'mars-composition-2027': 'mars',
+      'mars-opposition-1602': 'mars',
+      'venus-phases-1610': 'venus',
+      'galilean-moons-1610': 'io',
+      'mercury-transit-1631': 'mercury',
+      'great-conjunction-1603': 'jupiter',
+      'great-conjunction-2020': 'saturn',
+      'lunar-perturbation-2026': 'moon',
+    };
+
+    // Dirty view settings beforehand so we prove each trial resets cleanly.
+    store.setScaleMode('true');
+    store.setSphereCentre('observer');
+    store.toggle('showSightLines');
+    store.setSkyField(1);
+
+    for (const trial of DEMONSTRATIONS) {
+      store.applyDemonstration(trial);
+      const state = store.get();
+
+      expect(state.selectedBody, trial.id).toBe(expectedBodies[trial.id]);
+      expect(state.selectedBody, trial.id).not.toBe(state.observationPoint);
+      expect(state.mode, trial.id).toBe(trial.mode);
+      expect(state.frameOrigin, trial.id).toBe(trial.frameOrigin);
+      expect(state.observationPoint, trial.id).toBe(trial.observationPoint);
+      expect(state.scaleMode, trial.id).toBe('compressed');
+      expect(state.sphereCentre, trial.id).toBe('frame');
+      expect(state.showSightLines, trial.id).toBe(true);
+      expect(state.skyField, trial.id).toBe(trial.skyField ?? DEFAULT_SKY_FIELD);
+    }
+  });
 });

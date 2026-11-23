@@ -428,5 +428,9 @@
   "scorecard.cause.kepler": "Empirická elipsa (2 tělesa)",
   "scorecard.cause.newton": "Gravitace (1/r²), {{force}} N",
   "scorecard.phaseForbidden": "strop ≤ {{max}} %",
-  "scorecard.selectPrompt": "Vyberte těleso a srovnejte, co pro něj předpovídají všechny čtyři modely."
+  "scorecard.selectPrompt": "Vyberte těleso a srovnejte, co pro něj předpovídají všechny čtyři modely.",
+  "help.toggle": "Zobrazit či skrýt vysvětlení",
+  "evidence.sky.short": "Obloha",
+  "evidence.track.short": "Dráha",
+  "evidence.scorecard.short": "Srovnání"
 }

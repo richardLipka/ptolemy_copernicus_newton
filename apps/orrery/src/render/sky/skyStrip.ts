@@ -54,8 +54,8 @@ export const starSize = (magnitude: number): number =>
 /** Below this separation from the Sun the field is a daylight one. */
 const DAYLIGHT_DEG = 12;
 
-/** Below this field width, draw the Sun at its true angular diameter (~0.53°). */
-const TRUE_SUN_FIELD_DEG = 8;
+/** Up to this field width, draw the Sun at its true angular diameter (~0.54°). */
+const TRUE_SUN_FIELD_DEG = 12;
 
 const FIELD_SENSITIVITY = 0.0016;
 const WHEEL_PIXELS = [1, 16, 400];
